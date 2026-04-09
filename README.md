@@ -1,2 +1,2 @@
 # MC656---Engenharia-de-Software
-Tema: Educação ou cidades sustentáveis
+Tema: Democratização da cultura e da educação por meio sustentável de troca de livros.
