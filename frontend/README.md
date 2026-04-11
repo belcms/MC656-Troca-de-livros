@@ -75,7 +75,7 @@ flutter doctor --android-licenses
 
 * Vá apertando `y` (yes) e Enter para todas as perguntas.
 
-### Como rodar o aplicativo no dia a dia
+## Como rodar o aplicativo no dia a dia
 
 * **No terminal**, certifique-se de estar na pasta `frontend` do projeto.
 * **Ligue o emulador:** No Android Studio, clique em More Actions → Virtual Device Manager. Na aba de Device Manager, ache o device criado e clique no símbolo de play. Espere o simulador carregar totalmente.
