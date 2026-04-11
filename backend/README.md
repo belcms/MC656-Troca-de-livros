@@ -35,9 +35,14 @@ docker-compose up -d
 *(Isso fará o download da imagem do Postgres e criará o banco `books_db` na porta `5433`).*
 
 ### 2\. Criar o Ambiente Virtual
-```bash
-    .\venv\Scripts\activate
-```
+  * **No Windows:**
+    ```bash
+    python -m venv venv
+    ```
+  * **No Mac/Linux:**
+    ```bash
+    python3 -m venv venv
+    ```
 
 ### 3\. Ativar o Ambiente Virtual
 
