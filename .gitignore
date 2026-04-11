@@ -72,3 +72,26 @@ docker-compose.override.yml
 *.log
 *.sqlite3
 *.db
+
+# ------------------------------
+# Frontend (Flutter / Dart)
+# ------------------------------
+# Arquivos e diretórios gerados pelo Flutter
+**/build/
+**/.dart_tool/
+**.packages
+**/.pub-cache/
+**/.pub/
+**/pubspec.lock
+
+# Arquivos nativos gerados e não necessários no versionamento
+**/android/.gradle/
+**/android/app/src/main/gen/
+**/android/local.properties
+**/ios/.generated/
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/app.flx
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Pods/
