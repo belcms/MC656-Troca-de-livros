@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
+from fastapi.middleware.cors import CORSMiddleware
 from app.domain.books import models as books_models
 from app.domain.users import models as users_models
 from app.domain.announcements import models as announcements_models
@@ -12,6 +13,14 @@ announcements_models.Base.metadata.create_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Permite que qualquer frontend conecte localmente
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/create-dummy-data")
 def create_dummy_data(db: Session = Depends(get_db)):
@@ -98,3 +107,9 @@ def read_root():
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: str | None = None):
     return {"item_id": item_id, "q": q}
+
+@app.get("/users")
+def get_users(db: Session = Depends(get_db)):
+    # Puxa os 5 primeiros usuários do banco para testar
+    users = db.query(users_models.User).limit(5).all()
+    return users
