@@ -1,7 +1,6 @@
 import 'dart:ffi';
 import 'package:flutter/material.dart';
 
-//ver como receber as infos do post para exibir no card
 
 class AnnouncementCard extends StatelessWidget {
   final String title;
