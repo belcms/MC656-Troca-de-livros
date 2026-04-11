@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    
+    restart: always
+    
+    environment:
+      POSTGRES_USER: admin_books
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: books_db
+    
+    
+    ports:
+      - "5432:5432"
+    
+    # Volumes
+    volumes:
+      - postgres_dados:/var/lib/postgresql/data
+
+volumes:
+  postgres_dados:
