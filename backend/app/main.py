@@ -6,6 +6,7 @@ from app.domain.users import models as users_models
 from app.domain.announcements import models as announcements_models
 from app.domain.announcements.router import router as announcements_router
 from app.core.database import engine, Base, get_db
+from app.domain.users.router import router as users_router
 
 books_models.Base.metadata.create_all(bind=engine)
 users_models.Base.metadata.create_all(bind=engine)
@@ -24,6 +25,7 @@ app.add_middleware(
 )
 
 app.include_router(announcements_router)
+app.include_router(users_router)
 
 @app.post("/create-dummy-data")
 def create_dummy_data(db: Session = Depends(get_db)):
@@ -114,8 +116,8 @@ def read_root():
 def read_item(item_id: int, q: str | None = None):
     return {"item_id": item_id, "q": q}
 
-@app.get("/users")
-def get_users(db: Session = Depends(get_db)):
-    # Puxa os 5 primeiros usuários do banco para testar
-    users = db.query(users_models.User).limit(5).all()
-    return users
+# @app.get("/users")
+# def get_users(db: Session = Depends(get_db)):
+#     # Puxa os 5 primeiros usuários do banco para testar
+#     users = db.query(users_models.User).limit(5).all()
+#     return users
