@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 from app.domain.books import models as books_models
 from app.domain.users import models as users_models
+from app.domain.announcements import models as announcements_models
 from app.core.database import engine, Base
 
 books_models.Base.metadata.create_all(bind=engine)
 users_models.Base.metadata.create_all(bind=engine)
+announcements_models.Base.metadata.create_all(bind=engine)
 
 Base.metadata.create_all(bind=engine)
 
