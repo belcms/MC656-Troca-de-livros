@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
 from app.core.database import Base
 import uuid
 
@@ -10,3 +11,5 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     full_name = Column(String, index=True)
     cep = Column(String, index=True)
+
+    announcements = relationship("TradeAnnouncement", back_populates="user")

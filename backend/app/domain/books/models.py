@@ -43,4 +43,5 @@ class Edition(Base):
     language = Column(SQLAlchemyEnum(Language))
     
     book = relationship("Book", back_populates="editions")
+    announcements = relationship("TradeAnnouncement", back_populates="edition")
 

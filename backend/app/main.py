@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
 from app.domain.books import models as books_models
 from app.domain.users import models as users_models
 from app.domain.announcements import models as announcements_models
-from app.core.database import engine, Base
+from app.core.database import engine, Base, get_db
 
 books_models.Base.metadata.create_all(bind=engine)
 users_models.Base.metadata.create_all(bind=engine)
@@ -11,6 +12,82 @@ announcements_models.Base.metadata.create_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+@app.post("/create-dummy-data")
+def create_dummy_data(db: Session = Depends(get_db)):
+    user1 = users_models.User(
+        username="rafael",
+        email="rafael@example.com",
+        full_name="Rafael Feltrin",
+        cep="12345678"
+    )
+    user2 = users_models.User(
+        username="Neymar",
+        email="neymar@example.com",
+        full_name="Neymar Jr.",
+        cep="87654321"
+    )
+    db.add_all([user1, user2])
+    db.commit()
+    db.refresh(user1)
+    db.refresh(user2)
+    
+    book1 = books_models.Book(
+        title="1984",
+        author="George Orwell",
+        genre=books_models.Genre.Sci_fic,
+        synopsis="Dystopian social science fiction novel and cautionary tale."
+    )
+    book2 = books_models.Book(
+        title="Dune",
+        author="Frank Herbert",
+        genre=books_models.Genre.Sci_fic,
+        synopsis="A mythic and emotionally charged hero's journey."
+    )
+    db.add_all([book1, book2])
+    db.commit()
+    db.refresh(book1)
+    db.refresh(book2)
+
+    edition1 = books_models.Edition(
+        book_id=book1.id,
+        publisher="Secker & Warburg",
+        publish_year=1949,
+        number_of_pages=328,
+        language=books_models.Language.En
+    )
+    edition2 = books_models.Edition(
+        book_id=book2.id,
+        publisher="Chilton Books",
+        publish_year=1965,
+        number_of_pages=412,
+        language=books_models.Language.En
+    )
+    db.add_all([edition1, edition2])
+    db.commit()
+    db.refresh(edition1)
+    db.refresh(edition2)
+
+    announcement1 = announcements_models.TradeAnnouncement(
+        user_id=user1.id,
+        edition_id=edition1.id,
+        real_photo_url="https://example.com/photo1.jpg",
+        condition=announcements_models.Condition.Good,
+        description="Muito muito bom, cuido muito bem",
+        status=announcements_models.Status.Available
+    )
+    announcement2 = announcements_models.TradeAnnouncement(
+        user_id=user2.id,
+        edition_id=edition2.id,
+        real_photo_url="https://example.com/photo2.jpg",
+        condition=announcements_models.Condition.New,
+        description="Nunca nem abri essa bomba",
+        status=announcements_models.Status.Available
+    )
+    db.add_all([announcement1, announcement2])
+    db.commit()
+
+    return {"message": "Dummy data created successfully!"}
 
 
 @app.get("/")
