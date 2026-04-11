@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.domain.books import models as books_models
 from app.domain.users import models as users_models
 from app.domain.announcements import models as announcements_models
+from app.domain.announcements.router import router as announcements_router
 from app.core.database import engine, Base, get_db
 
 books_models.Base.metadata.create_all(bind=engine)
@@ -21,6 +22,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(announcements_router)
 
 @app.post("/create-dummy-data")
 def create_dummy_data(db: Session = Depends(get_db)):
@@ -95,8 +98,11 @@ def create_dummy_data(db: Session = Depends(get_db)):
     )
     db.add_all([announcement1, announcement2])
     db.commit()
+    db.refresh(announcement1)  
+    db.refresh(announcement2)
 
-    return {"message": "Dummy data created successfully!"}
+    return {"message": "Dummy data created successfully!",
+            "announcement_ids": [announcement1.id, announcement2.id]}
 
 
 @app.get("/")
