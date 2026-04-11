@@ -27,7 +27,7 @@ Siga os passos abaixo exatamente nesta ordem para garantir que o ambiente funcio
 
 ### 1. Subir o Banco de Dados (Docker)
 Nós não instalamos o PostgreSQL na máquina, vamos utilizar o Docker para criar um contêiner isolado.
-Abra o terminal na raiz do projeto e rode:
+Abra o terminal, navegue até a pasta backend e rode:
 ```bash
 docker-compose up -d
 ```
