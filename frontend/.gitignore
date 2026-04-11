@@ -53,3 +53,7 @@ app.*.map.json
 **/GeneratedPluginRegistrant.m
 **/GeneratedPluginRegistrant.h
 **/generated_main.cpp
+
+linux/
+windows/
+macos/
