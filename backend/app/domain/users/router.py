@@ -1,21 +1,19 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-# Importação relativa: puxa os modelos da mesma pasta 'users'
-from . import models 
 
-# Criando o "mini app" para as rotas de usuários
+# Importamos o nosso "cozinheiro"
+from . import services 
+
 router = APIRouter(
     prefix="/users",
-    tags=["Users"], # Isso deixa a documentação do Swagger linda e separada!
+    tags=["Users"],
 )
 
 @router.get("/")
 def get_users(db: Session = Depends(get_db)):
-    # Puxa os 5 primeiros usuários do banco para testar
-    users = db.query(models.User).limit(5).all()
+    # 1. O Router anota o pedido e passa a "panela" (db) para o Service
+    users = services.get_users(db=db, limit=5)
+    
+    # 2. O Router pega a resposta do Service e devolve para o garçom (Flutter)
     return users
-
-# Você pode ir adicionando outras rotas de usuários aqui no futuro:
-# @router.post("/") ...
-# @router.get("/{user_id}") ...
