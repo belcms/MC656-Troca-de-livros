@@ -36,7 +36,7 @@ class TelaPrincipal extends StatelessWidget {
         body: const TabBarView(
           children: [
             FeedView(), // <--- Chamando sua classe aqui!
-            SegundaTelaTestes(), // <--- Chamando outra classe de teste
+            AnnouncementDetailScreen(announcementId: '4db58101-279f-42b6-bfca-d9b269d93329'), // <--- Chamando outra classe de teste
           ],
         ),
 
