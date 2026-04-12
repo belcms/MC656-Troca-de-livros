@@ -4,7 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.domain.books import models as books_models
 from app.domain.users import models as users_models
 from app.domain.announcements import models as announcements_models
-from app.domain.announcements.router import router as announcements_router
+# from app.domain.announcements.router import router as announcements_router
+from app.api.v1.announcements.router import router as announcements_router
 from app.core.database import engine, Base, get_db
 from app.api.v1.users.router import router as users_router
 
@@ -85,7 +86,7 @@ def create_dummy_data(db: Session = Depends(get_db)):
     announcement1 = announcements_models.TradeAnnouncement(
         user_id=user1.id,
         edition_id=edition1.id,
-        real_photo_url="https://example.com/photo1.jpg",
+        real_photo_url="https://m.media-amazon.com/images/I/819js3EQwbL._SL1500_.jpg",
         condition=announcements_models.Condition.Good,
         description="Muito muito bom, cuido muito bem",
         status=announcements_models.Status.Available
@@ -93,7 +94,7 @@ def create_dummy_data(db: Session = Depends(get_db)):
     announcement2 = announcements_models.TradeAnnouncement(
         user_id=user2.id,
         edition_id=edition2.id,
-        real_photo_url="https://example.com/photo2.jpg",
+        real_photo_url="https://m.media-amazon.com/images/I/81zN7udGRUL._SL1500_.jpg",
         condition=announcements_models.Condition.New,
         description="Nunca nem abri essa bomba",
         status=announcements_models.Status.Available
