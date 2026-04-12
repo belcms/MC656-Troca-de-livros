@@ -33,7 +33,7 @@ class MyBooksCardResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class FeedAnnouncementResponse(BaseModel):
-    """"
+    """
     Schema representation for the Feed Announcement UI card.
     This view model is personalized to provide only the data needed to render the list of announcements on the feed screen
     """
@@ -41,6 +41,6 @@ class FeedAnnouncementResponse(BaseModel):
     title: str
     publish_year: int = Field(alias='publishYear')
     cep: str
-    real_photo_url: Optional[str]
+    real_photo_url: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
