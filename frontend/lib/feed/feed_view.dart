@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/book_details/announcement_detail_screen.dart';
 import 'announcement_card.dart';
 import '../services/announcement_service.dart';
 
@@ -69,11 +70,24 @@ class _FeedViewState extends State<FeedView> {
                           ),
                       itemBuilder: (context, index) {
                         final ann = announcements[index];
-                        return AnnouncementCard(
-                          title: ann['title'],
-                          publishYear: ann['publishYear'],
-                          photo: ann['real_photo_url'] ?? '',
-                          cep: ann['cep'],
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AnnouncementDetailScreen(
+                                  announcementId: ann['id'].toString(),
+                                ),
+                              ),
+                            );
+                          },
+
+                          child: AnnouncementCard(
+                            title: ann['title'],
+                            publishYear: ann['publishYear'],
+                            photo: ann['real_photo_url'] ?? '',
+                            cep: ann['cep'],
+                          ),
                         );
                       },
                     ),
