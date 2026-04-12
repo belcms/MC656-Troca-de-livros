@@ -14,14 +14,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF416956),
+          brightness: Brightness.light,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFFFF6EA),
+        useMaterial3: true,
+      ),
       debugShowCheckedModeBanner: false,
       home: TelaPrincipal(),
     );
   }
 }
 
-// 1. A ESTRUTURA PRINCIPAL
 class TelaPrincipal extends StatelessWidget {
   const TelaPrincipal({super.key});
 
@@ -30,15 +37,13 @@ class TelaPrincipal extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(),
-
-        // AQUI ESTÁ A MÁGICA: O corpo da tela chama as classes
-        body: const TabBarView(
-          children: [
-            FeedView(), // <--- Chamando sua classe aqui!
-            AnnouncementDetailScreen(announcementId: '4db58101-279f-42b6-bfca-d9b269d93329'), // <--- Chamando outra classe de teste
-          ],
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
         ),
+
+        body: const TabBarView(children: [FeedView(), SegundaTelaTestes()]),
 
         // BARRA NO RODAPÉ
         bottomNavigationBar: Container(
@@ -57,7 +62,6 @@ class TelaPrincipal extends StatelessWidget {
     );
   }
 }
-
 
 // 3. OUTRA CLASSE APENAS PARA TESTAR A TAB
 class SegundaTelaTestes extends StatelessWidget {

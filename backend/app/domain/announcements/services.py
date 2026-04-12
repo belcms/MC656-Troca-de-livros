@@ -1,6 +1,8 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 from app.domain.announcements import models
+from app.api.v1.announcements.schemas import FeedAnnouncementResponse
+from app.domain.books.models import Edition, Book
 
 def get_announcement_details(db: Session, id = str):
     announcements = db.query(models.TradeAnnouncement).filter(models.TradeAnnouncement.id == id).first()
@@ -35,3 +37,22 @@ def get_announcement_details(db: Session, id = str):
     }
     
     return text
+
+def get_feed_announcements(db: Session, limit: int = 20, offset: int = 0):
+    announcements = db.query(models.TradeAnnouncement).options(
+        joinedload(models.TradeAnnouncement.edition).joinedload(Edition.book),
+        joinedload(models.TradeAnnouncement.user)
+    ).limit(limit).offset(offset).all()
+
+
+    return [
+        FeedAnnouncementResponse(
+            id=ann.id,
+            title=ann.edition.book.title,
+            real_photo_url=ann.real_photo_url,
+            publishYear=ann.edition.publish_year,
+            cep=ann.user.cep
+        )
+        for ann in announcements
+    ]
+    
