@@ -18,10 +18,16 @@ class TradeAnnouncementResponse(TradeAnnouncementBase):
     model_config = ConfigDict(from_attributes=True)
 
 class MyBooksCardResponse(BaseModel):
-    id: str                      # Needed so the app knows which book to open/edit when clicked
-    title: str                   # Comes from Book
-    publish_year: int            # Comes from Edition
-    real_photo_url: Optional[str]
-    status: Status
+    """
+    Schema representation for the 'My Books' UI card.
+    
+    This view model is personalized to provide only the data needed to render 
+    the list of announcements on the user profile screen
+    """
+    id: str                      # Identifier to open or edit the book
+    title: str                  
+    publish_year: int            
+    real_photo_url: Optional[str] 
+    status: Status              
 
     model_config = ConfigDict(from_attributes=True)

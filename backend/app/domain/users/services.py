@@ -10,6 +10,21 @@ def get_users(db: Session, limit: int = 5):
     return db.query(models.User).limit(limit).all()
 
 def get_user_announcements(db: Session, user_id: str):
+    """
+    Fetch all announcements associated with a specific user.
+    
+    This function performs an INNER JOIN across TradeAnnouncement, 
+    Edition, and Book tables. It extracts specialized data targeted 
+    for the 'My Books' frontend card
+    
+    Args:
+        db (Session): The active SQLAlchemy database session.
+        user_id (str): The unique identifier for the user.
+        
+    Returns:
+        List[dict]: A list of dictionaries representing the assembled 
+                    cards (id, title, publish_year, real_photo_url, status).
+    """
     results = (
         db.query(
             TradeAnnouncement.id,
