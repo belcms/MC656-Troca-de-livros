@@ -1,20 +1,21 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'api_client.dart';
+import '../book_details/announcement_detail_model.dart';
 
 class AnnouncementService {
-  static Future<Map<String, dynamic>?> fetchAnnouncementDetails(
-    String id,
-  ) async {
+  static Future<AnnouncementDetail?> fetchAnnouncementDetails(String id) async {
     try {
-      final url = Uri.parse('${ApiClient.baseUrl}/api/v1/books/details/$id');
+      final url = Uri.parse('${ApiClient.baseUrl}/api/v1/announcements/details/$id');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return AnnouncementDetail.fromJson(data);
       }
+
       return null;
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }

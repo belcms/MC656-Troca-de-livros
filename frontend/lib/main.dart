@@ -64,11 +64,55 @@ class TelaPrincipal extends StatelessWidget {
 }
 
 // 3. OUTRA CLASSE APENAS PARA TESTAR A TAB
-class SegundaTelaTestes extends StatelessWidget {
+class SegundaTelaTestes extends StatefulWidget {
   const SegundaTelaTestes({super.key});
 
   @override
+  State<SegundaTelaTestes> createState() => _SegundaTelaTestesState();
+}
+
+class _SegundaTelaTestesState extends State<SegundaTelaTestes> {
+  final TextEditingController _idController = TextEditingController();
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Center(child: Text("OUTRA TELA DE TESTE"));
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('Teste detalhes do anúncio'),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _idController,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: 'UUID do anúncio',
+            ),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: () {
+              final id = _idController.text.trim();
+              if (id.isEmpty) return;
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AnnouncementDetailScreen(announcementId: id),
+                ),
+              );
+            },
+            child: const Text('Abrir detalhes'),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/announcement_service.dart';
+import 'announcement_detail_model.dart';
 
 class AnnouncementDetailScreen extends StatefulWidget {
   final String announcementId;
@@ -10,7 +11,7 @@ class AnnouncementDetailScreen extends StatefulWidget {
 }
 
 class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
-  late Future<Map<String, dynamic>?> _future;
+  late Future<AnnouncementDetail?> _future;
 
   @override
   void initState() {
@@ -22,31 +23,47 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Detalhes do livro')),
-      body: FutureBuilder<Map<String, dynamic>?>(
+      body: FutureBuilder<AnnouncementDetail?>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+
           if (!snapshot.hasData || snapshot.data == null) {
-            return const Center(child: Text('Erro ao carregar detalhes.'));
+            return const Center(child: Text('Não foi possível carregar os detalhes.'));
           }
 
-          final data = snapshot.data!;
-          final edition = (data['edition'] as Map<String, dynamic>?) ?? {};
-          final book = (edition['book'] as Map<String, dynamic>?) ?? {};
+          final detail = snapshot.data!;
+          final book = detail.book;
+          final edition = detail.edition;
 
-          return Padding(
+          return ListView(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text((book['title'] ?? '-').toString(), style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                Text('Autor: ${book['author'] ?? '-'}'),
-                Text('Sinopse: ${book['synopsis'] ?? '-'}'),
-              ],
-            ),
+            children: [
+              if ((detail.realPhotoUrl ?? '').isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    detail.realPhotoUrl!,
+                    height: 220,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ),
+              const SizedBox(height: 12),
+              Text(book?.title ?? '-', style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 8),
+              Text('Autor: ${book?.author ?? '-'}'),
+              Text('Sinopse: ${book?.synopsis ?? '-'}'),
+              const Divider(height: 24),
+              Text('Descrição: ${detail.description ?? '-'}'),
+              Text('Condição: ${detail.condition ?? '-'}'),
+              Text('Status: ${detail.status ?? '-'}'),
+              const Divider(height: 24),
+              Text('Editora: ${edition?.publisher ?? '-'}'),
+              Text('Ano de publicação: ${edition?.publishYear?.toString() ?? '-'}'),
+            ],
           );
         },
       ),
