@@ -51,6 +51,8 @@ class AnnouncementCard extends StatelessWidget {
               
               Text(
                 title, 
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700, 
                 ),
@@ -64,6 +66,8 @@ class AnnouncementCard extends StatelessWidget {
               ),
               Text(
                 cep, 
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w400, 
                   color: Theme.of(context).colorScheme.onSurfaceVariant,

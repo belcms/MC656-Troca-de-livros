@@ -21,12 +21,21 @@ class FeedView extends StatelessWidget {
 
 
     return Scaffold(
+
       body: SafeArea(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 16.0, bottom: 16.0),
+              child: Text('Home', style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: .bold)),
+              ),
+
+
+
             Expanded(
               child: GridView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                
                 physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                 itemCount: livros.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
