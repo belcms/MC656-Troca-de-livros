@@ -63,7 +63,7 @@ class AnnouncementCard extends StatelessWidget {
                 ),
               ),
               Text(
-                cep, // Assumindo que você declarou essa variável lá em cima
+                cep, 
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w400, 
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
