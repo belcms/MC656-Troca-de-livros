@@ -6,7 +6,7 @@ from app.domain.users import models as users_models
 from app.domain.announcements import models as announcements_models
 from app.domain.announcements.router import router as announcements_router
 from app.core.database import engine, Base, get_db
-from app.domain.users.router import router as users_router
+from app.api.v1.users.router import router as users_router
 
 books_models.Base.metadata.create_all(bind=engine)
 users_models.Base.metadata.create_all(bind=engine)
