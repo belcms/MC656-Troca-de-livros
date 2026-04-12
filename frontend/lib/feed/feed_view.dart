@@ -40,9 +40,9 @@ class FeedView extends StatelessWidget {
                 itemCount: livros.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,         
-                  crossAxisSpacing: 16.0,   
+                  crossAxisSpacing: 1.0,   
                   mainAxisSpacing: 16.0,    
-                  childAspectRatio: 0.55,    
+                  childAspectRatio: 0.50,    
                   
               ), 
               itemBuilder: (context, index) {

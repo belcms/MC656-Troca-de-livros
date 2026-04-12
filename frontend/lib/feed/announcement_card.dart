@@ -30,7 +30,7 @@ class AnnouncementCard extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start, // Mantém os textos à esquerda
+            crossAxisAlignment: CrossAxisAlignment.start, 
             children: <Widget>[
               Center(
                 child: ClipRRect(
@@ -48,7 +48,6 @@ class AnnouncementCard extends StatelessWidget {
               ),
               
               const SizedBox(height: 10),
-              
               Text(
                 title, 
                 maxLines: 2,
