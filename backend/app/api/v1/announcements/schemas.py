@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 from datetime import datetime
 from app.domain.announcements.models import Condition, Status
@@ -29,5 +29,18 @@ class MyBooksCardResponse(BaseModel):
     publish_year: int            
     real_photo_url: Optional[str] 
     status: Status              
+
+    model_config = ConfigDict(from_attributes=True)
+
+class FeedAnnouncementResponse(BaseModel):
+    """"
+    Schema representation for the Feed Announcement UI card.
+    This view model is personalized to provide only the data needed to render the list of announcements on the feed screen
+    """
+    id: str #identifier to open the informations of the book
+    title: str
+    publish_year: int = Field(alias='publishYear')
+    cep: str
+    real_photo_url: Optional[str]
 
     model_config = ConfigDict(from_attributes=True)
