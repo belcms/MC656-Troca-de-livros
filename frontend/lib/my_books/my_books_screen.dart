@@ -1,33 +1,36 @@
 import 'package:flutter/material.dart';
 
+import '../services/my_books_service.dart';
+import '../services/user_service.dart';
 import 'my_book_card.dart';
+import 'my_books_model.dart';
 
-class MyBooksScreen extends StatelessWidget {
+class MyBooksScreen extends StatefulWidget {
   const MyBooksScreen({super.key});
 
-  static final List<Map<String, dynamic>> _dummyBooks = [
-    {
-      'title':
-          'Memórias póstumas de Brás Cubas e esse texto continua para testar o overflow',
-      'publish_year': 2012,
-      'real_photo_url': 'https://m.media-amazon.com/images/I/71OL9RU2tJL.jpg',
-      'status': 'available',
-    },
-    {
-      'title': 'The power of habit',
-      'publish_year': 2014,
-      'real_photo_url':
-          'https://m.media-amazon.com/images/I/71QKQ9mwV7L._UF1000,1000_QL80_.jpg',
-      'status': 'available',
-    },
-    {
-      'title': '1984',
-      'publish_year': 2009,
-      'real_photo_url':
-          'https://m.media-amazon.com/images/I/71kxa1-0mfL._UF1000,1000_QL80_.jpg',
-      'status': 'reserved',
-    },
-  ];
+  @override
+  State<MyBooksScreen> createState() => _MyBooksScreenState();
+}
+
+class _MyBooksScreenState extends State<MyBooksScreen> {
+  late Future<List<MyBooksModel>> _booksFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _booksFuture = _loadInitialBooks();
+  }
+
+  Future<List<MyBooksModel>> _loadInitialBooks() async {
+    // Busca o primeiro usuário do banco como substituto para um ID de sessão autenticado
+    final users = await UserService.fetchUsers();
+    if (users != null && users.isNotEmpty) {
+      final firstUserId = users.first['id'];
+      final books = await MyBooksService.fetchUserBooks(firstUserId);
+      return books ?? [];
+    }
+    return [];
+  }
 
   Widget _buildHeader(BuildContext context) {
     return Row(
@@ -85,30 +88,46 @@ class MyBooksScreen extends StatelessWidget {
 
   Widget _buildGrid(BuildContext context, double cardExtent) {
     return Expanded(
-      child: GridView.builder(
-        padding: EdgeInsets.zero,
-        itemCount: _dummyBooks.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 14,
-          mainAxisExtent: cardExtent,
-        ),
-        itemBuilder: (context, index) {
-          final book = _dummyBooks[index];
-          return Align(
-            alignment: Alignment.topCenter,
-            child: MyBookCard(
-              title: book['title'] as String,
-              publishYear: book['publish_year'] as int,
-              photo: book['real_photo_url'] as String,
-              status: book['status'] as String,
-              onEdit: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Edit tapped: ${book['title']}')),
-                );
-              },
+      child: FutureBuilder<List<MyBooksModel>>(
+        future: _booksFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Erro: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('Nenhum livro encontrado.'));
+          }
+
+          final books = snapshot.data!;
+          return GridView.builder(
+            padding: EdgeInsets.zero,
+            itemCount: books.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 14,
+              mainAxisExtent: cardExtent,
             ),
+            itemBuilder: (context, index) {
+              final book = books[index];
+              return Align(
+                alignment: Alignment.topCenter,
+                child: MyBookCard(
+                  title: book.title,
+                  publishYear: book.publishYear,
+                  photo:
+                      book.realPhotoUrl ??
+                      'https://via.placeholder.com/300x400',
+                  status: book.status,
+                  onEdit: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Edit tapped: ${book.title}')),
+                    );
+                  },
+                ),
+              );
+            },
           );
         },
       ),
