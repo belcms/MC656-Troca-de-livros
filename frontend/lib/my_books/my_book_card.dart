@@ -87,20 +87,12 @@ class MyBookCard extends StatelessWidget {
               title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
         ),
         const SizedBox(height: 2),
-        Text(
-          '$publishYear',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Colors.black54,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        Text('$publishYear', style: Theme.of(context).textTheme.bodyMedium),
       ],
     );
   }
