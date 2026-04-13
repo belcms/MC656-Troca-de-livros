@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import case
 from . import models
-from app.domain.announcements.models import TradeAnnouncement
+from app.domain.announcements.models import TradeAnnouncement, Status
 from app.domain.books.models import Edition, Book
 from app.domain.users.models import User
 
@@ -25,6 +26,13 @@ def get_user_announcements(db: Session, user_id: str):
         List[dict]: A list of dictionaries representing the assembled 
                     cards (id, title, publish_year, real_photo_url, status).
     """
+    status_order = case(
+        (TradeAnnouncement.status == Status.Available, 1),
+        (TradeAnnouncement.status == Status.Reserved, 2),
+        (TradeAnnouncement.status == Status.Traded, 3),
+        else_=4
+    )
+
     results = (
         db.query(
             TradeAnnouncement.id,
@@ -36,6 +44,7 @@ def get_user_announcements(db: Session, user_id: str):
         .join(Edition, TradeAnnouncement.edition_id == Edition.id)
         .join(Book, Edition.book_id == Book.id)
         .filter(TradeAnnouncement.user_id == user_id)
+        .order_by(status_order)
         .all()
     )
     
