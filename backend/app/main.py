@@ -99,7 +99,10 @@ def create_dummy_data(db: Session = Depends(get_db)):
     db.add_all([announcement1, announcement2])
     db.commit()
 
-    return {"message": "Dummy data created successfully!"}
+    return {
+    "message": "Dummy data created successfully!",
+    "announcement_ids": [announcement1.id, announcement2.id]
+}
 
 
 @app.get("/")
@@ -110,6 +113,36 @@ def read_root():
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: str | None = None):
     return {"item_id": item_id, "q": q}
+
+@app.get("/api/v1/books/details/{id}")
+def get_book_details(id: str, db: Session = Depends(get_db)):
+    announcement = (
+        db.query(announcements_models.TradeAnnouncement)
+        .filter(announcements_models.TradeAnnouncement.id == id)
+        .first()
+    )
+
+    if not announcement:
+        return {"detail": "Announcement not found"}
+
+    edition = announcement.edition
+    book = edition.book
+
+    return {
+        "id": announcement.id,
+        "title": book.title,
+        "author": book.author,
+        "publisher": edition.publisher,
+        "genre": book.genre.value if hasattr(book.genre, "value") else str(book.genre),
+        "language": edition.language.value if hasattr(edition.language, "value") else str(edition.language),
+        "publishYear": edition.publish_year,
+        "pages": edition.number_of_pages,
+        "synopsis": book.synopsis,
+        "description": announcement.description,
+        "status": announcement.status.value if hasattr(announcement.status, "value") else str(announcement.status),
+        "condition": announcement.condition.value if hasattr(announcement.condition, "value") else str(announcement.condition),
+        "real_photo_url": announcement.real_photo_url,
+    }
 
 # @app.get("/users")
 # def get_users(db: Session = Depends(get_db)):

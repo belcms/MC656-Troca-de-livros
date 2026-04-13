@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../book_edition_viewmodel.dart';
+import 'book_edition_viewmodel.dart';
 
 class BookEditionPage extends StatefulWidget {
   final String id;
