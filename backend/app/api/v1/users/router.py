@@ -8,7 +8,7 @@ from app.api.v1.announcements.schemas import MyBooksCardResponse
 from app.domain.users import services 
 
 router = APIRouter(
-    prefix="/users",
+    prefix="/api/v1/users",
     tags=["Users"],
 )
 
