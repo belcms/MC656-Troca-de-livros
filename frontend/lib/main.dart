@@ -30,7 +30,7 @@ class TelaPrincipal extends StatelessWidget {
         body: TabBarView(
           children: [
             const Center(child: Text("Teste")),
-            BookEditionPage(id: '1'),
+            BookEditionPage(id: 'a6725ae9-41ac-431a-b3a1-5f26d3d2fbaf'),
           ],
         ),
         bottomNavigationBar: const TabBar(

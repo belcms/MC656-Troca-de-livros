@@ -30,16 +30,31 @@ class Book {
   });
 
   factory Book.fromJson(Map<String, dynamic> json) {
+    final book = json['book'] is Map<String, dynamic>
+        ? json['book'] as Map<String, dynamic>
+        : <String, dynamic>{};
+
+    final edition = json['edition'] is Map<String, dynamic>
+        ? json['edition'] as Map<String, dynamic>
+        : <String, dynamic>{};
+
     return Book(
       id: (json['id'] ?? '').toString(),
-      title: (json['title'] ?? '').toString(),
-      author: (json['author'] ?? '').toString(),
-      publisher: (json['publisher'] ?? '').toString(),
+      title: (json['title'] ?? book['title'] ?? '').toString(),
+      author: (json['author'] ?? book['author'] ?? '').toString(),
+      publisher: (json['publisher'] ?? edition['publisher'] ?? '').toString(),
       genre: (json['genre'] ?? 'Romance').toString(),
       language: (json['language'] ?? 'Português').toString(),
-      year: (json['publishYear'] ?? json['year'] ?? '').toString(),
-      pages: (json['pages'] ?? '').toString(),
-      synopsis: (json['synopsis'] ?? '').toString(),
+      year: (json['publishYear'] ??
+              json['year'] ??
+              edition['publish_year'] ??
+              '')
+          .toString(),
+      pages: (json['pages'] ??
+              edition['number_of_pages'] ??
+              '')
+          .toString(),
+      synopsis: (json['synopsis'] ?? book['synopsis'] ?? '').toString(),
       description: (json['description'] ?? '').toString(),
       status: (json['status'] ?? 'Disponível').toString(),
       condition: (json['condition'] ?? 'Bom').toString(),
