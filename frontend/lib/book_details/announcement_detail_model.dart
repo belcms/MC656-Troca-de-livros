@@ -6,6 +6,8 @@ class AnnouncementDetail {
   final String? status;
   final EditionDetail? edition;
   final BookInfo? book;
+  final String? userName;
+  final String? userCep;
 
   AnnouncementDetail({
     required this.id,
@@ -15,6 +17,8 @@ class AnnouncementDetail {
     this.status,
     this.edition,
     this.book,
+    this.userName,
+    this.userCep,
   });
 
   factory AnnouncementDetail.fromJson(Map<String, dynamic> json) {
@@ -32,6 +36,8 @@ class AnnouncementDetail {
       book: (nestedBook ?? rootBook) != null
           ? BookInfo.fromJson((nestedBook ?? rootBook)!)
           : null,
+      userName: json['user_name'] as String?,
+      userCep: json['user_cep'] as String?,
     );
   }
 }
