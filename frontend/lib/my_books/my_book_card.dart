@@ -29,7 +29,7 @@ class MyBookCard extends StatelessWidget {
         return const Color(0xFF24523C);
       case 'reserved':
       case 'reservado':
-        return const Color(0xFF723A00);
+        return const Color(0xFFDB8F44);
       case 'traded':
       case 'trocado':
         return const Color(0xFF7B2518);
@@ -92,7 +92,9 @@ class MyBookCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 2),
-        Text('$publishYear', style: Theme.of(context).textTheme.bodyMedium),
+        Text('$publishYear', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
+        const SizedBox(height: 2),
+        Text('Santos - SP', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)), // Hardcoded provisoriamente, de acordo com o design fornecido
       ],
     );
   }
@@ -105,7 +107,7 @@ class MyBookCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           decoration: BoxDecoration(
             color: _statusColor(context),
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(16), // Borda de acordo com a imagem (pilled)
           ),
           child: Text(
             _statusLabel(),
@@ -123,7 +125,7 @@ class MyBookCard extends StatelessWidget {
           splashRadius: 18,
           visualDensity: VisualDensity.compact,
           onPressed: onEdit,
-          icon: const Icon(Icons.edit_outlined),
+          icon: const Icon(Icons.edit_outlined, size: 20),
           tooltip: 'Edit',
         ),
       ],
@@ -133,11 +135,13 @@ class MyBookCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 180,
+      width: 170, // Ajustado sutilmente para acomodar novos textos
       child: Card(
         elevation: 3,
         color: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        // Margin em Card pode implicar o preenchimento ao inves da view inteira
+        margin: const EdgeInsets.symmetric(vertical: 4),
         child: Padding(
           padding: const EdgeInsets.all(10),
           child: Column(
@@ -147,7 +151,7 @@ class MyBookCard extends StatelessWidget {
               _buildCoverImage(),
               const SizedBox(height: 10),
               _buildTitleAndYear(context),
-              const SizedBox(height: 10),
+              Expanded(child: const SizedBox()), // Ocupa espaço para descer o rodapé na view
               _buildFooter(context),
             ],
           ),

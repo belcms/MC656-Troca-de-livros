@@ -164,7 +164,8 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.sizeOf(context).width;
-    final cardMainAxisExtent = screenWidth < 380 ? 350.0 : 362.0;
+    // Increased the mainAxisExtent to prevent "bottom overflowed by 2.0 pixels" after adding more texts
+    final cardMainAxisExtent = screenWidth < 380 ? 375.0 : 385.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2ECE2),
