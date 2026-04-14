@@ -18,7 +18,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # Permite que qualquer frontend conecte localmente
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -138,7 +138,7 @@ def create_dummy_data(db: Session = Depends(get_db)):
     announcement1 = announcements_models.TradeAnnouncement(
         user_id=user1.id,
         edition_id=edition1.id,
-        real_photo_url="https://example.com/photo1.jpg",
+        real_photo_url="https://m.media-amazon.com/images/I/91g5gcjTxsL._SY522_.jpg",
         condition=announcements_models.Condition.Good,
         description="Muito muito bom, cuido muito bem",
         status=announcements_models.Status.Available

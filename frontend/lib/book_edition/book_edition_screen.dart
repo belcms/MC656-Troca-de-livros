@@ -137,8 +137,11 @@ class _BookEditionPageState extends State<BookEditionPage> {
                       ? Image.network(
                           vm.coverUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) {
-                            return const Icon(Icons.book, size: 42);
+                          errorBuilder: (context, error, stackTrace) {
+                            print("ERRO IMAGEM: $error");
+                            return const Center(
+                              child: Text("Erro ao carregar"),
+                            );
                           },
                         )
                       : const Icon(Icons.book, size: 42),
