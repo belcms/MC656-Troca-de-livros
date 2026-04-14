@@ -2,7 +2,49 @@ import 'package:flutter/material.dart';
 import 'book_model.dart';
 import '../services/announcement_service.dart';
 
+abstract class AnnouncementServiceInterface {
+
+  Future<Map<String, dynamic>?> fetchAnnouncementDetails(String id);
+
+  Future<bool> updateAnnouncement({
+    required String id,
+    required Map<String, dynamic> body,
+  });
+
+}
+
+class AnnouncementServiceAdapter implements AnnouncementServiceInterface {
+
+  @override
+  Future<Map<String, dynamic>?> fetchAnnouncementDetails(String id) {
+
+    return AnnouncementService.fetchAnnouncementDetails(id);
+
+  }
+
+  @override
+  Future<bool> updateAnnouncement({
+    required String id,
+    required Map<String, dynamic> body,
+  }) {
+
+    return AnnouncementService.updateAnnouncement(
+      id: id,
+      body: body,
+    );
+
+  }
+
+}
+
 class BookEditionViewModel {
+
+  final AnnouncementServiceInterface service;
+
+  BookEditionViewModel({
+    AnnouncementServiceInterface? service,
+  }) : service = service ?? AnnouncementServiceAdapter();
+
   final titleController = TextEditingController();
   final authorController = TextEditingController();
   final publisherController = TextEditingController();
@@ -18,10 +60,13 @@ class BookEditionViewModel {
   String? coverUrl;
 
   Future<bool> loadFromServer(String id) async {
-    final data = await AnnouncementService.fetchAnnouncementDetails(id);
+
+    final data = await service.fetchAnnouncementDetails(id);
 
     if (data == null) {
+
       return false;
+
     }
 
     final book = Book.fromJson(data);
@@ -39,18 +84,25 @@ class BookEditionViewModel {
     status = book.status.isEmpty ? "Disponível" : book.status;
     condition = book.condition.isEmpty ? "Novo" : book.condition;
     coverUrl = book.coverUrl;
+
     return true;
+
   }
 
   void setStatus(String value) {
+
     status = value;
+
   }
 
   void setCondition(String value) {
+
     condition = value;
+
   }
 
   Book buildBook(String id) {
+
     return Book(
       id: id,
       title: titleController.text.trim(),
@@ -66,20 +118,24 @@ class BookEditionViewModel {
       condition: condition,
       coverUrl: coverUrl,
     );
+
   }
 
   Future<bool> submit(String id) async {
+
     final book = buildBook(id);
 
-    final ok = await AnnouncementService.updateAnnouncement(
+    final ok = await service.updateAnnouncement(
       id: id,
       body: book.toJson(),
     );
 
     return ok;
+
   }
 
   void dispose() {
+
     titleController.dispose();
     authorController.dispose();
     publisherController.dispose();
@@ -87,5 +143,7 @@ class BookEditionViewModel {
     pagesController.dispose();
     synopsisController.dispose();
     descriptionController.dispose();
+
   }
+
 }
