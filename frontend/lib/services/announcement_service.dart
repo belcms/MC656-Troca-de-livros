@@ -13,8 +13,12 @@ class AnnouncementService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       }
+
+      print('DETAILS STATUS: ${response.statusCode}');
+      print('DETAILS BODY: ${response.body}');
       return null;
     } catch (e) {
+      print('DETAILS ERROR: $e');
       return null;
     }
   }
@@ -37,8 +41,12 @@ class AnnouncementService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as List<dynamic>;
       }
+
+      print('FEED STATUS: ${response.statusCode}');
+      print('FEED BODY: ${response.body}');
       return null;
     } catch (e) {
+      print('FEED ERROR: $e');
       return null;
     }
   }
@@ -58,8 +66,12 @@ class AnnouncementService {
         body: jsonEncode(body),
       );
 
+      print('UPDATE STATUS: ${response.statusCode}');
+      print('UPDATE BODY: ${response.body}');
+
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
+      print('UPDATE ERROR: $e');
       return false;
     }
   }
