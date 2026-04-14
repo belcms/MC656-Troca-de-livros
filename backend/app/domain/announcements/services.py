@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from app.domain.announcements import models
 from app.api.v1.announcements.schemas import FeedAnnouncementResponse
 from app.domain.books.models import Edition, Book
+from app.domain.users.models import User
 
 def get_announcement_details(db: Session, id = str):
     announcements = db.query(models.TradeAnnouncement).filter(models.TradeAnnouncement.id == id).first()
@@ -12,10 +13,14 @@ def get_announcement_details(db: Session, id = str):
     
     edition = announcements.edition
     book = edition.book
+    user = announcements.user
+    
 
     text = {
         "id": announcements.id,
         "user_id": announcements.user_id,
+        "user_name": user.username,
+        "user_cep": user.cep,
         "edition_id": announcements.edition_id,
         "real_photo_url": announcements.real_photo_url,
         "condition": announcements.condition.value,
