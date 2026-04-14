@@ -39,7 +39,6 @@ class BookEditionViewModel {
     status = book.status.isEmpty ? "Disponível" : book.status;
     condition = book.condition.isEmpty ? "Novo" : book.condition;
     coverUrl = book.coverUrl;
-
     return true;
   }
 
