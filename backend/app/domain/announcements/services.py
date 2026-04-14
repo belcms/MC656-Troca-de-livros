@@ -5,15 +5,26 @@ from app.api.v1.announcements.schemas import FeedAnnouncementResponse
 from app.domain.books.models import Edition, Book
 from app.domain.users.models import User
 
-def get_announcement_details(db: Session, id = str):
+def get_announcement_details(db: Session, id: str):
     announcements = db.query(models.TradeAnnouncement).filter(models.TradeAnnouncement.id == id).first()
     
     if not announcements:
         raise HTTPException(status_code=404, detail="Announcement not found")
     
     edition = announcements.edition
+
+    if not edition:
+        raise HTTPException(status_code=404, detail="Edition information is missing for this announcement")
+    
     book = edition.book
+
+    if not book:
+        raise HTTPException(status_code=404, detail="Book information is missing for this edition")
+    
     user = announcements.user
+
+    if not user:
+         raise HTTPException(status_code=404, detail="User information is missing")
     
 
     text = {

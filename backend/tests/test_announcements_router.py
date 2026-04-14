@@ -1,0 +1,94 @@
+# tests/test_announcements_router.py
+import pytest
+from fastapi import HTTPException
+
+import app.api.v1.announcements.router as announcements_router_module
+
+
+def test_details_route_success(client, monkeypatch):
+    def fake_service(db, id):
+        return {
+            "id": id,
+            "user_id": "u-1",
+            "user_name": "Neymar",
+            "user_cep": "87654321",
+            "edition_id": "e-1",
+            "real_photo_url": None,
+            "condition": "New",
+            "description": "desc",
+            "create_date": "2026-04-14T12:00:00",
+            "status": "Available",
+            "edition": {
+                "id": "e-1",
+                "book_id": "b-1",
+                "publisher": "Chilton Books",
+                "publish_year": 1965,
+            },
+            "book": {
+                "id": "b-1",
+                "title": "Dune",
+                "author": "Frank Herbert",
+                "synopsis": "syn",
+            },
+        }
+
+    monkeypatch.setattr(announcements_router_module, "get_announcement_details", fake_service)
+
+    response = client.get("/api/v1/announcements/details/ann-1")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == "ann-1"
+    assert body["book"]["title"] == "Dune"
+
+
+def test_details_route_404(client, monkeypatch):
+    def fake_service(db, id):
+        raise HTTPException(status_code=404, detail="Announcement not found")
+
+    monkeypatch.setattr(announcements_router_module, "get_announcement_details", fake_service)
+
+    response = client.get("/api/v1/announcements/details/not-found")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Announcement not found"
+
+
+def test_details_route_500_on_unhandled_exception(client_no_raise, monkeypatch):
+    def fake_service(db, id):
+        raise RuntimeError("db down")
+
+    monkeypatch.setattr(announcements_router_module, "get_announcement_details", fake_service)
+
+    response = client_no_raise.get("/api/v1/announcements/details/ann-1")
+    assert response.status_code == 500
+
+
+def test_feed_route_success_and_contract(client, monkeypatch):
+    def fake_feed_service(db, limit, offset):
+        return [
+            {
+                "id": "ann-1",
+                "title": "Dune",
+                "publishYear": 1965,
+                "cep": "87654321",
+                "real_photo_url": "http://img",
+            }
+        ]
+
+    monkeypatch.setattr(announcements_router_module, "get_feed_announcements", fake_feed_service)
+
+    response = client.get("/api/v1/announcements/feed?limit=20&offset=0")
+    assert response.status_code == 200
+    body = response.json()
+    assert isinstance(body, list)
+    assert body[0]["id"] == "ann-1"
+    assert body[0]["publishYear"] == 1965
+
+
+def test_feed_route_query_validation_limit_too_high(client):
+    response = client.get("/api/v1/announcements/feed?limit=999&offset=0")
+    assert response.status_code == 422
+
+
+def test_feed_route_query_validation_offset_negative(client):
+    response = client.get("/api/v1/announcements/feed?limit=20&offset=-1")
+    assert response.status_code == 422

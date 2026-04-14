@@ -107,8 +107,11 @@ def test_get_announcement_details_missing_edition_breaks_currently(mocker):
     )
     _mock_query_chain_first(db, ann)
 
-    with pytest.raises(AttributeError):
+    with pytest.raises(HTTPException) as exc:
         get_announcement_details(db, "ann-1")
+
+    assert exc.value.status_code == 404
+    assert exc.value.detail == "Edition information is missing for this announcement"
 
 
 def test_get_feed_announcements_success(mocker):
