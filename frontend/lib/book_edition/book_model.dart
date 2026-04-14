@@ -29,6 +29,150 @@ class Book {
     this.coverUrl,
   });
 
+  static String _mapGenreFromBack(dynamic value) {
+    final raw = (value ?? '').toString();
+
+    switch (raw) {
+      case 'Fantasy':
+        return 'Fantasia';
+      case 'Romance':
+        return 'Romance';
+      case 'Sci_fic':
+        return 'Ficção científica';
+      case 'Non_fiction':
+        return 'Não ficção';
+      case 'Biography':
+        return 'Biografia';
+      case 'Graphic_novel':
+        return 'Graphic novel';
+      case 'Horror':
+        return 'Terror';
+      case 'Self_help':
+        return 'Autoajuda';
+      case 'Thriller':
+        return 'Suspense';
+      case 'Education':
+        return 'Educação';
+      default:
+        return 'Romance';
+    }
+  }
+
+  static String _mapLanguageFromBack(dynamic value) {
+    final raw = (value ?? '').toString();
+
+    switch (raw) {
+      case 'PT-br':
+        return 'Português';
+      case 'En':
+        return 'Inglês';
+      case 'Espanhol':
+        return 'Espanhol';
+      default:
+        return 'Português';
+    }
+  }
+
+  static String _mapStatusFromBack(dynamic value) {
+    final raw = (value ?? '').toString();
+
+    switch (raw) {
+      case 'Available':
+        return 'Disponível';
+      case 'Reserved':
+        return 'Negociando';
+      case 'Traded':
+        return 'Trocado';
+      default:
+        return 'Disponível';
+    }
+  }
+
+  static String _mapConditionFromBack(dynamic value) {
+    final raw = (value ?? '').toString();
+
+    switch (raw) {
+      case 'New':
+        return 'Novo';
+      case 'Good':
+        return 'Bom';
+      case 'Used':
+        return 'Muito bom';
+      case 'Worn':
+        return 'Desgastado';
+      default:
+        return 'Novo';
+    }
+  }
+
+  static String _mapGenreToBack(String value) {
+    switch (value) {
+      case 'Fantasia':
+        return 'Fantasy';
+      case 'Romance':
+        return 'Romance';
+      case 'Ficção científica':
+        return 'Sci_fic';
+      case 'Não ficção':
+        return 'Non_fiction';
+      case 'Biografia':
+        return 'Biography';
+      case 'Graphic novel':
+        return 'Graphic_novel';
+      case 'Terror':
+        return 'Horror';
+      case 'Autoajuda':
+        return 'Self_help';
+      case 'Suspense':
+        return 'Thriller';
+      case 'Educação':
+        return 'Education';
+      default:
+        return 'Romance';
+    }
+  }
+
+  static String _mapLanguageToBack(String value) {
+    switch (value) {
+      case 'Português':
+        return 'PT-br';
+      case 'Inglês':
+        return 'En';
+      case 'Espanhol':
+        return 'Espanhol';
+      default:
+        return 'PT-br';
+    }
+  }
+
+  static String _mapStatusToBack(String value) {
+    switch (value) {
+      case 'Disponível':
+        return 'Available';
+      case 'Negociando':
+        return 'Reserved';
+      case 'Trocado':
+        return 'Traded';
+      default:
+        return 'Available';
+    }
+  }
+
+  static String _mapConditionToBack(String value) {
+    switch (value) {
+      case 'Novo':
+        return 'New';
+      case 'Bom':
+        return 'Good';
+      case 'Muito bom':
+        return 'Used';
+      case 'Desgastado':
+        return 'Worn';
+      default:
+        return 'New';
+    }
+  }
+
   factory Book.fromJson(Map<String, dynamic> json) {
     final book = json['book'] is Map<String, dynamic>
         ? json['book'] as Map<String, dynamic>
@@ -43,21 +187,15 @@ class Book {
       title: (json['title'] ?? book['title'] ?? '').toString(),
       author: (json['author'] ?? book['author'] ?? '').toString(),
       publisher: (json['publisher'] ?? edition['publisher'] ?? '').toString(),
-      genre: (json['genre'] ?? 'Romance').toString(),
-      language: (json['language'] ?? 'Português').toString(),
-      year: (json['publishYear'] ??
-              json['year'] ??
-              edition['publish_year'] ??
-              '')
+      genre: _mapGenreFromBack(json['genre'] ?? book['genre']),
+      language: _mapLanguageFromBack(json['language'] ?? edition['language']),
+      year: (json['publishYear'] ?? json['year'] ?? edition['publish_year'] ?? '')
           .toString(),
-      pages: (json['pages'] ??
-              edition['number_of_pages'] ??
-              '')
-          .toString(),
+      pages: (json['pages'] ?? edition['number_of_pages'] ?? '').toString(),
       synopsis: (json['synopsis'] ?? book['synopsis'] ?? '').toString(),
       description: (json['description'] ?? '').toString(),
-      status: (json['status'] ?? 'Disponível').toString(),
-      condition: (json['condition'] ?? 'Bom').toString(),
+      status: _mapStatusFromBack(json['status']),
+      condition: _mapConditionFromBack(json['condition']),
       coverUrl: json['real_photo_url']?.toString(),
     );
   }
@@ -68,14 +206,14 @@ class Book {
       'title': title,
       'author': author,
       'publisher': publisher,
-      'genre': genre,
-      'language': language,
+      'genre': _mapGenreToBack(genre),
+      'language': _mapLanguageToBack(language),
       'publishYear': year,
       'pages': pages,
       'synopsis': synopsis,
       'description': description,
-      'status': status,
-      'condition': condition,
+      'status': _mapStatusToBack(status),
+      'condition': _mapConditionToBack(condition),
       'real_photo_url': coverUrl,
     };
   }
