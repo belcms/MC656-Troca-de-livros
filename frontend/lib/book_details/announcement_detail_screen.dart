@@ -34,8 +34,33 @@ class _AnnouncementDetailScreenState
         child: FutureBuilder<AnnouncementDetail?>(
           future: _future,
           builder: (context, snapshot) {
-            if (!snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              // TRATAMENTO DE EXCEÇÃO AQUI
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.red, size: 50),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Ops! Ocorreu um erro:\n${snapshot.error}',
+                      textAlign: TextAlign.center,
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _future = AnnouncementService.fetchAnnouncementDetails(widget.announcementId);
+                        });
+                      },
+                      child: const Text('Tentar Novamente'),
+                    )
+                  ],
+                ),
+              );
+            } else if (!snapshot.hasData) {
+              return const Center(child: Text("Nenhum dado encontrado."));
             }
 
             final data = snapshot.data!;

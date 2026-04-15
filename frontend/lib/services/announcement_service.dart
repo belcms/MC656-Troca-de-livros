@@ -13,10 +13,15 @@ class AnnouncementService {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return AnnouncementDetail.fromJson(data);
       }
-
-      return null;
-    } catch (_) {
-      return null;
+      else if (response.statusCode == 404) {
+        throw Exception('Anúncio não encontrado.');
+      } 
+      else {
+        throw Exception('Falha ao carregar anúncio (Erro ${response.statusCode}).');
+      }
+    } 
+    catch (e) {
+      throw Exception('Erro de conexão: Não foi possível acessar o servidor.');
     }
   }
 
