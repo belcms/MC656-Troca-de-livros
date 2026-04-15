@@ -12,10 +12,10 @@ class AnnouncementCard extends StatelessWidget {
     required this.title,
     required this.publishYear,
     required this.photo,
-    required this.cep
+    required this.cep,
   });
 
-@override
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 180,
@@ -30,7 +30,7 @@ class AnnouncementCard extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start, 
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Center(
                 child: ClipRRect(
@@ -46,32 +46,32 @@ class AnnouncementCard extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 10),
               Text(
-                title, 
+                title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700, 
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               Text(
-                '$publishYear', 
+                '$publishYear',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w400, 
+                  fontWeight: FontWeight.w400,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
               Text(
-                cep, 
+                cep,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w400, 
+                  fontWeight: FontWeight.w400,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
-              )
+              ),
             ],
           ),
         ),

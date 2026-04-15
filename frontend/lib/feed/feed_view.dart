@@ -24,17 +24,10 @@ class _FeedViewState extends State<FeedView> {
     final data = await AnnouncementService.fetchFeedAnnouncements();
     setState(() {
       announcements = data ?? [];
+      // announcements = [];
       isLoading = false;
     });
   }
-
-  // final List<Map<String, dynamic>> livros = [
-  //   {'title': 'Trono de Vidro', 'year': 2012, 'photo': 'https://m.media-amazon.com/images/I/81m94OedHqL._SL1500_.jpg', 'cep': 'Americana - SP'},
-  //   {'title': 'Coroa da Meia-Noite', 'year': 2013, 'photo': 'https://m.media-amazon.com/images/I/814x0T5JlsL._SL1500_.jpg', 'cep': 'Hortolândia - SP'},
-  //   {'title': 'Herdeira do Fogo', 'year': 2014, 'photo': 'https://m.media-amazon.com/images/I/81z-fUzRFxL._SL1500_.jpg', 'cep': 'São Paulo - SP'},
-  //   {'title': 'Rainha das Sombras', 'year': 2015, 'photo': 'https://m.media-amazon.com/images/I/81bXtL9Ii1L._SL1500_.jpg', 'cep': 'Vinhedo - SP'},
-  //   {'title': 'Império de Tempestades', 'year': 2016, 'photo': 'https://m.media-amazon.com/images/I/910tBzUIfwL._SL1500_.jpg', 'cep': 'Campinas - SP'},
-  // ];
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +48,8 @@ class _FeedViewState extends State<FeedView> {
             Expanded(
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
+                  : announcements.isEmpty
+                  ? const EmptyFeedState()
                   : GridView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       physics: const BouncingScrollPhysics(
@@ -91,6 +86,38 @@ class _FeedViewState extends State<FeedView> {
                         );
                       },
                     ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class EmptyFeedState extends StatelessWidget {
+  const EmptyFeedState({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.auto_stories, size: 80.0, color: Colors.grey),
+            const SizedBox(height: 24.0),
+            Text(
+              "O feed está vazio!",
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 12.0),
+            Text(
+              "Que tal dar o primeiro passo e anunciar aquele livro que está parado na estante?",
+              textAlign: .center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
             ),
           ],
         ),
