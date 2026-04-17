@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 import 'my_book_card.dart';
 import 'my_books_model.dart';
 
-//  Carrosel widget to display user's books in a horizontal scrollable list, used in both MyBooksScreen and UserProfileScreen
+/// Horizontal list version of My Books cards.
+///
+/// This widget is shared by screens that need a compact carousel representation
+/// of the user's announcements.
 class MyBooksCarousel extends StatelessWidget {
+  /// Card data to render.
   final List<MyBooksModel> books;
 
   const MyBooksCarousel({super.key, required this.books});

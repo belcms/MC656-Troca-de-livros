@@ -3,7 +3,15 @@ import 'package:http/http.dart' as http;
 import '../my_books/my_books_model.dart';
 import 'api_client.dart';
 
+/// HTTP service for the frontend My Books flow.
+///
+/// This service requests the backend card feed and maps each item to
+/// [MyBooksModel].
 class MyBooksService {
+  /// Fetches announcements that belong to a user.
+  ///
+  /// Endpoint: `GET /api/v1/users/{userId}/announcements`.
+  /// Returns `null` when request fails or backend does not return `200`.
   static Future<List<MyBooksModel>?> fetchUserBooks(String userId) async {
     final url = '${ApiClient.baseUrl}/api/v1/users/$userId/announcements';
 

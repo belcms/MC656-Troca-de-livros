@@ -1,3 +1,7 @@
+/// Data model consumed by the My Books UI.
+///
+/// It mirrors the backend card payload from:
+/// `GET /api/v1/users/{user_id}/announcements`.
 class MyBooksModel {
   final String id;
   final String title;
@@ -13,6 +17,7 @@ class MyBooksModel {
     required this.status,
   });
 
+  /// Builds a model instance from backend JSON.
   factory MyBooksModel.fromJson(Map<String, dynamic> json) {
     return MyBooksModel(
       id: json['id'] as String,

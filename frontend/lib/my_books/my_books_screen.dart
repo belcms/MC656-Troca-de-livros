@@ -5,6 +5,10 @@ import '../services/user_service.dart';
 import 'my_book_card.dart';
 import 'my_books_model.dart';
 
+/// Main page for the My Books feature.
+///
+/// It loads backend announcements and renders them as cards in a two-column
+/// grid, with loading, error and empty states.
 class MyBooksScreen extends StatefulWidget {
   const MyBooksScreen({super.key});
 
@@ -13,6 +17,7 @@ class MyBooksScreen extends StatefulWidget {
 }
 
 class _MyBooksScreenState extends State<MyBooksScreen> {
+  /// Future used by [FutureBuilder] to render async states in the grid.
   late Future<List<MyBooksModel>> _booksFuture;
 
   @override
@@ -21,6 +26,10 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
     _booksFuture = _loadInitialBooks();
   }
 
+  /// Loads initial books for the screen.
+  ///
+  /// Current strategy uses the first user returned by [UserService.fetchUsers]
+  /// as a temporary replacement for an authenticated session user id.
   Future<List<MyBooksModel>> _loadInitialBooks() async {
     // Busca o primeiro usuário do banco como substituto para um ID de sessão autenticado
     final users = await UserService.fetchUsers();
@@ -32,6 +41,7 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
     return [];
   }
 
+  /// Builds the top title row with back navigation.
   Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
@@ -45,6 +55,9 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
     );
   }
 
+  /// Builds the visual search bar placeholder.
+  ///
+  /// Search behavior is not wired yet in this version.
   Widget _buildSearchBar() {
     return Container(
       height: 45,
@@ -75,6 +88,9 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
     );
   }
 
+  /// Builds the availability sort/filter caption area.
+  ///
+  /// Sort action is currently presentation-only.
   Widget _buildSortFilter(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -86,6 +102,7 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
     );
   }
 
+  /// Builds the books grid using [_booksFuture] states.
   Widget _buildGrid(BuildContext context, double cardExtent) {
     return Expanded(
       child: FutureBuilder<List<MyBooksModel>>(
@@ -134,6 +151,9 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
     );
   }
 
+  /// Builds the bottom call-to-action button.
+  ///
+  /// The add flow is currently represented by a feedback snackbar.
   Widget _buildAddButton(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 6, 18, 14),
