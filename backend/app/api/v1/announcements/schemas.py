@@ -18,16 +18,23 @@ class TradeAnnouncementResponse(TradeAnnouncementBase):
     model_config = ConfigDict(from_attributes=True)
 
 class MyBooksCardResponse(BaseModel):
+    """Compact card payload for the backend My Books endpoint.
+
+    This schema intentionally exposes only the fields needed by the frontend
+    cards and keeps naming aligned with the JSON contract consumed in Flutter.
+
+    Attributes:
+        id: Announcement identifier used for future detail/edit actions.
+        title: Book title associated with the announcement edition.
+        publish_year: Publication year from the selected edition.
+        real_photo_url: Optional URL of the real book photo uploaded by user.
+        status: Current trade lifecycle state.
     """
-    Schema representation for the 'My Books' UI card.
-    
-    This view model is personalized to provide only the data needed to render 
-    the list of announcements on the user profile screen
-    """
-    id: str                      # Identifier to open or edit the book
-    title: str                  
-    publish_year: int            
-    real_photo_url: Optional[str] 
-    status: Status              
+
+    id: str
+    title: str
+    publish_year: int
+    real_photo_url: Optional[str]
+    status: Status
 
     model_config = ConfigDict(from_attributes=True)

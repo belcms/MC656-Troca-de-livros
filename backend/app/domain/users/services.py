@@ -10,21 +10,26 @@ from app.domain.users.models import User
 def get_users(db: Session, limit: int = 5):
     return db.query(models.User).limit(limit).all()
 
+
 def get_user_announcements(db: Session, user_id: str):
-    """
-    Fetch all announcements associated with a specific user.
-    
-    This function performs an INNER JOIN across TradeAnnouncement, 
-    Edition, and Book tables. It extracts specialized data targeted 
-    for the 'My Books' frontend card
-    
+    """Build My Books cards for all announcements created by a user.
+
+    Query details:
+        - Joins ``TradeAnnouncement`` -> ``Edition`` -> ``Book``.
+        - Selects only fields needed by My Books cards.
+        - Filters by ``TradeAnnouncement.user_id == user_id``.
+        - Orders by status priority: Available, Reserved, Traded, fallback.
+
+    The function does not raise when user_id is unknown; it returns an
+    empty list whenever no matching announcements are found.
+
     Args:
-        db (Session): The active SQLAlchemy database session.
-        user_id (str): The unique identifier for the user.
-        
+        db: Active SQLAlchemy session.
+        user_id: User identifier to scope announcements.
+
     Returns:
-        List[dict]: A list of dictionaries representing the assembled 
-                    cards (id, title, publish_year, real_photo_url, status).
+        list[dict[str, object]]: Card dictionaries with keys
+        ``id``, ``title``, ``publish_year``, ``real_photo_url``, ``status``.
     """
     status_order = case(
         (TradeAnnouncement.status == Status.Available, 1),
