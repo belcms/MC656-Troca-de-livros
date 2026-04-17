@@ -36,9 +36,24 @@ def get_book_details(id: str, db: Session = Depends(get_db)):
     """
     return get_announcement_details(db, id)
 
+
+
 @router.get("/feed", response_model=list[FeedAnnouncementResponse])
 def feed_announcements(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
-): return get_feed_announcements(db, limit=limit, offset=offset)
+):
+    """
+    Retrieves a paginated list of announcements for the main feed.
+    
+    Args: 
+        limit (int, optional): The maximum number of records to return. Defaults to 20.
+        offset (int, optional): The number of records to skip for pagination. Defaults to 0.
+        db (Session): The active database session.
+    
+    Returns: 
+        list[FeedAnnouncementResponse]: A list containing the serialized announcement data 
+        ready to be displayed on the feed UI.
+    """
+    return get_feed_announcements(db, limit=limit, offset=offset)

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 from app.domain.announcements import models
+from app.domain.announcements.models import Status
 from app.api.v1.announcements.schemas import FeedAnnouncementResponse
 from app.domain.books.models import Edition, Book
 from app.domain.users.models import User
@@ -101,10 +102,28 @@ def get_announcement_details(db: Session, id: str):
     return text
 
 def get_feed_announcements(db: Session, limit: int = 20, offset: int = 0):
+    """
+    Retrieves a paginated list of available trade announcements for the feed.
+
+    This function queries the database for announcements with an 'Available' status, 
+    ordering them from newest to oldest. It uses eager loading (joinedload) to 
+    fetch related Edition, Book, and User data in a single query, preventing N+1 
+    performance issues.
+
+    Args:
+        db (Session): The active SQLAlchemy database session.
+        limit (int, optional): The maximum number of records to return. Defaults to 20.
+        offset (int, optional): The number of records to skip for pagination. Defaults to 0.
+
+    Returns:
+        list[FeedAnnouncementResponse]: A list of mapped announcement objects 
+        containing the necessary data for the feed UI.
+    """
+    
     announcements = db.query(models.TradeAnnouncement).options(
         joinedload(models.TradeAnnouncement.edition).joinedload(Edition.book),
         joinedload(models.TradeAnnouncement.user)
-    ).limit(limit).offset(offset).all()
+    ).filter(models.TradeAnnouncement.status == Status.Available).order_by(models.TradeAnnouncement.create_date.desc()).limit(limit).offset(offset).all()
 
 
     return [

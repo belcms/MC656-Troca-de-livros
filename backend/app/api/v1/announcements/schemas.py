@@ -47,9 +47,18 @@ class MyBooksCardResponse(BaseModel):
 class FeedAnnouncementResponse(BaseModel):
     """
     Schema representation for the Feed Announcement UI card.
-    This view model is personalized to provide only the data needed to render the list of announcements on the feed screen
+
+    This view model is tailored to provide only the essential data 
+    required to render the list of announcements on the feed screen.
+
+    Attributes:
+        id (str): The unique identifier used to fetch the book's detailed information.
+        title (str): The title of the book.
+        publish_year (int): The publication year of the edition. Serialized as 'publishYear'.
+        cep (str): The postal code (CEP) of the user offering the book.
+        real_photo_url (Optional[str]): The URL of the actual photo of the book, if available.
     """
-    id: str #identifier to open the informations of the book
+    id: str 
     title: str
     publish_year: int = Field(alias='publishYear')
     cep: str

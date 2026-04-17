@@ -34,13 +34,13 @@ def create_dummy_data(db: Session = Depends(get_db)):
         username="rafael",
         email="rafael@example.com",
         full_name="Rafael Feltrin",
-        cep="12345678"
+        cep="Hortolândia - SP" #Just for now while we don't integrate with a Sedex API
     )
     user2 = users_models.User(
         username="Neymar",
         email="neymar@example.com",
         full_name="Neymar Jr.",
-        cep="87654321"
+        cep="Santos - SP" #Just for now while we don't integrate with a Sedex API
     )
     db.add_all([user1, user2])
     db.commit()
