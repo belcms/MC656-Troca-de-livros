@@ -19,7 +19,7 @@ class AnnouncementCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 180,
-      height: 300,
+      height: 330,
       child: Card(
         elevation: 4.0,
         color: Colors.white,
@@ -37,7 +37,7 @@ class AnnouncementCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8.0),
                   child: Image.network(
                     photo,
-                    height: 192,
+                    height: 190,
                     width: 144,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
