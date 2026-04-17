@@ -73,7 +73,7 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Search',
+              'Pesquisa',
               style: TextStyle(
                 fontSize: 17,
                 color: Colors.black87,
@@ -82,7 +82,6 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
               ),
             ),
           ),
-          Icon(Icons.mic_none_rounded, size: 30),
         ],
       ),
     );

@@ -47,14 +47,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               context,
             ).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
-          const Text(
-            'editar',
-            style: TextStyle(
-              fontSize: 16,
-              decoration: TextDecoration.underline,
-              color: Colors.black87,
-            ),
-          ),
         ],
       ),
     );
