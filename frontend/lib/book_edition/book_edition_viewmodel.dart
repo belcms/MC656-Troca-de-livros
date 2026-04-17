@@ -2,26 +2,32 @@ import 'package:flutter/material.dart';
 import 'book_model.dart';
 import '../services/announcement_service.dart';
 
+/// defines the contract used by the viewmodel to communicate with the service layer
 abstract class AnnouncementServiceInterface {
 
+  /// fetches announcement details by id
+  /// returns the json map or null if something goes wrong
   Future<Map<String, dynamic>?> fetchAnnouncementDetails(String id);
 
+  /// sends updated announcement data to backend
+  /// returns true if update works
   Future<bool> updateAnnouncement({
     required String id,
     required Map<String, dynamic> body,
   });
-
 }
 
+/// adapts the real service to the interface used by the viewmodel
 class AnnouncementServiceAdapter implements AnnouncementServiceInterface {
 
+  /// calls the service method that fetches announcement details
   @override
   Future<Map<String, dynamic>?> fetchAnnouncementDetails(String id) {
 
     return AnnouncementService.fetchAnnouncementDetails(id);
-
   }
 
+  /// calls the service method that updates an announcement
   @override
   Future<bool> updateAnnouncement({
     required String id,
@@ -34,17 +40,20 @@ class AnnouncementServiceAdapter implements AnnouncementServiceInterface {
     );
 
   }
-
 }
 
+/// manages the state and logic of the book edition screen
 class BookEditionViewModel {
 
+  /// service responsible for backend communication
   final AnnouncementServiceInterface service;
 
+  /// allows dependency injection for testing or custom implementations
   BookEditionViewModel({
     AnnouncementServiceInterface? service,
   }) : service = service ?? AnnouncementServiceAdapter();
 
+  /// controllers used to manage form field values
   final titleController = TextEditingController();
   final authorController = TextEditingController();
   final publisherController = TextEditingController();
@@ -53,24 +62,30 @@ class BookEditionViewModel {
   final synopsisController = TextEditingController();
   final descriptionController = TextEditingController();
 
+  /// selected values used in dropdowns and chips
   String genre = "Romance";
   String language = "Português";
   String status = "Disponível";
   String condition = "Novo";
   String? coverUrl;
 
+  /// loads announcement data from backend
+  /// fills controllers and local state with returned values
   Future<bool> loadFromServer(String id) async {
 
     final data = await service.fetchAnnouncementDetails(id);
 
+    /// returns false if backend does not return data
     if (data == null) {
 
       return false;
 
     }
 
+    /// converts json into book model
     final book = Book.fromJson(data);
 
+    /// fills text fields with current book values
     titleController.text = book.title;
     authorController.text = book.author;
     publisherController.text = book.publisher;
@@ -79,6 +94,7 @@ class BookEditionViewModel {
     synopsisController.text = book.synopsis;
     descriptionController.text = book.description;
 
+    /// sets defaults in case any field comes empty
     genre = book.genre.isEmpty ? "Romance" : book.genre;
     language = book.language.isEmpty ? "Português" : book.language;
     status = book.status.isEmpty ? "Disponível" : book.status;
@@ -89,22 +105,27 @@ class BookEditionViewModel {
 
   }
 
+  /// updates selected announcement status
   void setStatus(String value) {
 
     status = value;
 
   }
 
+  /// updates selected book condition
   void setCondition(String value) {
 
     condition = value;
 
   }
 
+  /// creates a book object using current form values
   Book buildBook(String id) {
 
     return Book(
       id: id,
+
+      /// trims user input before sending
       title: titleController.text.trim(),
       author: authorController.text.trim(),
       publisher: publisherController.text.trim(),
@@ -118,9 +139,10 @@ class BookEditionViewModel {
       condition: condition,
       coverUrl: coverUrl,
     );
-
   }
 
+  /// sends the edited data to backend
+  /// returns true if update succeeds
   Future<bool> submit(String id) async {
 
     final book = buildBook(id);
@@ -131,9 +153,9 @@ class BookEditionViewModel {
     );
 
     return ok;
-
   }
 
+  /// disposes all controllers to avoid memory leaks
   void dispose() {
 
     titleController.dispose();
@@ -145,5 +167,4 @@ class BookEditionViewModel {
     descriptionController.dispose();
 
   }
-
 }

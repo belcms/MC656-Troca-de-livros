@@ -29,6 +29,7 @@ class Book {
     this.coverUrl,
   });
 
+  /// maps genre values received from backend to frontend labels
   static String _mapGenreFromBack(dynamic value) {
     final raw = (value ?? '').toString();
 
@@ -58,6 +59,7 @@ class Book {
     }
   }
 
+  /// maps language values received from backend to frontend labels
   static String _mapLanguageFromBack(dynamic value) {
     final raw = (value ?? '').toString();
 
@@ -73,6 +75,7 @@ class Book {
     }
   }
 
+  /// maps status values received from backend to frontend labels
   static String _mapStatusFromBack(dynamic value) {
     final raw = (value ?? '').toString();
 
@@ -88,6 +91,7 @@ class Book {
     }
   }
 
+  /// maps condition values received from backend to frontend labels
   static String _mapConditionFromBack(dynamic value) {
     final raw = (value ?? '').toString();
 
@@ -105,6 +109,7 @@ class Book {
     }
   }
 
+  /// maps genre values from frontend to backend format
   static String _mapGenreToBack(String value) {
     switch (value) {
       case 'Fantasia':
@@ -132,6 +137,7 @@ class Book {
     }
   }
 
+  /// maps language values from frontend to backend format
   static String _mapLanguageToBack(String value) {
     switch (value) {
       case 'Português':
@@ -145,6 +151,7 @@ class Book {
     }
   }
 
+  /// maps status values from frontend to backend format
   static String _mapStatusToBack(String value) {
     switch (value) {
       case 'Disponível':
@@ -158,6 +165,7 @@ class Book {
     }
   }
 
+  /// maps condition values from frontend to backend format
   static String _mapConditionToBack(String value) {
     switch (value) {
       case 'Novo':
@@ -173,6 +181,8 @@ class Book {
     }
   }
 
+  /// creates a book object from backend json
+  /// also handles nested book and edition data when needed
   factory Book.fromJson(Map<String, dynamic> json) {
     final book = json['book'] is Map<String, dynamic>
         ? json['book'] as Map<String, dynamic>
@@ -200,6 +210,7 @@ class Book {
     );
   }
 
+  /// converts the book object into json to send to backend
   Map<String, dynamic> toJson() {
     return {
       'id': id,

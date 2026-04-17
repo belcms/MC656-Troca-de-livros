@@ -20,12 +20,16 @@ class _BookEditionPageState extends State<BookEditionPage> {
   bool hasError = false;
   bool isSaving = false;
 
+  /// called when the screen is created
+  /// loads book data from backend using the id
   @override
   void initState() {
     super.initState();
     _loadBook();
   }
 
+  /// fetches book data from server
+  /// updates loading and error states
   Future<void> _loadBook() async {
     final success = await vm.loadFromServer(widget.id);
 
@@ -37,6 +41,8 @@ class _BookEditionPageState extends State<BookEditionPage> {
     });
   }
 
+  /// sends updated book information to backend
+  /// shows feedback message to the user
   Future<void> _saveBook() async {
     setState(() {
       isSaving = true;
@@ -61,12 +67,15 @@ class _BookEditionPageState extends State<BookEditionPage> {
     );
   }
 
+  /// disposes viewmodel to avoid memory leak
   @override
   void dispose() {
     vm.dispose();
     super.dispose();
   }
 
+  /// builds main structure of the page
+  /// defines background and app bar
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,6 +89,8 @@ class _BookEditionPageState extends State<BookEditionPage> {
     );
   }
 
+  /// decides which content should be shown
+  /// loading spinner, error state or form
   Widget _buildBody() {
     if (isLoading) {
       return const Center(
@@ -120,7 +131,8 @@ class _BookEditionPageState extends State<BookEditionPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// CAPA
+
+          /// book cover preview and edit button
           Center(
             child: Column(
               children: [
@@ -133,10 +145,15 @@ class _BookEditionPageState extends State<BookEditionPage> {
                     border: Border.all(color: Colors.black12),
                   ),
                   clipBehavior: Clip.antiAlias,
+
+                  /// loads image from url if available
+                  /// fallback icon if no image
                   child: vm.coverUrl != null && vm.coverUrl!.isNotEmpty
                       ? Image.network(
                           vm.coverUrl!,
                           fit: BoxFit.cover,
+
+                          /// handles image loading error
                           errorBuilder: (context, error, stackTrace) {
                             print("ERRO IMAGEM: $error");
                             return const Center(
@@ -147,6 +164,8 @@ class _BookEditionPageState extends State<BookEditionPage> {
                       : const Icon(Icons.book, size: 42),
                 ),
                 const SizedBox(height: 12),
+
+                /// button to edit cover image
                 OutlinedButton(
                   onPressed: () {},
                   child: const Text('Editar foto da capa'),
@@ -157,7 +176,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
           const SizedBox(height: 20),
 
-          /// STATUS
+          /// book trade status selector
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -169,21 +188,28 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
           const SizedBox(height: 20),
 
-          /// SOBRE
+          /// book basic information section
           const Text(
             "Sobre o livro",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
+
           const SizedBox(height: 10),
+
+          /// card groups related inputs visually
           _card(
             Column(
               children: [
+
+                /// basic metadata inputs
                 _input(vm.titleController, "Título"),
                 _input(vm.authorController, "Autor"),
                 _input(vm.publisherController, "Editora"),
 
                 Row(
                   children: [
+
+                    /// dropdown for genre selection
                     Expanded(
                       child: _dropdown(
                         value: vm.genre,
@@ -206,7 +232,10 @@ class _BookEditionPageState extends State<BookEditionPage> {
                         },
                       ),
                     ),
+
                     const SizedBox(width: 10),
+
+                    /// dropdown for language selection
                     Expanded(
                       child: _dropdown(
                         value: vm.language,
@@ -233,10 +262,15 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
                 Row(
                   children: [
+
+                    /// publication year input
                     Expanded(
                       child: _input(vm.yearController, "Ano"),
                     ),
+
                     const SizedBox(width: 10),
+
+                    /// number of pages input
                     Expanded(
                       child: _input(vm.pagesController, "Páginas"),
                     ),
@@ -245,6 +279,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
                 const SizedBox(height: 10),
 
+                /// book synopsis multiline field
                 _multiline(vm.synopsisController, "Sinopse"),
               ],
             ),
@@ -252,33 +287,43 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
           const SizedBox(height: 20),
 
-          /// CONDIÇÃO
+          /// book physical condition section
           const Text(
             "Condição",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
+
           const SizedBox(height: 10),
+
           _card(
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+
+                /// selectable radio options
                 _condition("Novo"),
                 _condition("Muito bom"),
                 _condition("Bom"),
                 _condition("Desgastado"),
+
                 const SizedBox(height: 6),
+
+                /// explanatory texts for each condition
                 conditionText(
                   "Novo",
                   "Nunca usado, sem marcas, sem dobras, sem grifos. Estado perfeito.",
                 ),
+
                 conditionText(
                   "Muito bom",
                   "Pouco usado, pode ter sinais mínimos de manuseio, sem rasgos ou danos relevantes.",
                 ),
+
                 conditionText(
                   "Bom",
                   "Sinais visíveis de uso, pode ter pequenos grifos ou leve desgaste na capa, totalmente legível.",
                 ),
+
                 conditionText(
                   "Desgastado",
                   "Bastante usado, pode ter manchas, páginas amareladas ou dobras, ainda possível de ler.",
@@ -289,19 +334,22 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
           const SizedBox(height: 20),
 
-          /// DESCRIÇÃO
+          /// additional description section
           const Text(
             "Descrição",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
+
           const SizedBox(height: 10),
+
           _card(
             _multiline(vm.descriptionController, "Descrição"),
           ),
 
           const SizedBox(height: 30),
 
-          /// BOTÃO
+          /// submit button
+          /// disabled while saving
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -310,13 +358,16 @@ class _BookEditionPageState extends State<BookEditionPage> {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
+
               onPressed: isSaving ? null : _saveBook,
+
               child: isSaving
                   ? const SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
+
                   : const Text("Editar anúncio"),
             ),
           ),
@@ -325,13 +376,19 @@ class _BookEditionPageState extends State<BookEditionPage> {
     );
   }
 
+  /// chip used to select announcement status
   Widget _statusChip(String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: ChoiceChip(
         label: Text(value),
+
+        /// checks if this chip is selected
         selected: vm.status == value,
+
         selectedColor: const Color(0xFF416956),
+
+        /// updates selected status in viewmodel
         onSelected: (_) {
           setState(() {
             vm.setStatus(value);
@@ -341,29 +398,36 @@ class _BookEditionPageState extends State<BookEditionPage> {
     );
   }
 
+  /// radio option for book condition
   Widget _condition(String value) {
     return RadioListTile<String>(
       value: value,
       groupValue: vm.condition,
       contentPadding: EdgeInsets.zero,
+
+      /// updates selected condition
       onChanged: (v) {
         setState(() {
           vm.setCondition(v!);
         });
       },
+
       title: Text(value),
     );
   }
 
+  /// reusable text input field
   Widget _input(TextEditingController controller, String hint) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: TextField(
         controller: controller,
+
         decoration: InputDecoration(
           hintText: hint,
           filled: true,
           fillColor: const Color(0xFFF5F5F5),
+
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -373,14 +437,17 @@ class _BookEditionPageState extends State<BookEditionPage> {
     );
   }
 
+  /// multiline text field for longer content
   Widget _multiline(TextEditingController controller, String hint) {
     return TextField(
       controller: controller,
       maxLines: 4,
+
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
         fillColor: const Color(0xFFF5F5F5),
+
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -389,23 +456,31 @@ class _BookEditionPageState extends State<BookEditionPage> {
     );
   }
 
+  /// reusable dropdown component
   Widget _dropdown({
     required String value,
     required String hint,
     required List<String> items,
     required Function(String?) onChanged,
   }) {
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
+
       decoration: BoxDecoration(
         color: const Color(0xFFF5F5F5),
         borderRadius: BorderRadius.circular(12),
       ),
+
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
+
+          /// ensures value is always valid
           value: items.contains(value) ? value : items.first,
+
           hint: Text(hint),
           isExpanded: true,
+
           items: items
               .map(
                 (e) => DropdownMenuItem<String>(
@@ -414,18 +489,22 @@ class _BookEditionPageState extends State<BookEditionPage> {
                 ),
               )
               .toList(),
+
           onChanged: onChanged,
         ),
       ),
     );
   }
 
+  /// styled container used as visual group
   Widget _card(Widget child) {
     return Container(
       padding: const EdgeInsets.all(16),
+
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -433,25 +512,32 @@ class _BookEditionPageState extends State<BookEditionPage> {
           ),
         ],
       ),
+
       child: child,
     );
   }
 
+  /// helper text explaining each condition option
   Widget conditionText(String title, String description) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
+
       child: Text.rich(
         TextSpan(
           children: [
+
             TextSpan(
               text: "$title: ",
+
               style: const TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
               ),
             ),
+
             TextSpan(
               text: description,
+
               style: const TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w300,
