@@ -6,6 +6,52 @@ from app.domain.books.models import Edition, Book
 from app.domain.users.models import User
 
 def get_announcement_details(db: Session, id: str):
+    """
+    Retrieve complete details of a trade announcement by its ID.
+
+    This function queries the database for a specific `TradeAnnouncement`
+    and loads its related entities:
+    - User
+    - Book edition
+    - Book
+
+    If any of these entities are missing, an HTTP 404 exception is raised.
+
+    Args:
+        db (Session):
+            An active SQLAlchemy database session used to perform queries
+            and access persisted data.
+
+        id (str):
+            The unique identifier of the trade announcement to retrieve.
+
+    Returns:
+        dict:
+            A dictionary containing all relevant announcement data,
+            structured for easy consumption (e.g., by a REST API or frontend).
+            Includes:
+
+            - Announcement data:
+                id, user_id, edition_id, description, condition, status,
+                creation date, real photo URL
+
+            - User data:
+                user_name, user_cep
+
+            - Edition data:
+                id, book_id, publisher, publish_year
+
+            - Book data:
+                id, title, author, synopsis
+
+    Raises:
+        HTTPException (404):
+            - If the announcement is not found
+            - If the associated edition is missing
+            - If the associated book is missing
+            - If the associated user is missing
+    """
+
     announcements = db.query(models.TradeAnnouncement).filter(models.TradeAnnouncement.id == id).first()
     
     if not announcements:
