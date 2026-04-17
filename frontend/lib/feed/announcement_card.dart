@@ -1,12 +1,26 @@
 import 'dart:ffi';
 import 'package:flutter/material.dart';
 
+/// A visual card that displays the summarized information of an announcement in the feed.
+///
+/// This widget displays the book cover, title, publication year, and the
+/// advertiser's ZIP code (CEP).
 class AnnouncementCard extends StatelessWidget {
+  /// Title of the book. It will be automatically truncated if it exceeds 2 lines.
   final String title;
+
+  /// Publish Year of the Edition.
   final int publishYear;
+
+  /// The URL to fetch the book's image added by the advertiser.
   final String photo;
+
+  /// The postal code (CEP) from the advertiser.
   final String cep;
 
+  /// Creates a new announcement card.
+  ///
+  /// The parameters [title], [publishYear], [photo], and [cep] are required.
   const AnnouncementCard({
     super.key,
     required this.title,
