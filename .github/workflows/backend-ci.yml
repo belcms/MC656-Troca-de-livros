@@ -1,0 +1,32 @@
+name: Backend CI Pipeline
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+
+    - name: Configurar Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    # ETAPA 1: BUILD (Gerenciamento de Dependências com PIP)
+    - name: Build (Instalação de Dependências)
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+
+    # ETAPA 2: TESTES AUTOMATIZADOS
+    - name: Testes Automatizados (Pytest)
+      run: |
+        cd backend
+        pytest -v
