@@ -23,7 +23,10 @@ def _mock_query_chain_first(db, first_result):
 def _mock_feed_chain_all(db, all_result):
     query_obj = db.query.return_value
     options_obj = query_obj.options.return_value
-    limit_obj = options_obj.limit.return_value
+    # Adicionando os mocks para o filter e order_by que faltavam:
+    filter_obj = options_obj.filter.return_value
+    order_by_obj = filter_obj.order_by.return_value
+    limit_obj = order_by_obj.limit.return_value
     offset_obj = limit_obj.offset.return_value
     offset_obj.all.return_value = all_result
 
