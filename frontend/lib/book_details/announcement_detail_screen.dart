@@ -169,7 +169,7 @@ class _AnnouncementDetailScreenState
   }
 
   // =========================
-  // 🎯 SECTIONS
+  // SECTIONS
   // =========================
 
   /// Builds the cover image section.
@@ -273,7 +273,7 @@ class _AnnouncementDetailScreenState
   }
 
   // =========================
-  // 🧩 SMALL BUILDERS
+  // SMALL BUILDERS
   // =========================
 
   /// Builds a labeled row for displaying key-value information.
