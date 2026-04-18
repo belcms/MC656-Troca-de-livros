@@ -64,7 +64,7 @@ class _AnnouncementDetailScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEDE3D8),
+      backgroundColor: const Color(0xFFFFF6EA),
 
       /// Ensures content is displayed within safe screen boundaries.
       body: SafeArea(
