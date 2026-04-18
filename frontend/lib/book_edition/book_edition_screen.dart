@@ -20,6 +20,22 @@ class _BookEditionPageState extends State<BookEditionPage> {
   bool hasError = false;
   bool isSaving = false;
 
+// change the color of book status
+  Color _statusColor(String value) {
+    switch (value) {
+      case "Disponível":
+        return const Color(0xFF24523C);
+
+      case "Negociando":
+        return const Color(0xFFDB8F44);
+
+      case "Trocado":
+        return const Color(0xFF7B2518);
+
+      default:
+        return const Color(0xFF24523C);
+    }
+  }
   /// called when the screen is created
   /// loads book data from backend using the id
   @override
@@ -48,24 +64,26 @@ class _BookEditionPageState extends State<BookEditionPage> {
       isSaving = true;
     });
 
-    final success = await vm.submit(widget.id);
+      final success = await vm.submit(widget.id);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      isSaving = false;
-    });
+      setState(() {
+        isSaving = false;
+      });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success
-              ? 'Livro atualizado com sucesso.'
-              : 'Não foi possível atualizar o livro.',
-        ),
-      ),
-    );
+      if (success) {
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível atualizar o livro.'),
+          ),
+        );
+      }
   }
+
+  
 
   /// disposes viewmodel to avoid memory leak
   @override
@@ -348,8 +366,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
           const SizedBox(height: 30),
 
-          /// submit button
-          /// disabled while saving
+          /// save button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -359,7 +376,8 @@ class _BookEditionPageState extends State<BookEditionPage> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
 
-              onPressed: isSaving ? null : _saveBook,
+            onPressed: isSaving? null: null, //E EXCLUIR ESSA
+              // onPressed: isSaving ? null : _saveBook, // ESPERAR PRA DESCOMENTAR
 
               child: isSaving
                   ? const SizedBox(
@@ -367,10 +385,29 @@ class _BookEditionPageState extends State<BookEditionPage> {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-
                   : const Text("Editar anúncio"),
             ),
           ),
+
+          const SizedBox(height: 12),
+
+          /// cancel button // DESCOMENTAR DPS
+          // SizedBox(
+          //   width: double.infinity,
+          //   child: TextButton(
+          //     onPressed: () { //DESCOMENAR QNDO O FELTRIN FIZER O MERGE
+          //       Navigator.pop(context, false);
+          //     },
+
+          //     child: const Text(
+          //       "Cancelar",
+          //       style: TextStyle(
+          //         fontWeight: FontWeight.w600,
+          //         fontSize: 16,
+          //       ),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
@@ -378,17 +415,49 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
   /// chip used to select announcement status
   Widget _statusChip(String value) {
+  final color = _statusColor(value);
+  final isSelected = vm.status == value;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: ChoiceChip(
-        label: Text(value),
+        showCheckmark: false, // remove check automático
 
-        /// checks if this chip is selected
-        selected: vm.status == value,
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
 
-        selectedColor: const Color(0xFF416956),
+            /// check branco customizado
+            if (isSelected)
+              const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 16,
+              ),
 
-        /// updates selected status in viewmodel
+            if (isSelected)
+              const SizedBox(width: 4),
+
+            Text(
+              value,
+              style: TextStyle(
+                color: isSelected ? Colors.white : color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+
+        selected: isSelected,
+
+        selectedColor: color,
+
+        backgroundColor: Colors.transparent,
+
+        shape: StadiumBorder(
+          side: BorderSide(color: color),
+        ),
+
         onSelected: (_) {
           setState(() {
             vm.setStatus(value);
@@ -397,6 +466,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
       ),
     );
   }
+
 
   /// radio option for book condition
   Widget _condition(String value) {
