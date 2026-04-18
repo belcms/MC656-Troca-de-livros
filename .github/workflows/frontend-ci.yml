@@ -1,0 +1,37 @@
+name: Frontend CI Pipeline
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+
+    - name: Configurar Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+
+    # ETAPA 1.A: Gerenciamento de dependências
+    - name: Instalação de Dependências
+      run: |
+        cd frontend
+        flutter pub get
+
+    # ETAPA 2: Testes automatizados
+    - name: Testes Automatizados (Flutter Test)
+      run: |
+        cd frontend
+        flutter test
+
+    # ETAPA 1.B: BUILD (Geração do Executável da Aplicação)
+    # Roda apenas se os testes passarem. Usa --debug para o CI rodar mais rápido.
+    - name: Build da Aplicação (Gerar APK Executável)
+      run: |
+        cd frontend
+        flutter build apk --debug
