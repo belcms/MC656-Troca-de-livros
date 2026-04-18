@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'book_details/announcement_detail_screen.dart';
 import 'services/user_service.dart';
+import 'feed/feed_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,117 +15,104 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Teste FastAPI',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueGrey),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF416956),
+          brightness: Brightness.light,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFFFF6EA),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Conexão Flutter + FastAPI'),
+      debugShowCheckedModeBanner: false,
+      home: TelaPrincipal(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  String _mensagem = 'Aguardando requisição...';
-  bool _carregando = false;
-
-  Future<void> _buscarUsuarios() async {
-    setState(() {
-      _carregando = true;
-      _mensagem = 'Buscando usuários no banco...';
-    });
-
-    // A tela não sabe o que é HTTP ou IP, ela só pede os dados para o Service!
-    final users = await UserService.fetchUsers();
-
-    setState(() {
-      if (users == null) {
-        _mensagem = "Falha na conexão. O servidor está rodando?";
-      } else if (users.isEmpty) {
-        _mensagem = "Conexão de sucesso!\nMas a tabela de usuários está vazia.";
-      } else {
-        String resultado = "Usuários encontrados:\n\n";
-        for (var user in users) {
-          resultado +=
-              "👤 Nome: ${user['full_name']}\n📧 E-mail: ${user['email']}\n\n";
-        }
-        _mensagem = resultado;
-      }
-      _carregando = false;
-    });
-  }
+class TelaPrincipal extends StatelessWidget {
+  const TelaPrincipal({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          widget.title,
-          style: const TextStyle(fontWeight: FontWeight.w400),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
         ),
-      ),
-      // Adicionado SingleChildScrollView para permitir rolagem se a lista for grande
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: double.infinity, // Ocupa toda a largura disponível
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: _carregando
-                    ? const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(
-                        _mensagem,
-                        // Alinhado à esquerda para a lista ficar mais fácil de ler
-                        textAlign: TextAlign.left,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          height: 1.5,
-                          color: Colors.black87,
-                        ),
-                      ),
-              ),
-              const SizedBox(
-                height: 80,
-              ), // Espaço para não ficar embaixo do botão
+
+        body: const TabBarView(children: [FeedView(), SegundaTelaTestes()]),
+
+        // BARRA NO RODAPÉ
+        bottomNavigationBar: Container(
+          color: Colors.blueGrey[900],
+          child: const TabBar(
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white60,
+            indicatorColor: Colors.cyan,
+            tabs: [
+              Tab(icon: Icon(Icons.home), text: 'Feed'),
+              Tab(icon: Icon(Icons.settings), text: 'Config'),
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _carregando ? null : _buscarUsuarios,
-        elevation: 2,
-        icon: const Icon(Icons.search),
-        label: const Text('Buscar Usuários'),
+    );
+  }
+}
+
+// 3. OUTRA CLASSE APENAS PARA TESTAR A TAB
+class SegundaTelaTestes extends StatefulWidget {
+  const SegundaTelaTestes({super.key});
+
+  @override
+  State<SegundaTelaTestes> createState() => _SegundaTelaTestesState();
+}
+
+class _SegundaTelaTestesState extends State<SegundaTelaTestes> {
+  final TextEditingController _idController = TextEditingController();
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('Teste detalhes do anúncio'),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _idController,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: 'UUID do anúncio',
+            ),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: () {
+              final id = _idController.text.trim();
+              if (id.isEmpty) return;
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AnnouncementDetailScreen(announcementId: id),
+                ),
+              );
+            },
+            child: const Text('Abrir detalhes'),
+          ),
+        ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
