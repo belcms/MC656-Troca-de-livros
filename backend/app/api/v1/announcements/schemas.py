@@ -4,6 +4,12 @@ from datetime import datetime
 from app.domain.announcements.models import Condition, Status
 
 class TradeAnnouncementBase(BaseModel):
+    """
+    Base schema for a trade announcement.
+
+    This class defines the core attributes required to create or represent
+    a trade announcement, excluding database-generated fields.
+    """
     edition_id: str
     real_photo_url: Optional[str] = None
     condition: Condition
@@ -11,6 +17,12 @@ class TradeAnnouncementBase(BaseModel):
     status: Status = Status.Available
 
 class TradeAnnouncementResponse(TradeAnnouncementBase):
+    """
+    Response schema for a trade announcement.
+
+    Extends `TradeAnnouncementBase` by including fields that are generated
+    and managed by the system (e.g., database).
+    """
     id: str
     user_id: str
     create_date: datetime
