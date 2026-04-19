@@ -2,14 +2,14 @@ from app.domain.announcements.models import Status
 from app.domain.users.models import User
 
 
-def test_get_user_announcements_endpoint_returns_cards(client, db_session, seed_announcement):
+def test_get_user_announcements_endpoint_returns_cards(users_client, db_session, seed_announcement):
     first = seed_announcement(status=Status.Reserved, title="CleanCode", publish_year=2008)
     user = first["user"]
     second = seed_announcement(user=user, status=Status.Available, title="Refactoring", publish_year=1999)
     seed_announcement(status=Status.Available, title="AnotherUserBook")
     db_session.commit()
 
-    response = client.get(f"/api/v1/users/{user.id}/announcements")
+    response = users_client.get(f"/api/v1/users/{user.id}/announcements")
 
     assert response.status_code == 200
     payload = response.json()
@@ -20,15 +20,15 @@ def test_get_user_announcements_endpoint_returns_cards(client, db_session, seed_
     assert set(payload[0].keys()) == {"id", "title", "publish_year", "real_photo_url", "status"}
 
 
-def test_get_user_announcements_endpoint_returns_empty_list_for_non_existent_user(client):
-    response = client.get("/api/v1/users/non-existent-user-id/announcements")
+def test_get_user_announcements_endpoint_returns_empty_list_for_non_existent_user(users_client):
+    response = users_client.get("/api/v1/users/non-existent-user-id/announcements")
 
     assert response.status_code == 200
     assert response.json() == []
 
 
 def test_get_user_announcements_endpoint_returns_empty_list_for_existing_user_without_announcements(
-    client, db_session
+    users_client, db_session
 ):
     user = User(
         username="without_books",
@@ -39,7 +39,7 @@ def test_get_user_announcements_endpoint_returns_empty_list_for_existing_user_wi
     db_session.add(user)
     db_session.commit()
 
-    response_existing_user_without_announcements = client.get(
+    response_existing_user_without_announcements = users_client.get(
         f"/api/v1/users/{user.id}/announcements"
     )
     assert response_existing_user_without_announcements.status_code == 200
