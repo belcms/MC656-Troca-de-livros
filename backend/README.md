@@ -75,6 +75,16 @@ uvicorn app.main:app --reload
 
 *(O `--reload` faz com que o servidor reinicie sozinho sempre que você salvar um arquivo).*
 
+### 6\. Rodar os Testes Automatizados
+
+Com o ambiente virtual ativado, execute:
+
+```bash
+pytest -q
+```
+
+Os testes de "meus livros" estão na pasta `tests/` e usam banco em memória (SQLite), sem depender do PostgreSQL do Docker.
+
 -----
 
 ## Acessando a Documentação (Swagger)

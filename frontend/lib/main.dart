@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-
 import 'book_edition/book_edition_screen.dart';
+import 'feed/feed_view.dart';
+import 'user_profile/user_profile_screen.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -11,9 +13,52 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: TelaPrincipal(),
+      title: 'My Books',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF416956),
+          brightness: Brightness.light,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFFFF6EA),
+        useMaterial3: true,
+        textTheme: const TextTheme(
+          // Page Titles (like 'Meus Livros')
+          headlineLarge: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 34,
+            fontStyle: FontStyle.normal,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+          // 'Disponibilidade'-level headers
+          titleLarge: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 18,
+            fontStyle: FontStyle.normal,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
+          ),
+          // Book Card Titles
+          titleMedium: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 15,
+            fontStyle: FontStyle.normal,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+          // Book Card Year
+          bodyMedium: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
+            fontStyle: FontStyle.normal,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFF727272),
+          ),
+        ),
+      ),
+      home: const TelaPrincipal(),
     );
   }
 }
@@ -26,18 +71,26 @@ class TelaPrincipal extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(),
-        body: TabBarView(
-          children: [
-            const Center(child: Text("Teste")),
-            BookEditionPage(id: '47e93587-26c1-4a22-b78b-100d50be591e'), //criado estaticamnete, depois passar o id do anuncio
-          ],
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
         ),
-        bottomNavigationBar: const TabBar(
-          tabs: [
-            Tab(icon: Icon(Icons.home)),
-            Tab(icon: Icon(Icons.edit)),
-          ],
+
+        body: const TabBarView(children: [FeedView(), UserProfileScreen()]),
+
+        // BARRA NO RODAPÉ
+        bottomNavigationBar: Container(
+          color: Colors.blueGrey[900],
+          child: const TabBar(
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white60,
+            indicatorColor: Colors.cyan,
+            tabs: [
+              Tab(icon: Icon(Icons.home), text: 'Feed'),
+              Tab(icon: Icon(Icons.person), text: 'Perfil'),
+            ],
+          ),
         ),
       ),
     );

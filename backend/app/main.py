@@ -5,8 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.domain.books import models as books_models
 from app.domain.users import models as users_models
 from app.domain.announcements import models as announcements_models
+# from app.domain.announcements.router import router as announcements_router
+from app.api.v1.announcements.router import router as announcements_router
 from app.core.database import engine, Base, get_db
-from app.domain.users.router import router as users_router
+from app.api.v1.users.router import router as users_router
 
 books_models.Base.metadata.create_all(bind=engine)
 users_models.Base.metadata.create_all(bind=engine)
@@ -24,6 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(announcements_router)
 app.include_router(users_router)
 
 
@@ -86,13 +89,13 @@ def create_dummy_data(db: Session = Depends(get_db)):
         username="rafael",
         email="rafael@example.com",
         full_name="Rafael Feltrin",
-        cep="12345678"
+        cep="Hortolândia - SP" #Just for now while we don't integrate with a Sedex API
     )
     user2 = users_models.User(
         username="Neymar",
         email="neymar@example.com",
         full_name="Neymar Jr.",
-        cep="87654321"
+        cep="Santos - SP" #Just for now while we don't integrate with a Sedex API
     )
     db.add_all([user1, user2])
     db.commit()
@@ -146,7 +149,7 @@ def create_dummy_data(db: Session = Depends(get_db)):
     announcement2 = announcements_models.TradeAnnouncement(
         user_id=user2.id,
         edition_id=edition2.id,
-        real_photo_url="https://example.com/photo2.jpg",
+        real_photo_url="https://m.media-amazon.com/images/I/81zN7udGRUL._SL1500_.jpg",
         condition=announcements_models.Condition.New,
         description="Nunca nem abri essa bomba",
         status=announcements_models.Status.Available
@@ -233,7 +236,6 @@ def update_book(
     db.commit()
 
     return {"message": "Book updated successfully"}
-
 
 @app.get("/")
 def read_root():

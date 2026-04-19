@@ -1,0 +1,74 @@
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Optional
+from datetime import datetime
+from app.domain.announcements.models import Condition, Status
+
+class TradeAnnouncementBase(BaseModel):
+    """
+    Base schema for a trade announcement.
+
+    This class defines the core attributes required to create or represent
+    a trade announcement, excluding database-generated fields.
+    """
+    edition_id: str
+    real_photo_url: Optional[str] = None
+    condition: Condition
+    description: Optional[str] = None
+    status: Status = Status.Available
+
+class TradeAnnouncementResponse(TradeAnnouncementBase):
+    """
+    Response schema for a trade announcement.
+
+    Extends `TradeAnnouncementBase` by including fields that are generated
+    and managed by the system (e.g., database).
+    """
+    id: str
+    user_id: str
+    create_date: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class MyBooksCardResponse(BaseModel):
+    """Compact card payload for the backend My Books endpoint.
+
+    This schema intentionally exposes only the fields needed by the frontend
+    cards and keeps naming aligned with the JSON contract consumed in Flutter.
+
+    Attributes:
+        id: Announcement identifier used for future detail/edit actions.
+        title: Book title associated with the announcement edition.
+        publish_year: Publication year from the selected edition.
+        real_photo_url: Optional URL of the real book photo uploaded by user.
+        status: Current trade lifecycle state.
+    """
+
+    id: str
+    title: str
+    publish_year: int
+    real_photo_url: Optional[str]
+    status: Status
+
+    model_config = ConfigDict(from_attributes=True)
+
+class FeedAnnouncementResponse(BaseModel):
+    """
+    Schema representation for the Feed Announcement UI card.
+
+    This view model is tailored to provide only the essential data 
+    required to render the list of announcements on the feed screen.
+
+    Attributes:
+        id (str): The unique identifier used to fetch the book's detailed information.
+        title (str): The title of the book.
+        publish_year (int): The publication year of the edition. Serialized as 'publishYear'.
+        cep (str): The postal code (CEP) of the user offering the book.
+        real_photo_url (Optional[str]): The URL of the actual photo of the book, if available.
+    """
+    id: str 
+    title: str
+    publish_year: int = Field(alias='publishYear')
+    cep: str
+    real_photo_url: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)

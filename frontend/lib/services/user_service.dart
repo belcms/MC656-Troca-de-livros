@@ -4,7 +4,7 @@ import 'api_client.dart'; // Importa a configuração base
 
 class UserService {
   // Usa o baseUrl do ApiClient
-  static final String _usersUrl = '${ApiClient.baseUrl}/users';
+  static final String _usersUrl = '${ApiClient.baseUrl}/api/v1/users';
 
   static Future<List<dynamic>?> fetchUsers() async {
     try {
