@@ -20,7 +20,7 @@ class TestCreateAnnouncement:
         data = response.json()
         assert data["message"] == "Announcement created successfully"
 
-    def test_create_announcement_invalid_data(client):
+    def test_create_announcement_invalid_data(self,client):
         # falta coisas como editionId e condition tem um valor que não existe no Enum
         payload_ruim = {
             "coverUrl": "http://example.com/photo.jpg",

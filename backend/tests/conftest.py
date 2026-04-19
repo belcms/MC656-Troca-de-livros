@@ -14,7 +14,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.domain.users.router import router as users_router
+from app.main import app as app
 from app.core.database import Base, get_db
 from app.domain.announcements.models import Condition, Status, TradeAnnouncement
 from app.domain.books.models import Book, Edition, Genre, Language
@@ -43,12 +43,11 @@ def db_session() -> Generator[Session, None, None]:
 @pytest.fixture
 def client(db_session: Session) -> Generator[TestClient, None, None]:
     """Provide a TestClient with DB dependency overridden to use test DB."""
-    app = FastAPI()
-    app.include_router(users_router)
-
+    
     def override_get_db() -> Generator[Session, None, None]:
         yield db_session
 
+    # Injetamos o banco temporário no seu APP DE VERDADE
     app.dependency_overrides[get_db] = override_get_db
     try:
         with TestClient(app) as test_client:

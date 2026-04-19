@@ -5,7 +5,7 @@ class TestCreateBook:
             json={
                 "title": "The Great Gatsby",
                 "author": "F. Scott Fitzgerald",
-                "genre": "Fiction",
+                "genre": "Romance",
                 "synopsis": "A novel set in the Roaring Twenties."
             }
         )
@@ -17,7 +17,7 @@ class TestCreateBook:
         assert "bookId" in data
         
 
-    def test_create_book_dados_invalid_data(client):
+    def test_create_book_dados_invalid_data(self, client):
         # falta coisas como title e genre tem um valor que não existe no Enum
         payload_ruim = {
             "author": "F. Scott Fitzgerald",
@@ -27,7 +27,7 @@ class TestCreateBook:
 
         response = client.post("/api/v1/books", json=payload_ruim)
 
-        assert response.statuss_code == 422
+        assert response.status_code == 422
         
         erros = response.json()["detail"]
         campos_com_erro = [erro["loc"][-1] for erro in erros]
