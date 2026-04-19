@@ -376,8 +376,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
 
-            onPressed: isSaving? null: null, //E EXCLUIR ESSA
-              // onPressed: isSaving ? null : _saveBook, // ESPERAR PRA DESCOMENTAR
+              onPressed: isSaving ? null : _saveBook, 
 
               child: isSaving
                   ? const SizedBox(
@@ -391,23 +390,23 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
           const SizedBox(height: 12),
 
-          /// cancel button // DESCOMENTAR DPS
-          // SizedBox(
-          //   width: double.infinity,
-          //   child: TextButton(
-          //     onPressed: () { //DESCOMENAR QNDO O FELTRIN FIZER O MERGE
-          //       Navigator.pop(context, false);
-          //     },
+          // cancel button 
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: () { 
+                Navigator.pop(context, false);
+              },
 
-          //     child: const Text(
-          //       "Cancelar",
-          //       style: TextStyle(
-          //         fontWeight: FontWeight.w600,
-          //         fontSize: 16,
-          //       ),
-          //     ),
-          //   ),
-          // ),
+              child: const Text(
+                "Cancelar",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
