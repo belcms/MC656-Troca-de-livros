@@ -116,6 +116,20 @@ class _BookCreationPageState extends State<BookCreationPage> {
     if (success) {
       // Volta para a tela anterior se salvou com sucesso
       DefaultTabController.of(context).animateTo(0); // Volta para a primeira aba (home)
+      // Limpa os campos do formulário para a próxima criação
+      vm.titleController.clear();
+      vm.authorController.clear();
+      vm.publisherController.clear();
+      vm.yearController.clear();
+      vm.pagesController.clear();
+      vm.synopsisController.clear();
+      vm.descriptionController.clear();
+      vm.condition = "Novo";
+      vm.genre = "";
+      vm.language = "";
+      vm.status = "Disponível";
+      vm.condition = "Muito bom";
+      _imagemCapaUrl = null; 
     }
   }
 
@@ -360,7 +374,6 @@ class _BookCreationPageState extends State<BookCreationPage> {
           ),
           const SizedBox(height: 10),
           _card(
-            // TODO: [ViewModel] Crie TextEditingController para a description
             _multiline(vm.descriptionController, "Sua descrição do anúncio..."),
           ),
 
@@ -375,7 +388,7 @@ class _BookCreationPageState extends State<BookCreationPage> {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              onPressed: isSaving ? null : _saveBook,
+              onPressed: isSaving ? null : _saveBook, //o isSaving desabilita o botão e mostra o loading enquanto salva
               child: isSaving
                   ? const SizedBox(
                       width: 20,
@@ -393,14 +406,12 @@ class _BookCreationPageState extends State<BookCreationPage> {
     );
   }
 
-  // --- MÉTODOS AUXILIARES (Mesmos da edição) ---
 
   Widget _statusChip(String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: ChoiceChip(
         label: Text(value),
-        // TODO: [ViewModel] Crie variável String status (ex: default "Disponível")
         selected: vm.status == value,
         selectedColor: const Color(0xFF416956),
         labelStyle: TextStyle(
@@ -408,7 +419,6 @@ class _BookCreationPageState extends State<BookCreationPage> {
         ),
         onSelected: (_) {
           setState(() {
-            // TODO: [ViewModel] Crie método setStatus(String val)
             vm.setStatus(value);
           });
         },
@@ -419,12 +429,10 @@ class _BookCreationPageState extends State<BookCreationPage> {
   Widget _condition(String value) {
     return RadioListTile<String>(
       value: value,
-      // TODO: [ViewModel] Crie variável String condition (ex: default "Muito bom")
       groupValue: vm.condition,
       contentPadding: EdgeInsets.zero,
       onChanged: (v) {
         setState(() {
-          // TODO: [ViewModel] Crie método setCondition(String val)
           vm.setCondition(v!);
         });
       },
