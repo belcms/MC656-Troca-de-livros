@@ -25,18 +25,59 @@ class AnnouncementService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return AnnouncementDetail.fromJson(data);
-      }
-      else if (response.statusCode == 404) {
+      } else if (response.statusCode == 404) {
         throw Exception('Anúncio não encontrado.');
-      } 
-      else {
+      } else {
         throw Exception('Falha ao carregar anúncio (Erro ${response.statusCode}).');
       }
-    } 
-    catch (e) {
+    } catch (e) {
       throw Exception('Erro de conexão: Não foi possível acessar o servidor.');
     }
   }
+
+  static Future<Map<String, dynamic>?> fetchAnnouncementDetailsRaw(String id) async {
+  try {
+    final url = Uri.parse('${ApiClient.baseUrl}/api/v1/announcements/details/$id');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else if (response.statusCode == 404) {
+      throw Exception('Anúncio não encontrado.');
+    } else {
+      throw Exception('Falha ao carregar anúncio (Erro ${response.statusCode}).');
+    }
+  } catch (e) {
+    throw Exception('Erro de conexão: Não foi possível acessar o servidor.');
+  }
+}
+
+  static Future<bool> updateAnnouncement({
+    required String id,
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiClient.baseUrl}/api/v1/books/$id');
+
+      print('UPDATE URL: $url');
+      print('UPDATE BODY: ${jsonEncode(body)}');
+
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      print('UPDATE STATUS: ${response.statusCode}');
+      print('UPDATE RESPONSE: ${response.body}');
+
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      print('UPDATE ERROR: $e');
+      return false;
+    }
+  }
+
 
 
   /// Fetches a paginated list of available announcements for the main feed.
@@ -55,6 +96,7 @@ class AnnouncementService {
   }) async {
     try {
       final url = Uri.parse('${ApiClient.baseUrl}/api/v1/announcements/feed')
+
           .replace(
             queryParameters: {
               'limit': limit.toString(),

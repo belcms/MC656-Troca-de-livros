@@ -3,10 +3,12 @@ import 'book_edition_viewmodel.dart';
 
 class BookEditionPage extends StatefulWidget {
   final String id;
+  final BookEditionViewModel? viewModel;
 
   const BookEditionPage({
     super.key,
     required this.id,
+    this.viewModel,
   });
 
   @override
@@ -14,11 +16,20 @@ class BookEditionPage extends StatefulWidget {
 }
 
 class _BookEditionPageState extends State<BookEditionPage> {
-  final vm = BookEditionViewModel();
+  late final BookEditionViewModel vm;
 
   bool isLoading = true;
   bool hasError = false;
   bool isSaving = false;
+
+  /// called when the screen is created
+  /// loads book data from backend using the id
+  @override
+  void initState() {
+    super.initState();
+    vm = widget.viewModel ?? BookEditionViewModel();
+    _loadBook();
+  }
 
 // change the color of book status
   Color _statusColor(String value) {
@@ -35,13 +46,6 @@ class _BookEditionPageState extends State<BookEditionPage> {
       default:
         return const Color(0xFF24523C);
     }
-  }
-  /// called when the screen is created
-  /// loads book data from backend using the id
-  @override
-  void initState() {
-    super.initState();
-    _loadBook();
   }
 
   /// fetches book data from server

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'book_model.dart';
 import '../services/announcement_service.dart';
+import '../book_details/announcement_detail_model.dart';
 
 /// defines the contract used by the viewmodel to communicate with the service layer
 abstract class AnnouncementServiceInterface {
-
   /// fetches announcement details by id
   /// returns the json map or null if something goes wrong
   Future<Map<String, dynamic>?> fetchAnnouncementDetails(String id);
@@ -20,13 +20,13 @@ abstract class AnnouncementServiceInterface {
 /// adapts the real service to the interface used by the viewmodel
 class AnnouncementServiceAdapter implements AnnouncementServiceInterface {
 
+
   /// calls the service method that fetches announcement details
+
   @override
   Future<Map<String, dynamic>?> fetchAnnouncementDetails(String id) {
-
-    return AnnouncementService.fetchAnnouncementDetails(id);
+    return AnnouncementService.fetchAnnouncementDetailsRaw(id);
   }
-
   /// calls the service method that updates an announcement
   @override
   Future<bool> updateAnnouncement({
@@ -72,20 +72,14 @@ class BookEditionViewModel {
   /// loads announcement data from backend
   /// fills controllers and local state with returned values
   Future<bool> loadFromServer(String id) async {
-
     final data = await service.fetchAnnouncementDetails(id);
 
-    /// returns false if backend does not return data
     if (data == null) {
-
       return false;
-
     }
 
-    /// converts json into book model
     final book = Book.fromJson(data);
 
-    /// fills text fields with current book values
     titleController.text = book.title;
     authorController.text = book.author;
     publisherController.text = book.publisher;
@@ -94,7 +88,6 @@ class BookEditionViewModel {
     synopsisController.text = book.synopsis;
     descriptionController.text = book.description;
 
-    /// sets defaults in case any field comes empty
     genre = book.genre.isEmpty ? "Romance" : book.genre;
     language = book.language.isEmpty ? "Português" : book.language;
     status = book.status.isEmpty ? "Disponível" : book.status;
@@ -102,7 +95,6 @@ class BookEditionViewModel {
     coverUrl = book.coverUrl;
 
     return true;
-
   }
 
   /// updates selected announcement status

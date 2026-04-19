@@ -5,6 +5,8 @@ import '../services/my_books_service.dart';
 import '../services/user_service.dart';
 import 'my_book_card.dart';
 import 'my_books_model.dart';
+import '../book_edition/book_edition_screen.dart';
+
 
 /// Main page for the My Books feature.
 ///
@@ -147,9 +149,14 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
                         book.realPhotoUrl ??
                         'https://via.placeholder.com/300x400',
                     status: book.status,
-                    onEdit: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Edit tapped: ${book.title}')),
+                    onEdit: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BookEditionPage(
+                            id: book.id,
+                          ),
+                        ),
                       );
                     },
                   ),
