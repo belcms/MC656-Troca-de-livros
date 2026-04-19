@@ -30,11 +30,11 @@ class AnnouncementService {
     try {
       final url = Uri.parse('${ApiClient.baseUrl}/api/v1/announcements/feed')
           .replace(
-        queryParameters: {
-          'limit': limit.toString(),
-          'offset': offset.toString(),
-        },
-      );
+            queryParameters: {
+              'limit': limit.toString(),
+              'offset': offset.toString(),
+            },
+          );
 
       final response = await http.get(url);
 
@@ -60,9 +60,7 @@ class AnnouncementService {
 
       final response = await http.put(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
 
@@ -72,6 +70,63 @@ class AnnouncementService {
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
       print('UPDATE ERROR: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> createAnnouncement({
+    required Map<String, dynamic> body, required String userId,
+  }) async {
+    try {
+      // cria book
+      final bookUrl = Uri.parse('${ApiClient.baseUrl}/api/v1/books');
+      final bookResponse = await http.post(
+        bookUrl,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+      if(bookResponse.statusCode != 201 && bookResponse.statusCode != 200) return false;
+      
+      // cria edition
+      final editionUrl = Uri.parse('${ApiClient.baseUrl}/api/v1/editions/${jsonDecode(bookResponse.body)["bookId"]}');
+      final editionResponse = await http.post(
+        editionUrl,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+      if(editionResponse.statusCode != 201 && editionResponse.statusCode != 200) return false;
+
+      // cria announcement
+      final announcementUrl = Uri.parse(
+        '${ApiClient.baseUrl}/api/v1/announcements/d9490809-09b7-4bf9-8165-56db8d45c32c',
+      );
+
+      body["editionId"] = jsonDecode(editionResponse.body)["editionId"];
+      final announcementResponse = await http.post(
+        announcementUrl,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+      if(announcementResponse.statusCode != 201 && announcementResponse.statusCode != 200) return false;
+
+    } catch (e) {
+      print('CREATE ERROR: $e');
+      return false;
+    }
+    return true;
+  }
+
+  static Future<bool> setDummyData() async {
+    try {
+      final url = Uri.parse('${ApiClient.baseUrl}/create-dummy-data');
+      final response = await http.post(url);
+
+      print('DUMMY STATUS: ${response.statusCode}');
+      print('DUMMY BODY: ${response.body}');
+
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      print('DUMMY ERROR: $e');
       return false;
     }
   }

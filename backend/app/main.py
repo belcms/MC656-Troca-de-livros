@@ -161,7 +161,6 @@ def create_dummy_data(db: Session = Depends(get_db)):
         "announcement_ids": [announcement1.id, announcement2.id]
     }
 
-
 @app.get("/api/v1/books/details/{id}")
 def get_book_details(id: str, db: Session = Depends(get_db)):
     announcement = (
@@ -234,6 +233,57 @@ def update_book(
 
     return {"message": "Book updated successfully"}
 
+@app.post("/api/v1/books")
+def create_book(body: dict = Body(...), db: Session = Depends(get_db),):
+    #Criar o livro (e adiciona no banco)
+    book = books_models.Book(
+        title=body["title"],
+        author=body["author"],
+        genre=map_genre(body["genre"]),
+        synopsis=body["synopsis"]
+    )
+
+    db.add(book)
+    db.commit()
+    db.refresh(book)
+
+    return {"message": "Book created successfully", "bookId": book.id}
+
+@app.post("/api/v1/editions/{book_id}")
+def create_edition(book_id: str, body: dict = Body(...), db: Session = Depends(get_db)):
+    #Criar a edição (e adiciona no banco)
+    edition = books_models.Edition(
+        book_id=book_id,
+        publisher=body["publisher"],
+        publish_year=int(body["year"]) if body.get("year") else None,
+        number_of_pages=int(body["pages"]),
+        language=map_language(body["language"])
+    )
+
+    db.add(edition)
+    db.commit()
+    db.refresh(edition)
+
+    return {"message": "Edition created successfully",
+            "editionId": edition.id}
+
+@app.post("/api/v1/announcements/{user_id}")
+def create_announcement(user_id: str, body: dict = Body(...), db: Session = Depends(get_db)):
+    #Criar o anúncio (e adiciona no banco)
+    announcement = announcements_models.TradeAnnouncement(
+        user_id=user_id,
+        edition_id=body["editionId"],
+        real_photo_url=body["coverUrl"],
+        condition=map_condition(body["condition"]),
+        description=body["description"],
+        status=map_status(body["status"])
+    )
+
+    db.add(announcement)
+    db.commit()
+    db.refresh(announcement)
+
+    return {"message": "Announcement created successfully"}
 
 @app.get("/")
 def read_root():
