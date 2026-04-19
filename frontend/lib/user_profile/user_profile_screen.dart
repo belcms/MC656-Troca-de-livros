@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../my_books/my_books_screen.dart';
-import '../my_books/my_books_carousel.dart';
 import '../my_books/my_books_model.dart';
 import '../services/my_books_service.dart';
 import '../services/user_service.dart';
+
+import '../book_details/announcement_detail_screen.dart';
+import '../book_edition/book_edition_screen.dart';
+import '../my_books/my_book_card.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -31,6 +34,20 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       return books ?? [];
     }
     return [];
+  }
+  Future<void> _openEditBook(String id) async {
+    final updated = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BookEditionPage(id: id),
+      ),
+    );
+
+    if (updated == true) {
+      setState(() {
+        _booksFuture = _loadInitialBooks();
+      });
+    }
   }
 
   Widget _buildTopHeader() {
@@ -139,7 +156,39 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           );
         }
 
-        return MyBooksCarousel(books: snapshot.data!);
+        final books = snapshot.data!;
+
+        return SizedBox(
+          height: 385,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            scrollDirection: Axis.horizontal,
+            itemCount: books.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 14),
+            itemBuilder: (context, index) {
+              final book = books[index];
+
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          AnnouncementDetailScreen(announcementId: book.id),
+                    ),
+                  );
+                },
+                child: MyBookCard(
+                  title: book.title,
+                  publishYear: book.publishYear,
+                  photo: book.realPhotoUrl ?? 'https://via.placeholder.com/300x400',
+                  status: book.status,
+                  onEdit: () => _openEditBook(book.id),
+                ),
+              );
+            },
+          ),
+        );
       },
     );
   }
