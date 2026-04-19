@@ -33,19 +33,14 @@ class AnnouncementDetailScreen extends StatefulWidget {
   /// Unique identifier of the announcement to be displayed.
   final String announcementId;
 
-  const AnnouncementDetailScreen({
-    super.key,
-    required this.announcementId,
-  });
+  const AnnouncementDetailScreen({super.key, required this.announcementId});
 
   @override
   State<AnnouncementDetailScreen> createState() =>
       _AnnouncementDetailScreenState();
 }
 
-class _AnnouncementDetailScreenState
-    extends State<AnnouncementDetailScreen> {
-
+class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   /// Future that holds the announcement data retrieved from the API.
   ///
   /// This is initialized in `initState` and reused by the `FutureBuilder`
@@ -57,15 +52,14 @@ class _AnnouncementDetailScreenState
     super.initState();
 
     /// Initiates the API request when the screen is first created.
-    _future =
-        AnnouncementService.fetchAnnouncementDetails(widget.announcementId);
+    _future = AnnouncementService.fetchAnnouncementDetails(
+      widget.announcementId,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF6EA),
-
       /// Ensures content is displayed within safe screen boundaries.
       body: SafeArea(
         child: FutureBuilder<AnnouncementDetail?>(
@@ -73,19 +67,21 @@ class _AnnouncementDetailScreenState
 
           /// Builds UI based on the current state of the async operation.
           builder: (context, snapshot) {
-
             /// Loading state
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-
             /// Error state with retry option
             else if (snapshot.hasError) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, color: Colors.red, size: 50),
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 50,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Oops! An error occurred:\n${snapshot.error}',
@@ -96,16 +92,18 @@ class _AnnouncementDetailScreenState
                     ElevatedButton(
                       onPressed: () {
                         setState(() {
-                          _future = AnnouncementService.fetchAnnouncementDetails(widget.announcementId);
+                          _future =
+                              AnnouncementService.fetchAnnouncementDetails(
+                                widget.announcementId,
+                              );
                         });
                       },
                       child: const Text('Try Again'),
-                    )
+                    ),
                   ],
                 ),
               );
             }
-
             /// Empty state
             else if (!snapshot.hasData) {
               return const Center(child: Text("No data found."));
@@ -123,7 +121,6 @@ class _AnnouncementDetailScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   /// Back navigation button
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
@@ -156,9 +153,7 @@ class _AnnouncementDetailScreenState
                   const SizedBox(height: 16),
 
                   /// Book synopsis
-                  _buildDescription(
-                    synopsis: book?.synopsis,
-                  ),
+                  _buildDescription(synopsis: book?.synopsis),
                 ],
               ),
             );
@@ -182,11 +177,7 @@ class _AnnouncementDetailScreenState
         borderRadius: BorderRadius.circular(12),
         child: url != null
             ? Image.network(url, height: 260)
-            : Container(
-                height: 260,
-                width: 160,
-                color: Colors.grey[300],
-              ),
+            : Container(height: 260, width: 160, color: Colors.grey[300]),
       ),
     );
   }
@@ -195,11 +186,7 @@ class _AnnouncementDetailScreenState
   /// - Book title
   /// - Author
   /// - Condition badge (aligned to the right)
-  Widget _buildHeader({
-    String? title,
-    String? author,
-    String? condition,
-  }) {
+  Widget _buildHeader({String? title, String? author, String? condition}) {
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -208,15 +195,12 @@ class _AnnouncementDetailScreenState
             Text(
               title ?? '',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             Text(
               author ?? '',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(color: Colors.grey, fontSize: 14),
             ),
           ],
         ),
@@ -261,14 +245,10 @@ class _AnnouncementDetailScreenState
   }
 
   /// Builds the description section (e.g., book synopsis).
-  Widget _buildDescription({
-    String? synopsis,
-  }) {
+  Widget _buildDescription({String? synopsis}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (synopsis != null) _textBlock("Synopsis", synopsis),
-      ],
+      children: [if (synopsis != null) _textBlock("Synopsis", synopsis)],
     );
   }
 
@@ -308,10 +288,17 @@ class _AnnouncementDetailScreenState
         children: [
           Text(
             "$title:",
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 4),
-          Text(content),
+          Text(
+            content,
+            style: const TextStyle(color: Colors.black, fontSize: 14),
+          ),
         ],
       ),
     );
