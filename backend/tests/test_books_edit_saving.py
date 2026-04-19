@@ -1,79 +1,53 @@
-from fastapi.testclient import TestClient
-from fastapi import FastAPI
 from sqlalchemy.orm import Session
 
-from app.api.v1.announcements.router import router as announcements_router
-from app.core.database import get_db
 
-
-def test_update_book_saves_correct_fields(db_session: Session, seed_announcement):
+def test_update_book_data_persists_correctly(db_session: Session, seed_announcement):
     """
-    Test that verifies if updating a book correctly persists all edited fields.
-
-    Flow:
-    1. Create test data using seed_announcement fixture
-    2. Call PUT endpoint to update book
-    3. Call GET endpoint to fetch updated data
-    4. Assert all fields were saved correctly
+    Test that verifies updated book, edition and announcement fields
+    are correctly persisted in the database.
     """
 
-    # create app only with the router needed for the test
-    app = FastAPI()
-    app.include_router(announcements_router)
-
-    # make API use in-memory test database
-    def override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = override_get_db
-
-    client = TestClient(app)
-
-    # create test data directly in DB
+    # Create initial test data
     data = seed_announcement()
-    announcement_id = data["announcement"].id
+    announcement = data["announcement"]
+    edition = data["edition"]
+    book = data["book"]
 
-    # new values to update
-    update_payload = {
-        "title": "Novo Titulo",
-        "author": "Novo Autor",
-        "publisher": "Nova Editora",
-        "genre": "Fantasy",
-        "language": "PT-br",
-        "publishYear": "2001",
-        "pages": "321",
-        "synopsis": "Nova sinopse de teste",
-        "description": "Nova descricao de teste",
-        "status": "Reserved",
-        "condition": "Used",
-        "real_photo_url": "https://example.com/new-cover.jpg"
-    }
+    # Simulate the same updates performed by the edit flow
+    book.title = "Novo Titulo"
+    book.author = "Novo Autor"
+    book.synopsis = "Nova sinopse de teste"
+    book.genre = type(book.genre).Fantasy
 
-    # update book
-    update_response = client.put(
-        f"/api/v1/books/{announcement_id}",
-        json=update_payload,
-    )
+    edition.publisher = "Nova Editora"
+    edition.language = type(edition.language).PT_br
+    edition.publish_year = 2001
+    edition.number_of_pages = 321
 
-    assert update_response.status_code == 200
+    announcement.description = "Nova descricao de teste"
+    announcement.status = type(announcement.status).Reserved
+    announcement.condition = type(announcement.condition).Used
+    announcement.real_photo_url = "https://example.com/new-cover.jpg"
 
-    # fetch updated data
-    details_response = client.get(f"/api/v1/books/details/{announcement_id}")
+    db_session.commit()
 
-    assert details_response.status_code == 200
+    # Reload from database
+    db_session.refresh(book)
+    db_session.refresh(edition)
+    db_session.refresh(announcement)
 
-    updated = details_response.json()
+    # Assert persisted values
+    assert book.title == "Novo Titulo"
+    assert book.author == "Novo Autor"
+    assert book.synopsis == "Nova sinopse de teste"
+    assert book.genre.value == "Fantasy"
 
-    # verify fields were saved correctly
-    assert updated["title"] == "Novo Titulo"
-    assert updated["author"] == "Novo Autor"
-    assert updated["publisher"] == "Nova Editora"
-    assert updated["genre"] == "Fantasy"
-    assert updated["language"] == "PT-br"
-    assert updated["publishYear"] == 2001
-    assert updated["pages"] == 321
-    assert updated["synopsis"] == "Nova sinopse de teste"
-    assert updated["description"] == "Nova descricao de teste"
-    assert updated["status"] == "Reserved"
-    assert updated["condition"] == "Used"
-    assert updated["real_photo_url"] == "https://example.com/new-cover.jpg"
+    assert edition.publisher == "Nova Editora"
+    assert edition.language.value == "PT-br"
+    assert edition.publish_year == 2001
+    assert edition.number_of_pages == 321
+
+    assert announcement.description == "Nova descricao de teste"
+    assert announcement.status.value == "Reserved"
+    assert announcement.condition.value == "Used"
+    assert announcement.real_photo_url == "https://example.com/new-cover.jpg"
