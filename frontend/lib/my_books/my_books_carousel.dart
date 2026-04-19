@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../book_details/announcement_detail_screen.dart';
 
 import 'my_book_card.dart';
 import 'my_books_model.dart';
@@ -31,16 +32,27 @@ class MyBooksCarousel extends StatelessWidget {
         separatorBuilder: (context, index) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
           final book = books[index];
-          return MyBookCard(
-            title: book.title,
-            publishYear: book.publishYear,
-            photo: book.realPhotoUrl ?? 'https://via.placeholder.com/300x400',
-            status: book.status,
-            onEdit: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Edit tapped: ${book.title}')),
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      AnnouncementDetailScreen(announcementId: book.id),
+                ),
               );
             },
+            child: MyBookCard(
+              title: book.title,
+              publishYear: book.publishYear,
+              photo: book.realPhotoUrl ?? 'https://via.placeholder.com/300x400',
+              status: book.status,
+              onEdit: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Edit tapped: ${book.title}')),
+                );
+              },
+            ),
           );
         },
       ),

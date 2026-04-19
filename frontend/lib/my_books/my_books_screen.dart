@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../book_details/announcement_detail_screen.dart';
 
 import '../services/my_books_service.dart';
 import '../services/user_service.dart';
@@ -129,18 +130,29 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
               final book = books[index];
               return Align(
                 alignment: Alignment.topCenter,
-                child: MyBookCard(
-                  title: book.title,
-                  publishYear: book.publishYear,
-                  photo:
-                      book.realPhotoUrl ??
-                      'https://via.placeholder.com/300x400',
-                  status: book.status,
-                  onEdit: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Edit tapped: ${book.title}')),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            AnnouncementDetailScreen(announcementId: book.id),
+                      ),
                     );
                   },
+                  child: MyBookCard(
+                    title: book.title,
+                    publishYear: book.publishYear,
+                    photo:
+                        book.realPhotoUrl ??
+                        'https://via.placeholder.com/300x400',
+                    status: book.status,
+                    onEdit: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Edit tapped: ${book.title}')),
+                      );
+                    },
+                  ),
                 ),
               );
             },
