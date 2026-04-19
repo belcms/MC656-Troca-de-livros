@@ -187,7 +187,7 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
     final cardMainAxisExtent = screenWidth < 380 ? 375.0 : 385.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2ECE2),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(15, 20, 15, 0),
