@@ -8,7 +8,7 @@ from app.api.v1.announcements.schemas import MyBooksCardResponse
 from app.domain.users import services 
 
 router = APIRouter(
-    prefix="/users",
+    prefix="/api/v1/users",
     tags=["Users"],
 )
 
@@ -26,15 +26,22 @@ def get_users(db: Session = Depends(get_db)):
         summary="Get User Books (Announcements)", 
         description="Retrieves a specialized list of book announcements created by a specific user.")
 def get_user_announcements(user_id: str, db: Session = Depends(get_db)):
-    """
-    Fetch all announcements for a given user.
-    
+    """Return the card list used by the backend My Books flow.
+
+    The endpoint delegates to the users service, which joins announcements,
+    editions, and books to build a lightweight card payload.
+
+    Current behavior:
+        - Returns HTTP 200 with a list of cards.
+        - Returns an empty list when the user has no announcements.
+        - Returns an empty list when user_id does not exist.
+
     Args:
-        user_id (str): The unique identifier of the user to query.
-        db (Session, optional): The database session dependency.
-        
+        user_id: User identifier from path parameters.
+        db: SQLAlchemy session injected by FastAPI.
+
     Returns:
-        List[MyBooksCardResponse]: A list of book cards formatted for the frontend feed.
+        List[MyBooksCardResponse]: Ordered cards for the My Books screen.
     """
     announcements = services.get_user_announcements(db=db, user_id=user_id)
     return announcements

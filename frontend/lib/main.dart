@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'book_details/announcement_detail_screen.dart';
-import 'services/user_service.dart';
 import 'feed/feed_view.dart';
+import 'user_profile/user_profile_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,6 +12,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'My Books',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF416956),
@@ -22,9 +21,42 @@ class MyApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: const Color(0xFFFFF6EA),
         useMaterial3: true,
+        textTheme: const TextTheme(
+          // Page Titles (like 'Meus Livros')
+          headlineLarge: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 34,
+            fontStyle: FontStyle.normal,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+          // 'Disponibilidade'-level headers
+          titleLarge: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 18,
+            fontStyle: FontStyle.normal,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
+          ),
+          // Book Card Titles
+          titleMedium: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 15,
+            fontStyle: FontStyle.normal,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+          // Book Card Year
+          bodyMedium: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
+            fontStyle: FontStyle.normal,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFF727272),
+          ),
+        ),
       ),
-      debugShowCheckedModeBanner: false,
-      home: TelaPrincipal(),
+      home: const TelaPrincipal(),
     );
   }
 }
@@ -43,7 +75,7 @@ class TelaPrincipal extends StatelessWidget {
           surfaceTintColor: Colors.transparent,
         ),
 
-        body: const TabBarView(children: [FeedView(), SegundaTelaTestes()]),
+        body: const TabBarView(children: [FeedView(), UserProfileScreen()]),
 
         // BARRA NO RODAPÉ
         bottomNavigationBar: Container(
@@ -54,64 +86,10 @@ class TelaPrincipal extends StatelessWidget {
             indicatorColor: Colors.cyan,
             tabs: [
               Tab(icon: Icon(Icons.home), text: 'Feed'),
-              Tab(icon: Icon(Icons.settings), text: 'Config'),
+              Tab(icon: Icon(Icons.person), text: 'Perfil'),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-// 3. OUTRA CLASSE APENAS PARA TESTAR A TAB
-class SegundaTelaTestes extends StatefulWidget {
-  const SegundaTelaTestes({super.key});
-
-  @override
-  State<SegundaTelaTestes> createState() => _SegundaTelaTestesState();
-}
-
-class _SegundaTelaTestesState extends State<SegundaTelaTestes> {
-  final TextEditingController _idController = TextEditingController();
-
-  @override
-  void dispose() {
-    _idController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('Teste detalhes do anúncio'),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _idController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'UUID do anúncio',
-            ),
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: () {
-              final id = _idController.text.trim();
-              if (id.isEmpty) return;
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AnnouncementDetailScreen(announcementId: id),
-                ),
-              );
-            },
-            child: const Text('Abrir detalhes'),
-          ),
-        ],
       ),
     );
   }
