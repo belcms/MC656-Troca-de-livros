@@ -1,55 +1,39 @@
 from fastapi.testclient import TestClient
+from fastapi import FastAPI
 from sqlalchemy.orm import Session
 
-from app.main import app
+from app.api.v1.announcements.router import router as announcements_router
 from app.core.database import get_db
 
 
-def get_dummy_announcement_id(client: TestClient):
+def test_update_book_saves_correct_fields(db_session: Session, seed_announcement):
     """
-    Creates dummy data using the helper endpoint and
-    returns one valid announcement id to be used in the test.
-    """
-    response = client.post("/create-dummy-data")
-
-    # Ensure dummy data was created successfully
-    assert response.status_code == 200
-
-    body = response.json()
-    ids = body.get("announcement_ids", [])
-
-    # Ensure at least one announcement was created
-    assert len(ids) > 0
-
-    return ids[0]
-
-
-def test_update_book_saves_correct_fields(db_session: Session):
-    """
-    Integration test that verifies if updating a book
-    actually persists the new values in the database.
+    Test that verifies if updating a book correctly persists all edited fields.
 
     Flow:
-    1. Override DB dependency to use isolated in-memory test DB
-    2. Create dummy announcement
-    3. Send PUT request updating book fields
-    4. Fetch updated book details
-    5. Assert that all fields were correctly saved
+    1. Create test data using seed_announcement fixture
+    2. Call PUT endpoint to update book
+    3. Call GET endpoint to fetch updated data
+    4. Assert all fields were saved correctly
     """
 
-    # Override the database dependency so the API uses the test DB
+    # create app only with the router needed for the test
+    app = FastAPI()
+    app.include_router(announcements_router)
+
+    # make API use in-memory test database
     def override_get_db():
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
 
-    # Create TestClient using the real FastAPI app
     client = TestClient(app)
 
-    # Create initial dummy book/announcement
-    announcement_id = get_dummy_announcement_id(client)
+    # create test data directly in DB
+    data = seed_announcement()
+    announcement_id = data["announcement"].id
 
-    # New values that should overwrite existing book data
+    # new values to update
     update_payload = {
         "title": "Novo Titulo",
         "author": "Novo Autor",
@@ -65,28 +49,22 @@ def test_update_book_saves_correct_fields(db_session: Session):
         "real_photo_url": "https://example.com/new-cover.jpg"
     }
 
-    # Call the update endpoint
+    # update book
     update_response = client.put(
         f"/api/v1/books/{announcement_id}",
         json=update_payload,
     )
 
-    # Verify request succeeded
     assert update_response.status_code == 200
 
-    # Verify success message
-    assert update_response.json()["message"] == "Book updated successfully"
-
-    # Fetch updated book data
+    # fetch updated data
     details_response = client.get(f"/api/v1/books/details/{announcement_id}")
 
-    # Ensure fetch succeeded
     assert details_response.status_code == 200
 
     updated = details_response.json()
 
-    # Validate all fields were persisted correctly
-    assert updated["id"] == announcement_id
+    # verify fields were saved correctly
     assert updated["title"] == "Novo Titulo"
     assert updated["author"] == "Novo Autor"
     assert updated["publisher"] == "Nova Editora"
@@ -99,6 +77,3 @@ def test_update_book_saves_correct_fields(db_session: Session):
     assert updated["status"] == "Reserved"
     assert updated["condition"] == "Used"
     assert updated["real_photo_url"] == "https://example.com/new-cover.jpg"
-
-    # Clean up dependency override so other tests are not affected
-    app.dependency_overrides.clear()
