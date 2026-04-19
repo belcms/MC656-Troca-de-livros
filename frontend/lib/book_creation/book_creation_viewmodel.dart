@@ -1,5 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/book_edition/book_model.dart';
 import '../services/announcement_service.dart';
+
+// 1. Crie a Interface e o Adapter (Igual no Edition)
+abstract class CreationServiceInterface {
+  Future<bool> createAnnouncement({
+    required Map<String, dynamic> body,
+    required String userId,
+  });
+}
+
+class CreationServiceAdapter implements CreationServiceInterface {
+  @override
+  Future<bool> createAnnouncement({
+    required Map<String, dynamic> body,
+    required String userId,
+  }) {
+    return AnnouncementService.createAnnouncement(body: body, userId: userId);
+  }
+}
 
 class BookCreationViewModel {
   final titleController = TextEditingController();
@@ -15,6 +34,11 @@ class BookCreationViewModel {
   String status = "Disponível";
   String condition = "Novo";
 
+  final CreationServiceInterface service;
+
+  BookCreationViewModel({CreationServiceInterface? service})
+      : service = service ?? CreationServiceAdapter();
+
   void setStatus(String value) {
     status = value;
   }
@@ -25,26 +49,35 @@ class BookCreationViewModel {
 
   /// Método chamado ao clicar em "Criar anúncio"
   Future<bool> submit(String? coverUrl, String userId) async {
-    
     // 1. TRADUTORES: Convertem do português da tela para o inglês do Banco
     String mapLanguage() {
       if (language == "Inglês") return "En";
       if (language == "Espanhol") return "Espanhol";
-      return "PT-br"; 
+      return "PT-br";
     }
 
     String mapGenre() {
       switch (genre) {
-        case "Fantasia": return "Fantasy";
-        case "Ficção científica": return "Sci_fic";
-        case "Não ficção": return "Non_fiction";
-        case "Biografia": return "Biography";
-        case "Graphic novel": return "Graphic_novel";
-        case "Terror": return "Horror";
-        case "Autoajuda": return "Self_help";
-        case "Suspense": return "Thriller";
-        case "Acadêmico": return "Education";
-        default: return "Romance";
+        case "Fantasia":
+          return "Fantasy";
+        case "Ficção científica":
+          return "Sci_fic";
+        case "Não ficção":
+          return "Non_fiction";
+        case "Biografia":
+          return "Biography";
+        case "Graphic novel":
+          return "Graphic_novel";
+        case "Terror":
+          return "Horror";
+        case "Autoajuda":
+          return "Self_help";
+        case "Suspense":
+          return "Thriller";
+        case "Acadêmico":
+          return "Education";
+        default:
+          return "Romance";
       }
     }
 
@@ -70,20 +103,21 @@ class BookCreationViewModel {
       "title": titleController.text,
       "author": authorController.text,
       "publisher": publisherController.text,
-      "year": anoFormatado,           // <--- Enviando como Int!
-      "pages": paginasFormatadas,     // <--- Enviando como Int!
+      "year": anoFormatado, // <--- Enviando como Int!
+      "pages": paginasFormatadas, // <--- Enviando como Int!
       "synopsis": synopsisController.text,
       "description": descriptionController.text,
-      "genre": mapGenre(),            // <--- Usando o tradutor de Gênero
-      "language": mapLanguage(),      // <--- Usando o tradutor de Idioma
-      "status": mapStatus(),          // <--- Usando o tradutor de Status
-      "condition": mapCondition(),    // <--- Usando o tradutor de Condição
+      "genre": mapGenre(), // <--- Usando o tradutor de Gênero
+      "language": mapLanguage(), // <--- Usando o tradutor de Idioma
+      "status": mapStatus(), // <--- Usando o tradutor de Status
+      "condition": mapCondition(), // <--- Usando o tradutor de Condição
       "coverUrl": coverUrl ?? "",
     };
 
     try {
-      final sucesso = await AnnouncementService.createAnnouncement(
-        body: novoLivro, userId: userId
+      final sucesso = await service.createAnnouncement(
+        body: novoLivro,
+        userId: userId,
       );
 
       return sucesso;
@@ -92,6 +126,7 @@ class BookCreationViewModel {
       return false;
     }
   }
+
   /// Limpeza de memória
   void dispose() {
     titleController.dispose();
