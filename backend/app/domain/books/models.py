@@ -3,6 +3,7 @@ import enum
 from sqlalchemy import Enum as SQLAlchemyEnum, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+from pydantic import BaseModel
 
 class Genre(str, enum.Enum):
     Fantasy = "Fantasy"
@@ -45,3 +46,12 @@ class Edition(Base):
     book = relationship("Book", back_populates="editions")
     announcements = relationship("TradeAnnouncement", back_populates="edition")
 
+
+
+#pydantic models
+class BookPydantic(BaseModel):
+    title: str
+    author: str
+    genre: Genre
+    synopsis: str
+    

@@ -98,7 +98,7 @@ class AnnouncementService {
 
       // cria announcement
       final announcementUrl = Uri.parse(
-        '${ApiClient.baseUrl}/api/v1/announcements/d9490809-09b7-4bf9-8165-56db8d45c32c',
+        '${ApiClient.baseUrl}/api/v1/announcements/$userId',
       );
 
       body["editionId"] = jsonDecode(editionResponse.body)["editionId"];

@@ -5,6 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.domain.books import models as books_models
 from app.domain.users import models as users_models
 from app.domain.announcements import models as announcements_models
+from app.domain.books import schemas as books_schemas
+from app.domain.announcements import schemas as announcements_schemas
+from app.domain.announcements import models as announcements_models
 from app.core.database import engine, Base, get_db
 from app.domain.users.router import router as users_router
 
@@ -233,57 +236,45 @@ def update_book(
 
     return {"message": "Book updated successfully"}
 
-@app.post("/api/v1/books")
-def create_book(body: dict = Body(...), db: Session = Depends(get_db),):
-    #Criar o livro (e adiciona no banco)
-    book = books_models.Book(
-        title=body["title"],
-        author=body["author"],
-        genre=map_genre(body["genre"]),
-        synopsis=body["synopsis"]
-    )
+@app.post("/api/v1/books", status_code=201)
+def create_book(body: books_schemas.BookPydantic, db: Session = Depends(get_db),):
+    
+    #transforma o body que está em um obj pydantic em um modelo do SQLAlchemy para persistir no banco
+    book = books_models.Book(**body.model_dump(exclude={"id"}))
 
     db.add(book)
     db.commit()
     db.refresh(book)
 
-    return {"message": "Book created successfully", "bookId": book.id}
+    return {"data": book,
+            "message": "Book created successfully",
+             "bookId": book.id}
 
-@app.post("/api/v1/editions/{book_id}")
-def create_edition(book_id: str, body: dict = Body(...), db: Session = Depends(get_db)):
-    #Criar a edição (e adiciona no banco)
-    edition = books_models.Edition(
-        book_id=book_id,
-        publisher=body["publisher"],
-        publish_year=int(body["year"]) if body.get("year") else None,
-        number_of_pages=int(body["pages"]),
-        language=map_language(body["language"])
-    )
+@app.post("/api/v1/editions/{book_id}", status_code=201)
+def create_edition(book_id: str, body: books_schemas.EditionPydantic, db: Session = Depends(get_db)):
+    
+    #transforma o body que está em um obj pydantic em um modelo do SQLAlchemy para persistir no banco
+    edition  = books_models.Edition(**body.model_dump(exclude={"id", "book_id"}), book_id=book_id)
 
     db.add(edition)
     db.commit()
     db.refresh(edition)
 
-    return {"message": "Edition created successfully",
+    return {"data": edition,
+            "message": "Edition created successfully",
             "editionId": edition.id}
 
-@app.post("/api/v1/announcements/{user_id}")
-def create_announcement(user_id: str, body: dict = Body(...), db: Session = Depends(get_db)):
-    #Criar o anúncio (e adiciona no banco)
-    announcement = announcements_models.TradeAnnouncement(
-        user_id=user_id,
-        edition_id=body["editionId"],
-        real_photo_url=body["coverUrl"],
-        condition=map_condition(body["condition"]),
-        description=body["description"],
-        status=map_status(body["status"])
-    )
+@app.post("/api/v1/announcements/{user_id}", status_code=201)
+def create_announcement(user_id: str, body: announcements_schemas.TradeAnnouncementPydantic, db: Session = Depends(get_db)):
+    
+    #transforma o body que está em um obj pydantic em um modelo do SQLAlchemy para persistir no banco
+    announcement = announcements_models.TradeAnnouncement(**body.model_dump(exclude={"id", "user_id"}), user_id=user_id) #vantagem, se mudarmos o modelo, não quebra
 
     db.add(announcement)
     db.commit()
     db.refresh(announcement)
 
-    return {"message": "Announcement created successfully"}
+    return {"data": announcement, "message": "Announcement created successfully"}
 
 @app.get("/")
 def read_root():

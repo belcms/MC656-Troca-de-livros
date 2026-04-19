@@ -37,9 +37,9 @@ class TelaPrincipal extends StatelessWidget {
           children: [
             const Center(child: Text("Teste")),
             BookEditionPage(
-              id: '588ee8e1-8aa6-4eed-bf2d-87b17b0710c0',
+              id: 'a7d81cac-9407-49b0-bbb8-a339720c1d8d',
             ), //criado estaticamnete, depois passar o id do anuncio
-            BookCreationPage(userId: 'd9490809-09b7-4bf9-8165-56db8d45c32c'),
+            BookCreationPage(userId: '56cae0e6-ff60-4e63-a971-d951f015c28e'),
           ],
         ),
         bottomNavigationBar: const TabBar(
