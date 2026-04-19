@@ -332,6 +332,9 @@ class _BookEditionPageState extends State<BookEditionPage> {
         label: Text(value),
         selected: vm.status == value,
         selectedColor: const Color(0xFF416956),
+        labelStyle: TextStyle(
+          color: vm.status == value ? Colors.white : Colors.black87,
+        ),
         onSelected: (_) {
           setState(() {
             vm.setStatus(value);

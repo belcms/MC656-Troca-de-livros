@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import 'book_edition/book_edition_screen.dart';
 
@@ -38,7 +37,7 @@ class TelaPrincipal extends StatelessWidget {
           children: [
             const Center(child: Text("Teste")),
             BookEditionPage(
-              id: '9baef69c-5e31-4b29-9159-88bfd4e1da42',
+              id: '588ee8e1-8aa6-4eed-bf2d-87b17b0710c0',
             ), //criado estaticamnete, depois passar o id do anuncio
             BookCreationPage(userId: 'd9490809-09b7-4bf9-8165-56db8d45c32c'),
           ],
