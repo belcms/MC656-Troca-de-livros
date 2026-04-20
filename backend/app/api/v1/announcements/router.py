@@ -15,7 +15,18 @@ router = APIRouter(prefix="/api/v1/announcements", tags=["announcements"])
 
 @router.get("/details/{id}")
 def get_book_details_route(id: str, db: Session = Depends(get_db)):
-    # O teste vai interceptar essa chamada
+    """Retrieve details of a specific announcement by its ID.
+
+        The endpoint delegates to the announcements service to fetch the full 
+        details of a single announcement.
+
+        Args:
+            id: Announcement identifier from path parameters.
+            db: SQLAlchemy session injected by FastAPI.
+
+        Returns:
+            The detailed announcement payload.
+    """
     return get_announcement_details(db, id)
 
 @router.get("/feed", response_model=list[FeedAnnouncementResponse])
@@ -24,10 +35,34 @@ def feed_announcements_route(
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
 ):
-    # O teste vai interceptar essa chamada
+    """Return the feed list used by the main announcements timeline.
+
+    The endpoint delegates to the announcements service to retrieve a paginated
+    list of announcements for the general feed.
+
+    Args:
+        limit: Maximum number of announcements to return. Constrained between 1 and 100.
+        offset: Number of announcements to skip for pagination.
+        db: SQLAlchemy session injected by FastAPI.
+
+    Returns:
+        list[FeedAnnouncementResponse]: A list of announcements for the feed.
+    """
     return get_feed_announcements(db, limit=limit, offset=offset)
 
 @router.post("/{user_id}", status_code=201)
 def create_announcement_route(user_id: str, body: announcements_schemas.TradeAnnouncementPydantic, db: Session = Depends(get_db)):
-    # Aqui usamos o apelido, assim a rota não chama a si mesma!
+    """Create a new trade announcement for a specific user.
+
+    The endpoint delegates to the announcements service to persist a new
+    announcement associated with the given user ID.
+
+    Args:
+        user_id: User identifier from path parameters.
+        body: The payload containing the trade announcement details.
+        db: SQLAlchemy session injected by FastAPI.
+
+    Returns:
+        The created announcement payload with HTTP 201 status.
+    """
     return service_create_announcement(user_id, body, db)

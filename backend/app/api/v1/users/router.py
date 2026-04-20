@@ -14,10 +14,22 @@ router = APIRouter(
 
 @router.get("/")
 def get_users(db: Session = Depends(get_db)):
-    # 1. O Router anota o pedido e passa a "panela" (db) para o Service
+    """Retrieve a list of users.
+
+    The endpoint delegates to the users service to fetch a limited 
+    number of users (currently hardcoded to a limit of 5) from the database.
+
+    Args:
+        db: SQLAlchemy session injected by FastAPI.
+
+    Returns:
+        A list of user payloads to be consumed by the client (e.g., Flutter frontend).
+    """
+    
+    # O Router anota o pedido e passa a "panela" (db) para o Service
     users = services.get_users(db=db, limit=5)
     
-    # 2. O Router pega a resposta do Service e devolve para o garçom (Flutter)
+    # O Router pega a resposta do Service e devolve para o garçom (Flutter)
     return users
 
 @router.get(

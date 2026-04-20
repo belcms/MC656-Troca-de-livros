@@ -1,5 +1,8 @@
 class TestCreateBook:
     def test_create_book(self, client):
+        """
+        It testes the creation of a book with valid data
+        """
         response = client.post(
             "/api/v1/books",
             json={
@@ -18,7 +21,9 @@ class TestCreateBook:
         
 
     def test_create_book_dados_invalid_data(self, client):
-        # falta coisas como title e genre tem um valor que não existe no Enum
+        """
+        It tests the creation of a book with invalid data
+        """
         payload_ruim = {
             "author": "F. Scott Fitzgerald",
             "genre": "Ficção", # Valor que não existe no Enum!

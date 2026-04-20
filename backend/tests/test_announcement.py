@@ -1,6 +1,8 @@
 class TestCreateAnnouncement:
     def test_create_announcement(self, client):
-        #simula requisao pro banco (mockado)
+        """
+        It tests the creation of an announcement
+        """
         response = client.post(
             "/api/v1/announcements/id123",
             json={
@@ -21,7 +23,9 @@ class TestCreateAnnouncement:
         assert data["message"] == "Announcement created successfully"
 
     def test_create_announcement_invalid_data(self,client):
-        # falta coisas como editionId e condition tem um valor que não existe no Enum
+        """
+        It tests the creation of an announcement with invalid data (if it returns 422)
+        """
         payload_ruim = {
             "coverUrl": "http://example.com/photo.jpg",
             "condition": "Novo em Folha", #!!!

@@ -6,6 +6,8 @@ class UserService {
   // Usa o baseUrl do ApiClient
   static final String _usersUrl = '${ApiClient.baseUrl}/api/v1/users';
 
+
+  // Fetch users from the API.
   static Future<List<dynamic>?> fetchUsers() async {
     try {
       final response = await http.get(Uri.parse(_usersUrl));

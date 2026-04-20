@@ -1,5 +1,8 @@
 class TestEdition:
     def test_create_edition(self, client):
+        """
+        It verifies that the creation of an edition is successful
+        """
         bookId = '1'
         payload = {
             "bookId": bookId,
@@ -16,6 +19,9 @@ class TestEdition:
         assert "editionId" in data
     
     def test_create_edition_invalid_data(self, client):
+        """
+        It verifies that the creation of an edition with invalid data fails
+        """
         bookId = '1'
         payload_ruim = {
             "bookId": bookId,

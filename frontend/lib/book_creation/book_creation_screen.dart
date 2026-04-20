@@ -23,7 +23,8 @@ class _BookCreationPageState extends State<BookCreationPage> {
   // Controller temporário só para o pop-up de colar o link
   final _urlCapaController = TextEditingController();
 
-  // Função do Image Picker
+  /// Displays an alert dialog prompting the user to paste a URL for the book cover image.
+  /// Updates the state with the provided URL upon confirmation.
   void _pedirUrlDaImagem() {
     showDialog(
       context: context,
@@ -59,6 +60,9 @@ class _BookCreationPageState extends State<BookCreationPage> {
     );
   }
 
+  /// Displays a bottom sheet with a CupertinoPicker (roulette) for year selection.
+  ///
+  /// [controller] is the text controller that will be updated with the selected year.
   void _mostrarRoletaDeAno(TextEditingController controller) {
     // Gera uma lista de anos: do ano atual descendo até 1900
     final int anoAtual = DateTime.now().year;
@@ -115,6 +119,10 @@ class _BookCreationPageState extends State<BookCreationPage> {
     );
   }
 
+  /// Validates the form fields and initiates the book announcement creation process.
+  ///
+  /// Displays snackbars for validation errors or the final success/failure result.
+  /// If successful, it clears the form and resets the UI state.
   Future<void> _saveBook() async {
     // Validações básicas (exemplo: título e autor não podem ser vazios)
     if (vm.titleController.text.isEmpty) {
@@ -223,6 +231,8 @@ class _BookCreationPageState extends State<BookCreationPage> {
     );
   }
 
+  /// Builds the main scrollable body of the book creation screen, containing
+  /// all the input fields, image picker, status selectors, and the submit button.
   Widget _buildBody() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -476,7 +486,9 @@ class _BookCreationPageState extends State<BookCreationPage> {
     );
   }
 
-
+  /// Builds a selectable [ChoiceChip] widget for the book status.
+  ///
+  /// [value] is the localized status string representing this chip.
   Widget _statusChip(String value) {
     final color = _statusColor(value);
 
@@ -502,6 +514,10 @@ class _BookCreationPageState extends State<BookCreationPage> {
     );
   }
 
+
+  /// Builds a [RadioListTile] for selecting the physical condition of the book.
+  ///
+  /// [value] is the localized condition string representing this radio button.
   Widget _condition(String value) {
     return RadioListTile<String>(
       value: value,
@@ -516,7 +532,11 @@ class _BookCreationPageState extends State<BookCreationPage> {
     );
   }
 
-  // Adicionei keyboardType para melhorar a UX em campos de número
+  /// Builds a standard styled [TextField] for single-line text input.
+  ///
+  /// [controller] manages the text being edited.
+  /// [hint] is the placeholder text displayed when the field is empty.
+  /// [keyboardType] determines the layout of the on-screen keyboard.
   Widget _input(
     TextEditingController controller,
     String hint, {
@@ -540,6 +560,11 @@ class _BookCreationPageState extends State<BookCreationPage> {
     );
   }
 
+  /// Builds a read-only [TextField] specifically tailored for year selection.
+  /// Tapping it triggers the year selection bottom sheet instead of the keyboard.
+  ///
+  /// [controller] manages the text representing the selected year.
+  /// [hint] is the placeholder text displayed when the field is empty.
   Widget _inputAnoSelecionavel(TextEditingController controller, String hint) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 10),
@@ -565,6 +590,10 @@ class _BookCreationPageState extends State<BookCreationPage> {
       );
     }
 
+  /// Builds a multi-line [TextField] suitable for longer text like synopses or descriptions.
+  ///
+  /// [controller] manages the text being edited.
+  /// [hint] is the placeholder text displayed when the field is empty.
   Widget _multiline(TextEditingController controller, String hint) {
     return TextField(
       controller: controller,
@@ -581,6 +610,12 @@ class _BookCreationPageState extends State<BookCreationPage> {
     );
   }
 
+  /// Builds a custom-styled [DropdownButton] wrapped in a container.
+  ///
+  /// [value] is the currently selected item.
+  /// [hint] is the placeholder text displayed when no item is selected.
+  /// [items] is the list of available string options.
+  /// [onChanged] is the callback triggered when a new item is selected.
   Widget _dropdown({
     required String value,
     required String hint,
@@ -608,6 +643,8 @@ class _BookCreationPageState extends State<BookCreationPage> {
     );
   }
 
+  /// Wraps a given [child] widget inside a styled container with a white background,
+  /// rounded corners, and a subtle drop shadow to create a card-like appearance.
   Widget _card(Widget child) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -622,6 +659,10 @@ class _BookCreationPageState extends State<BookCreationPage> {
     );
   }
 
+  /// Builds a rich text widget to display a condition title alongside its description.
+  ///
+  /// [title] is the bolded name of the condition.
+  /// [description] is the lighter text explaining the condition details.
   Widget conditionText(String title, String description) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -642,7 +683,9 @@ class _BookCreationPageState extends State<BookCreationPage> {
     );
   }
 
-  // change the color of book status
+  /// Returns the corresponding [Color] for a given book status string.
+  ///
+  /// [value] is the localized status string used to determine the color.
   Color _statusColor(String value) {
     switch (value) {
       case "Disponível":

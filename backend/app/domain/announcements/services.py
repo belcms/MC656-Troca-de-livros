@@ -148,6 +148,19 @@ def get_feed_announcements(db: Session, limit: int = 20, offset: int = 0):
 
 
 def map_genre(value: str):
+    """
+    Map a string value to the corresponding Genre enum.
+
+    This function takes a genre name as a string and returns the matching
+    `books_models.Genre` enum. If the provided value does not match any
+    known genre, it defaults to `Genre.Romance`.
+
+    Args:
+        value (str): The string representation of the genre.
+
+    Returns:
+        books_models.Genre: The mapped genre enum.
+    """
     mapping = {
         "Fantasy": books_models.Genre.Fantasy,
         "Romance": books_models.Genre.Romance,
@@ -164,6 +177,19 @@ def map_genre(value: str):
 
 
 def map_language(value: str):
+    """
+    Map a string value to the corresponding Language enum.
+
+    This function takes a language name as a string and returns the matching
+    `books_models.Language` enum. If the provided value does not match any
+    known language, it defaults to `Language.PT_br`.
+
+    Args:
+        value (str): The string representation of the language.
+
+    Returns:
+        books_models.Language: The mapped language enum.
+    """
     mapping = {
         "PT-br": books_models.Language.PT_br,
         "En": books_models.Language.En,
@@ -173,6 +199,19 @@ def map_language(value: str):
 
 
 def map_status(value: str):
+    """
+    Map a string value to the corresponding Status enum.
+
+    This function takes a status name as a string and returns the matching
+    `announcements_models.Status` enum. If the provided value does not match
+    any known status, it defaults to `Status.Available`.
+
+    Args:
+        value (str): The string representation of the status.
+
+    Returns:
+        announcements_models.Status: The mapped status enum.
+    """
     mapping = {
         "Available": announcements_models.Status.Available,
         "Reserved": announcements_models.Status.Reserved,
@@ -182,6 +221,19 @@ def map_status(value: str):
 
 
 def map_condition(value: str):
+    """
+    Map a string value to the corresponding Condition enum.
+
+    This function takes a condition name as a string and returns the matching
+    `announcements_models.Condition` enum. If the provided value does not match
+    any known condition, it defaults to `Condition.New`.
+
+    Args:
+        value (str): The string representation of the condition.
+
+    Returns:
+        announcements_models.Condition: The mapped condition enum.
+    """
     mapping = {
         "New": announcements_models.Condition.New,
         "Good": announcements_models.Condition.Good,
@@ -192,6 +244,20 @@ def map_condition(value: str):
 
 
 def create_dummy_data(db: Session = Depends(get_db)):
+    """
+    Populate the database with initial dummy data for testing purposes.
+
+    This function checks if any trade announcements currently exist in the database.
+    If they do, it returns early. Otherwise, it creates and persists two dummy users,
+    two dummy books, two dummy editions, and two trade announcements linked to them.
+
+    Args:
+        db (Session): The active SQLAlchemy database session. Defaults to `get_db`.
+
+    Returns:
+        dict: A dictionary containing a success or status message and a list
+        of the created (or existing) announcement IDs.
+    """
     existing = db.query(announcements_models.TradeAnnouncement).first()
 
     if existing:
@@ -281,6 +347,24 @@ def create_dummy_data(db: Session = Depends(get_db)):
     }
 
 def get_book_details(id: str, db: Session = Depends(get_db)):
+    """
+    Retrieve detailed information about a book from a specific announcement.
+
+    This function queries the database for a `TradeAnnouncement` by its ID and
+    extracts flattened data spanning the announcement, its related edition, and
+    the core book details.
+
+    Args:
+        id (str): The unique identifier of the trade announcement.
+        db (Session): The active SQLAlchemy database session. Defaults to `get_db`.
+
+    Returns:
+        dict: A flattened dictionary containing combined details of the announcement,
+        book, and edition (e.g., title, author, publisher, status, real_photo_url).
+
+    Raises:
+        HTTPException (404): If no announcement is found with the provided ID.
+    """
     announcement = (
         db.query(announcements_models.TradeAnnouncement)
         .filter(announcements_models.TradeAnnouncement.id == id)
@@ -314,6 +398,25 @@ def update_book(
     body: dict = Body(...),
     db: Session = Depends(get_db),
 ):
+    """
+    Update the details of an existing book, edition, and announcement.
+
+    This function fetches an existing trade announcement by its ID and updates
+    its fields, as well as the fields of the associated edition and book, based
+    on the provided dictionary payload. It uses mapping functions to safely
+    convert string values to enums where necessary.
+
+    Args:
+        id (str): The unique identifier of the trade announcement to update.
+        body (dict): A dictionary containing the fields and values to update.
+        db (Session): The active SQLAlchemy database session. Defaults to `get_db`.
+
+    Returns:
+        dict: A dictionary containing a success message.
+
+    Raises:
+        HTTPException (404): If no announcement is found with the provided ID.
+    """
     announcement = (
         db.query(announcements_models.TradeAnnouncement)
         .filter(announcements_models.TradeAnnouncement.id == id)
@@ -350,7 +453,21 @@ def update_book(
     return {"message": "Book updated successfully"}
 
 def create_book(body: books_schemas.BookPydantic, db: Session = Depends(get_db),):
-    
+    """
+    Create a new book record in the database.
+
+    This function accepts a Pydantic model containing book data, converts it into
+    an SQLAlchemy model, and persists it to the database.
+
+    Args:
+        body (books_schemas.BookPydantic): The validated Pydantic model containing
+            the book data.
+        db (Session): The active SQLAlchemy database session. Defaults to `get_db`.
+
+    Returns:
+        dict: A dictionary containing the created SQLAlchemy book object, a success
+        message, and the newly generated book ID.
+    """
     #transforma o body que está em um obj pydantic em um modelo do SQLAlchemy para persistir no banco
     book = books_models.Book(**body.model_dump(exclude={"id"}))
 
@@ -363,8 +480,24 @@ def create_book(body: books_schemas.BookPydantic, db: Session = Depends(get_db),
              "bookId": book.id}
 
 def create_edition(book_id: str, body: books_schemas.EditionPydantic, db: Session = Depends(get_db)):
-    
+    """
+    Create a new edition record linked to a specific book.
+
+    This function accepts a Pydantic model containing edition data, links it to
+    the provided book ID, converts it into an SQLAlchemy model, and persists it.
+
+    Args:
+        book_id (str): The unique identifier of the book this edition belongs to.
+        body (books_schemas.EditionPydantic): The validated Pydantic model containing
+            the edition data.
+        db (Session): The active SQLAlchemy database session. Defaults to `get_db`.
+
+    Returns:
+        dict: A dictionary containing the created SQLAlchemy edition object, a success
+        message, and the newly generated edition ID.
+    """
     #transforma o body que está em um obj pydantic em um modelo do SQLAlchemy para persistir no banco
+    
     edition  = books_models.Edition(**body.model_dump(exclude={"id", "book_id"}), book_id=book_id)
 
     db.add(edition)
@@ -376,7 +509,23 @@ def create_edition(book_id: str, body: books_schemas.EditionPydantic, db: Sessio
             "editionId": edition.id}
 
 def create_announcement(user_id: str, body: announcements_schemas.TradeAnnouncementPydantic, db: Session = Depends(get_db)):
-    
+    """
+    Create a new trade announcement linked to a specific user.
+
+    This function accepts a Pydantic model containing announcement data, links it
+    to the provided user ID, converts it into an SQLAlchemy model, and persists it
+    to the database.
+
+    Args:
+        user_id (str): The unique identifier of the user creating the announcement.
+        body (announcements_schemas.TradeAnnouncementPydantic): The validated Pydantic
+            model containing the announcement data.
+        db (Session): The active SQLAlchemy database session. Defaults to `get_db`.
+
+    Returns:
+        dict: A dictionary containing the created SQLAlchemy announcement object and
+        a success message.
+    """
     #transforma o body que está em um obj pydantic em um modelo do SQLAlchemy para persistir no banco
     announcement = announcements_models.TradeAnnouncement(**body.model_dump(exclude={"id", "user_id"}), user_id=user_id) #vantagem, se mudarmos o modelo, não quebra
 

@@ -35,6 +35,12 @@ class AnnouncementService {
     }
   }
 
+// Fetches the detailed information of a specific announcement.
+// 
+// Makes a GET request to the `/api/v1/announcements/details/{id}` endpoint.
+//
+// The [id] parameter is the unique identifier of the announcement.
+// Returns an [AnnouncementDetail] object if the request is successful (HTTP 200),
   static Future<Map<String, dynamic>?> fetchAnnouncementDetailsRaw(String id) async {
   try {
     final url = Uri.parse('${ApiClient.baseUrl}/api/v1/announcements/details/$id');
@@ -52,6 +58,15 @@ class AnnouncementService {
   }
 }
 
+
+
+// Updates an announcement.
+//
+// Makes a PUT request to the `/api/v1/announcements/{id}` endpoint.
+//
+// The [id] parameter is the unique identifier of the announcement.
+// The [body] parameter contains the updated data for the announcement.
+//
   static Future<bool> updateAnnouncement({
     required String id,
     required Map<String, dynamic> body,
@@ -112,6 +127,13 @@ class AnnouncementService {
       return null;
     }
   }
+
+  //  Creates an announcement.
+  //
+  //  Makes a POST request to the `/api/v1/announcements/{userId}` endpoint.
+  //
+  //  The [body] parameter contains the data for the announcement.
+  //  The [userId] parameter is the unique identifier of the user creating the announcement.
   static Future<bool> createAnnouncement({required Map<String, dynamic> body, required String userId,}) async {
     try {
       // cria book
@@ -152,6 +174,8 @@ class AnnouncementService {
     return true;
   }
 
+
+  // Sets dummy data in the backend.
   static Future<bool> setDummyData() async {
     try {
       final url = Uri.parse('${ApiClient.baseUrl}/create-dummy-data');

@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import '../services/announcement_service.dart';
 
-// 1. Crie a Interface e o Adapter (Igual no Edition)
+/// Abstract interface defining the contract for the announcement creation service.
 abstract class CreationServiceInterface {
+  /// Submits a new announcement payload to the backend for a specific user.
+  ///
+  /// [body] is a map containing the parsed book and announcement data.
+  /// [userId] is the unique identifier of the user creating the announcement.
   Future<bool> createAnnouncement({required Map<String, dynamic> body, required String userId,});
-
 }
 
+/// Concrete implementation of [CreationServiceInterface] that delegates
+/// the creation request to the [AnnouncementService].
 class CreationServiceAdapter implements CreationServiceInterface {
   @override
   Future<bool> createAnnouncement({required Map<String, dynamic> body, required String userId,}) {
@@ -14,6 +19,8 @@ class CreationServiceAdapter implements CreationServiceInterface {
   }
 }
 
+/// ViewModel responsible for managing the state, text controllers, and business
+/// logic of the book creation screen.
 class BookCreationViewModel {
   final titleController = TextEditingController();
   final authorController = TextEditingController();
@@ -32,15 +39,33 @@ class BookCreationViewModel {
 
   BookCreationViewModel({CreationServiceInterface? service}): service = service ?? CreationServiceAdapter();
 
+  /// Updates the current status of the book announcement.
+  ///
+  /// [value] is the localized status string selected by the user.
   void setStatus(String value) {
     status = value;
   }
 
+  /// Updates the physical condition of the book.
+  ///
+  /// [value] is the localized condition string selected by the user.
   void setCondition(String value) {
     condition = value;
   }
 
-  /// Método chamado ao clicar em "Criar anúncio"
+  /// Processes the form data and submits the announcement creation request.
+  ///
+  /// This method performs several steps:
+  /// 1. Maps localized UI strings (Portuguese) to backend enum values (English).
+  /// 2. Parses string inputs for 'year' and 'pages' into integers.
+  /// 3. Constructs the final JSON payload.
+  /// 4. Delegates the network request to the injected service.
+  ///
+  /// [coverUrl] is the optional URL of the uploaded cover image.
+  /// [userId] is the unique identifier of the user creating the announcement.
+  ///
+  /// Returns a Future that resolves to `true` if the announcement was created
+  /// successfully, or `false` if an error occurred.
   Future<bool> submit(String? coverUrl, String userId) async {
     // 1. TRADUTORES: Convertem do português da tela para o inglês do Banco
     String mapLanguage() {
@@ -115,7 +140,8 @@ class BookCreationViewModel {
     }
   }
 
-  /// Limpeza de memória
+  /// Disposes of all text controllers to free up resources and prevent memory leaks.
+  /// This should be called when the ViewModel is destroyed.
   void dispose() {
     titleController.dispose();
     authorController.dispose();
