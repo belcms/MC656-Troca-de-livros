@@ -43,6 +43,6 @@ def read_root():
 def read_item(item_id: int, q: str | None = None):
     return {"item_id": item_id, "q": q}
 
-@app.get("/create-dummy-data")
+@app.post("/create-dummy-data")
 def create_dummy(db: Session = Depends(get_db)):
     return create_dummy_data(db)
