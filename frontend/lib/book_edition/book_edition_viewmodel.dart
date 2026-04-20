@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'book_model.dart';
 import '../services/announcement_service.dart';
-import '../book_details/announcement_detail_model.dart';
 
 /// defines the contract used by the viewmodel to communicate with the service layer
 abstract class AnnouncementServiceInterface {

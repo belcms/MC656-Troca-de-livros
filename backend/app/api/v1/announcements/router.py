@@ -1,59 +1,68 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.domain.announcements.services import get_announcement_details
-from app.api.v1.announcements.schemas import FeedAnnouncementResponse
-from app.domain.announcements.services import get_feed_announcements
 
-# router = APIRouter(prefix="/api/v1/books", tags=["books"])
+from app.api.v1.announcements.schemas import FeedAnnouncementResponse
+import app.domain.announcements.schemas as announcements_schemas
+
+from app.domain.announcements.services import (
+    get_announcement_details,
+    get_feed_announcements,
+    create_announcement as service_create_announcement
+)
 
 router = APIRouter(prefix="/api/v1/announcements", tags=["announcements"])
 
 @router.get("/details/{id}")
-def get_book_details(id: str, db: Session = Depends(get_db)):
-    """
-    Endpoint to retrieve detailed information about a specific trade announcement.
+def get_book_details_route(id: str, db: Session = Depends(get_db)):
+    """Retrieve details of a specific announcement by its ID.
 
-    This route receives an announcement ID as a path parameter and returns
-    its complete details by delegating the logic to `get_announcement_details`.
+        The endpoint delegates to the announcements service to fetch the full 
+        details of a single announcement.
 
-    Args:
-        id (str):
-            The unique identifier of the trade announcement.
+        Args:
+            id: Announcement identifier from path parameters.
+            db: SQLAlchemy session injected by FastAPI.
 
-        db (Session, optional):
-            Database session automatically injected via dependency injection
-            using FastAPI's `Depends(get_db)`.
-
-    Returns:
-        dict:
-            A dictionary containing the full details of the requested
-            trade announcement, including user, edition, and book data.
-
-    Raises:
-        HTTPException (404):
-            If the announcement or any related entity is not found.
+        Returns:
+            The detailed announcement payload.
     """
     return get_announcement_details(db, id)
 
-
-
 @router.get("/feed", response_model=list[FeedAnnouncementResponse])
-def feed_announcements(
+def feed_announcements_route(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
 ):
-    """
-    Retrieves a paginated list of announcements for the main feed.
-    
-    Args: 
-        limit (int, optional): The maximum number of records to return. Defaults to 20.
-        offset (int, optional): The number of records to skip for pagination. Defaults to 0.
-        db (Session): The active database session.
-    
-    Returns: 
-        list[FeedAnnouncementResponse]: A list containing the serialized announcement data 
-        ready to be displayed on the feed UI.
+    """Return the feed list used by the main announcements timeline.
+
+    The endpoint delegates to the announcements service to retrieve a paginated
+    list of announcements for the general feed.
+
+    Args:
+        limit: Maximum number of announcements to return. Constrained between 1 and 100.
+        offset: Number of announcements to skip for pagination.
+        db: SQLAlchemy session injected by FastAPI.
+
+    Returns:
+        list[FeedAnnouncementResponse]: A list of announcements for the feed.
     """
     return get_feed_announcements(db, limit=limit, offset=offset)
+
+@router.post("/{user_id}", status_code=201)
+def create_announcement_route(user_id: str, body: announcements_schemas.TradeAnnouncementPydantic, db: Session = Depends(get_db)):
+    """Create a new trade announcement for a specific user.
+
+    The endpoint delegates to the announcements service to persist a new
+    announcement associated with the given user ID.
+
+    Args:
+        user_id: User identifier from path parameters.
+        body: The payload containing the trade announcement details.
+        db: SQLAlchemy session injected by FastAPI.
+
+    Returns:
+        The created announcement payload with HTTP 201 status.
+    """
+    return service_create_announcement(user_id, body, db)

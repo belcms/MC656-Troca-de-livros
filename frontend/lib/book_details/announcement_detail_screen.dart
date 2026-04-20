@@ -170,14 +170,24 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   /// Builds the cover image section.
   ///
   /// If a valid URL is provided, it displays the image from the network.
-  /// Otherwise, it shows a placeholder container.
+  /// Otherwise, it shows a placeholder image.
   Widget _buildCover(String? url) {
+    // Define a URL padrão caso a fornecida seja inválida
+    const String fallbackUrl = 'https://axiomprint.com/icons/default-squre.jpg';
+    
+    // Verifica se a URL é nula, vazia ou apenas espaços
+    final bool isValidUrl = url != null && url.trim().isNotEmpty && url.startsWith('http');
+
     return Center(
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: url != null
-            ? Image.network(url, height: 260)
-            : Container(height: 260, width: 160, color: Colors.grey[300]),
+        child: Image.network(
+          isValidUrl ? url : fallbackUrl,
+          height: 260,
+          errorBuilder: (context, error, stackTrace) {
+            return Image.network(fallbackUrl, height: 260);
+          },
+        ),
       ),
     );
   }

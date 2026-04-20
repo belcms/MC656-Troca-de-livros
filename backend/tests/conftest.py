@@ -16,12 +16,13 @@ if str(BACKEND_ROOT) not in sys.path:
 
 from app.api.v1.announcements.router import router as announcements_router
 from app.api.v1.users.router import router as users_router
+
+from app.api.v1.books.router import router as books_router
+
 from app.core.database import Base, get_db
 from app.domain.announcements.models import Condition, Status, TradeAnnouncement
 from app.domain.books.models import Book, Edition, Genre, Language
 from app.domain.users.models import User
-
-
 
 @pytest.fixture
 def fake_db():
@@ -29,14 +30,15 @@ def fake_db():
         pass
     return DummyDB()
 
-
 @pytest.fixture
-def app_with_router(fake_db):
+#Usando db_session (banco SQLite em memória) em vez do fake_db vazio
+def app_with_router(db_session: Session):
     app = FastAPI()
     app.include_router(announcements_router)
+    app.include_router(books_router) # ADICIONADO
 
     def override_get_db():
-        yield fake_db
+        yield db_session # Injeta o banco real nos testes
 
     app.dependency_overrides[get_db] = override_get_db
     return app
@@ -86,7 +88,6 @@ def users_client(db_session: Session) -> Generator[TestClient, None, None]:
             yield test_client
     finally:
         app.dependency_overrides.clear()
-
 
 
 @pytest.fixture
