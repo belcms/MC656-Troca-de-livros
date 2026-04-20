@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
-
-import 'book_edition/book_edition_screen.dart';
-
 import 'book_creation/book_creation_screen.dart';
-import 'services/announcement_service.dart';
+import 'feed/feed_view.dart';
+import 'user_profile/user_profile_screen.dart';
+
 
 void main() {
-
-  //run dummy data
-  AnnouncementService.setDummyData();
   runApp(const MyApp());
 }
 
@@ -17,9 +13,52 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: TelaPrincipal(),
+      title: 'My Books',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF416956),
+          brightness: Brightness.light,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFFFF6EA),
+        useMaterial3: true,
+        textTheme: const TextTheme(
+          // Page Titles (like 'Meus Livros')
+          headlineLarge: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 34,
+            fontStyle: FontStyle.normal,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+          // 'Disponibilidade'-level headers
+          titleLarge: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 18,
+            fontStyle: FontStyle.normal,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
+          ),
+          // Book Card Titles
+          titleMedium: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 15,
+            fontStyle: FontStyle.normal,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+          // Book Card Year
+          bodyMedium: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
+            fontStyle: FontStyle.normal,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFF727272),
+          ),
+        ),
+      ),
+      home: const TelaPrincipal(),
     );
   }
 }
@@ -32,22 +71,27 @@ class TelaPrincipal extends StatelessWidget {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: AppBar(),
-        body: TabBarView(
-          children: [
-            const Center(child: Text("Teste")),
-            BookEditionPage(
-              id: 'a7d81cac-9407-49b0-bbb8-a339720c1d8d',
-            ), //criado estaticamnete, depois passar o id do anuncio
-            BookCreationPage(userId: '56cae0e6-ff60-4e63-a971-d951f015c28e'),
-          ],
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
         ),
-        bottomNavigationBar: const TabBar(
-          tabs: [
-            Tab(icon: Icon(Icons.home)),
-            Tab(icon: Icon(Icons.edit)),
-            Tab(icon: Icon(Icons.book)),
-          ],
+
+        body: const TabBarView(children: [FeedView(), UserProfileScreen(), BookCreationPage()]),
+
+        // BARRA NO RODAPÉ
+        bottomNavigationBar: Container(
+          color: Colors.blueGrey[900],
+          child: const TabBar(
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white60,
+            indicatorColor: Colors.cyan,
+            tabs: [
+              Tab(icon: Icon(Icons.home), text: 'Feed'),
+              Tab(icon: Icon(Icons.person), text: 'Perfil'),
+              Tab(icon: Icon(Icons.create), text: "Criar Anúncio",)
+            ],
+          ),
         ),
       ),
     );

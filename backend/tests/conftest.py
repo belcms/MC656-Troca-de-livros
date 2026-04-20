@@ -1,11 +1,6 @@
+import sys
 from pathlib import Path
 from typing import Callable, Dict, Generator
-import sys
-
-# Ensure tests can import the backend package when pytest is invoked from different shells.
-BACKEND_ROOT = Path(__file__).resolve().parents[1]
-if str(BACKEND_ROOT) not in sys.path:
-    sys.path.insert(0, str(BACKEND_ROOT))
 
 import pytest
 from fastapi import FastAPI
@@ -14,11 +9,49 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.main import app as app
+# Make tests independent from invocation directory (e.g., repo root vs backend root).
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
+
+from app.api.v1.announcements.router import router as announcements_router
+from app.api.v1.users.router import router as users_router
+
+from app.api.v1.books.router import router as books_router
+
 from app.core.database import Base, get_db
 from app.domain.announcements.models import Condition, Status, TradeAnnouncement
 from app.domain.books.models import Book, Edition, Genre, Language
 from app.domain.users.models import User
+
+@pytest.fixture
+def fake_db():
+    class DummyDB:
+        pass
+    return DummyDB()
+
+@pytest.fixture
+#Usando db_session (banco SQLite em memória) em vez do fake_db vazio
+def app_with_router(db_session: Session):
+    app = FastAPI()
+    app.include_router(announcements_router)
+    app.include_router(books_router) # ADICIONADO
+
+    def override_get_db():
+        yield db_session # Injeta o banco real nos testes
+
+    app.dependency_overrides[get_db] = override_get_db
+    return app
+
+
+@pytest.fixture
+def client(app_with_router):
+    return TestClient(app_with_router)
+
+
+@pytest.fixture
+def client_no_raise(app_with_router):
+    return TestClient(app_with_router, raise_server_exceptions=False)
 
 
 @pytest.fixture
@@ -41,13 +74,14 @@ def db_session() -> Generator[Session, None, None]:
 
 
 @pytest.fixture
-def client(db_session: Session) -> Generator[TestClient, None, None]:
+def users_client(db_session: Session) -> Generator[TestClient, None, None]:
     """Provide a TestClient with DB dependency overridden to use test DB."""
-    
+    app = FastAPI()
+    app.include_router(users_router)
+
     def override_get_db() -> Generator[Session, None, None]:
         yield db_session
 
-    # Injetamos o banco temporário no seu APP DE VERDADE
     app.dependency_overrides[get_db] = override_get_db
     try:
         with TestClient(app) as test_client:
