@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'book_creation_viewmodel.dart';
+import '../services/user_service.dart';
+import 'package:flutter/cupertino.dart';
 
 class BookCreationPage extends StatefulWidget {
   final String? userId; // A página será carrega com o ID do usuário logado
@@ -57,6 +59,62 @@ class _BookCreationPageState extends State<BookCreationPage> {
     );
   }
 
+  void _mostrarRoletaDeAno(TextEditingController controller) {
+    // Gera uma lista de anos: do ano atual descendo até 1900
+    final int anoAtual = DateTime.now().year;
+    final List<int> anos = List.generate(anoAtual - 1900 + 1, (index) => anoAtual - index);
+
+    // Tenta pegar o ano que já está no controller, ou usa o ano atual como padrão
+    int anoSelecionado = int.tryParse(controller.text) ?? anoAtual;
+    int indexInicial = anos.indexOf(anoSelecionado);
+    if (indexInicial == -1) indexInicial = 0; // fallback de segurança
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      builder: (BuildContext builder) {
+        return SizedBox(
+          height: 250,
+          child: Column(
+            children: [
+              // Barra superior com o botão de "Concluído"
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Concluído', style: TextStyle(color: Color(0xFF416956))),
+                  )
+                ],
+              ),
+              // A Roleta em si
+              Expanded(
+                child: CupertinoPicker(
+                  itemExtent: 40.0, // Altura de cada item na roleta
+                  scrollController: FixedExtentScrollController(initialItem: indexInicial),
+                  onSelectedItemChanged: (int index) {
+                    setState(() {
+                      // Atualiza o TextField automaticamente enquanto gira a roleta
+                      controller.text = anos[index].toString();
+                    });
+                  },
+                  children: anos.map((int ano) {
+                    return Center(
+                      child: Text(
+                        ano.toString(),
+                        style: const TextStyle(fontSize: 20),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _saveBook() async {
     // Validações básicas (exemplo: título e autor não podem ser vazios)
     if (vm.titleController.text.isEmpty) {
@@ -93,9 +151,22 @@ class _BookCreationPageState extends State<BookCreationPage> {
     setState(() {
       isSaving = true;
     });
-
+    // Caso não tenha userId, busca o primeiro usuário.
+    String? currentUserId = widget.userId;
+    if (currentUserId == null) {
+      final users = await UserService.fetchUsers();
+      if (users != null && users.isNotEmpty) {
+        currentUserId = users.first['id'];
+      } else {
+        setState(() { isSaving = false; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro: Nenhum usuário encontrado no banco de dados.')),
+        );
+        return;
+      }
+    }
     // Sugestão: Passe o _imagemCapa como parâmetro para que o ViewModel faça o upload.
-    final success = await vm.submit(_imagemCapaUrl, widget.userId!); // Passa o userId para o ViewModel
+    final success = await vm.submit(_imagemCapaUrl, currentUserId!); // Passa o userId para o ViewModel
 
     if (!mounted) return;
 
@@ -302,10 +373,9 @@ class _BookCreationPageState extends State<BookCreationPage> {
                   children: [
                     Expanded(
                       // TODO: [ViewModel] Crie TextEditingController para o year
-                      child: _input(
+                      child: _inputAnoSelecionavel(
                         vm.yearController,
                         "Ano",
-                        keyboardType: TextInputType.number,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -408,20 +478,26 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
 
   Widget _statusChip(String value) {
+    final color = _statusColor(value);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: ChoiceChip(
+        checkmarkColor: Colors.white,
         label: Text(value),
         selected: vm.status == value,
-        selectedColor: const Color(0xFF416956),
+        selectedColor: vm.status == value ? color : null,
         labelStyle: TextStyle(
-          color: vm.status == value ? Colors.white : Colors.black,
+          color: vm.status == value ? Colors.white : color,
         ),
         onSelected: (_) {
           setState(() {
             vm.setStatus(value);
           });
         },
+                shape: StadiumBorder(
+          side: BorderSide(color: color),
+        ),
       ),
     );
   }
@@ -463,6 +539,31 @@ class _BookCreationPageState extends State<BookCreationPage> {
       ),
     );
   }
+
+  Widget _inputAnoSelecionavel(TextEditingController controller, String hint) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: TextField(
+          controller: controller,
+          readOnly: true, // OBRIGATÓRIO: Impede que o teclado suba!
+          onTap: () {
+            // Quando o usuário tocar no campo, abre a nossa roleta
+            _mostrarRoletaDeAno(controller);
+          },
+          decoration: InputDecoration(
+            hintText: hint,
+            filled: true,
+            fillColor: const Color(0xFFF5F5F5),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            // Um ícone de calendário ou seta indica pro usuário que é um menu
+            suffixIcon: const Icon(Icons.calendar_today, color: Colors.grey, size: 20), 
+          ),
+        ),
+      );
+    }
 
   Widget _multiline(TextEditingController controller, String hint) {
     return TextField(
@@ -539,5 +640,22 @@ class _BookCreationPageState extends State<BookCreationPage> {
         ),
       ),
     );
+  }
+
+  // change the color of book status
+  Color _statusColor(String value) {
+    switch (value) {
+      case "Disponível":
+        return const Color(0xFF24523C);
+
+      case "Negociando":
+        return const Color(0xFFDB8F44);
+
+      case "Trocado":
+        return const Color(0xFF7B2518);
+
+      default:
+        return const Color(0xFF24523C);
+    }
   }
 }

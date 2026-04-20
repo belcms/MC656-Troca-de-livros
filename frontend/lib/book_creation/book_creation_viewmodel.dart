@@ -1,21 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/book_edition/book_model.dart';
 import '../services/announcement_service.dart';
 
 // 1. Crie a Interface e o Adapter (Igual no Edition)
 abstract class CreationServiceInterface {
-  Future<bool> createAnnouncement({
-    required Map<String, dynamic> body,
-    required String userId,
-  });
+  Future<bool> createAnnouncement({required Map<String, dynamic> body, required String userId,});
+
 }
 
 class CreationServiceAdapter implements CreationServiceInterface {
   @override
-  Future<bool> createAnnouncement({
-    required Map<String, dynamic> body,
-    required String userId,
-  }) {
+  Future<bool> createAnnouncement({required Map<String, dynamic> body, required String userId,}) {
     return AnnouncementService.createAnnouncement(body: body, userId: userId);
   }
 }
@@ -36,8 +30,7 @@ class BookCreationViewModel {
 
   final CreationServiceInterface service;
 
-  BookCreationViewModel({CreationServiceInterface? service})
-      : service = service ?? CreationServiceAdapter();
+  BookCreationViewModel({CreationServiceInterface? service}): service = service ?? CreationServiceAdapter();
 
   void setStatus(String value) {
     status = value;
@@ -115,14 +108,9 @@ class BookCreationViewModel {
     };
 
     try {
-      final sucesso = await service.createAnnouncement(
-        body: novoLivro,
-        userId: userId,
-      );
-
+      final sucesso = await service.createAnnouncement(body: novoLivro, userId: userId,);
       return sucesso;
     } catch (e) {
-      print("Erro ao salvar: $e");
       return false;
     }
   }
