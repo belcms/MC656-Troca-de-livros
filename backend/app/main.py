@@ -1,13 +1,13 @@
-from fastapi import FastAPI, Depends, Body, HTTPException
+from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.domain.books import models as books_models
 from app.domain.users import models as users_models
 from app.domain.announcements import models as announcements_models
-from app.domain.books import schemas as books_schemas
-from app.domain.announcements import schemas as announcements_schemas
+
 from app.domain.announcements import models as announcements_models
+from app.domain.announcements.services import create_dummy_data
 # from app.domain.announcements.router import router as announcements_router
 from app.api.v1.announcements.router import router as announcements_router
 from app.core.database import engine, Base, get_db
@@ -42,3 +42,7 @@ def read_root():
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: str | None = None):
     return {"item_id": item_id, "q": q}
+
+@app.get("/create-dummy-data")
+def create_dummy(db: Session = Depends(get_db)):
+    return create_dummy_data(db)
