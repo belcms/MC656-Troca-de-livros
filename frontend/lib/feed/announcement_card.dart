@@ -47,6 +47,7 @@ class AnnouncementCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Center(
+                child: AspectRatio(aspectRatio: 3/4,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8.0),
                   child: Image.network(
@@ -55,10 +56,18 @@ class AnnouncementCard extends StatelessWidget {
                     width: 144,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.broken_image, size: 50);
+                      return Container(
+                        color: const Color(0xFFF1F1F1),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.broken_image_outlined,
+                          size: 36,
+                        ),
+                      );
                     },
                   ),
                 ),
+                )
               ),
 
               const SizedBox(height: 10),
