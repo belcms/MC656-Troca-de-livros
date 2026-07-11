@@ -10,6 +10,7 @@ class MyBookCard extends StatelessWidget {
   final int publishYear;
   final String photo;
   final String status;
+  final String location;
   final VoidCallback? onEdit;
 
   const MyBookCard({
@@ -18,6 +19,7 @@ class MyBookCard extends StatelessWidget {
     required this.publishYear,
     required this.photo,
     required this.status,
+    required this.location,
     this.onEdit,
   });
 
@@ -94,7 +96,16 @@ class MyBookCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text('$publishYear', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
         const SizedBox(height: 2),
-        Text('Santos - SP', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)), // Hardcoded provisoriamente, de acordo com o design fornecido
+Row(
+          children: [
+            const Icon(Icons.location_on, size: 12, color: Colors.black54),
+            const SizedBox(width: 4),
+            Text(
+              location, 
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)
+            ),
+          ],
+        ),
       ],
     );
   }

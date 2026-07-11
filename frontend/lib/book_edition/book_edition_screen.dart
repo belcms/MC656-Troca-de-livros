@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'book_edition_viewmodel.dart';
 import 'package:flutter/cupertino.dart';
+import '../services/location_service.dart';
 
 class BookEditionPage extends StatefulWidget {
   final String id;
@@ -22,6 +23,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
   bool isLoading = true;
   bool hasError = false;
   bool isSaving = false;
+  String _locationInfo = "Buscando localização...";
 
   /// called when the screen is created
   /// loads book data from backend using the id
@@ -55,10 +57,34 @@ class _BookEditionPageState extends State<BookEditionPage> {
     final success = await vm.loadFromServer(widget.id);
 
     if (!mounted) return;
+    if(success && vm.cepController.text.isNotEmpty) {
+      await _buscarLocalizacao(vm.cepController.text);
+    }
 
     setState(() {
       isLoading = false;
       hasError = !success;
+    });
+  }
+
+  Future<void> _buscarLocalizacao(String cep) async {
+    final cleanCep = cep.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanCep.length != 8) return;
+
+    setState(() {
+      _locationInfo = "Buscando localização...";
+    });
+
+    final loc = await LocationService.fetchLocation(cleanCep);
+    if (!mounted) return;
+
+    setState(() {
+      if (loc != null) {
+        final district = loc['district'] ?? "";
+        _locationInfo = "${loc['city']} - ${loc['state']}" + (district.isNotEmpty ? ", $district" : "");
+      } else {
+        _locationInfo = "CEP não encontrado ou inválido.";
+      }
     });
   }
 
@@ -289,6 +315,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
           const SizedBox(height: 20),
 
+
           /// book trade status selector
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -300,7 +327,54 @@ class _BookEditionPageState extends State<BookEditionPage> {
           ),
 
           const SizedBox(height: 20),
+        /// LOCALIZAÇÃO (NOVO BLOCO VISUAL!)
+          const Text(
+            "Localização",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          _card(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: vm.cepController,
+                  keyboardType: TextInputType.number,
+                  maxLength: 8, // Limita o tamanho do CEP
+                  decoration: InputDecoration(
+                    hintText: "CEP",
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    counterText: "", // Esconde o contador 0/8
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (value) {
+                    if (value.length == 8) {
+                      _buscarLocalizacao(value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        _locationInfo,
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
 
+          const SizedBox(height: 20),
           /// book basic information section
           const Text(
             "Sobre o livro",

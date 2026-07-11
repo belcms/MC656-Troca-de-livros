@@ -77,7 +77,7 @@ class TelaPrincipal extends StatelessWidget {
           surfaceTintColor: Colors.transparent,
         ),
 
-        body: const TabBarView(children: [FeedView(), UserProfileScreen(), BookCreationPage()]),
+        body: TabBarView(children: [FeedView(), UserProfileScreen(), BookCreationPage()]),
 
         // BARRA NO RODAPÉ
         bottomNavigationBar: Container(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'book_creation_viewmodel.dart';
 import '../services/user_service.dart';
 import 'package:flutter/cupertino.dart';
+import '../services/location_service.dart';
 
 class BookCreationPage extends StatefulWidget {
   final String? userId; // A página será carrega com o ID do usuário logado
@@ -14,7 +15,7 @@ class BookCreationPage extends StatefulWidget {
 
 class _BookCreationPageState extends State<BookCreationPage> {
   final vm = BookCreationViewModel();
-
+  String _locationInfo = "Digite seu CEP...";
   bool isSaving = false;
 
   // Variável para guardar a URL que o usuário digitar
@@ -22,6 +23,48 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
   // Controller temporário só para o pop-up de colar o link
   final _urlCapaController = TextEditingController();
+
+
+  @override
+    void initState() {
+      super.initState();
+      _carregarUsuarioLogado();
+    }
+
+    // Pega o CEP do usuário atual e faz a busca inicial
+    Future<void> _carregarUsuarioLogado() async {
+      final users = await UserService.fetchUsers();
+      if (users != null && users.isNotEmpty) {
+        final user = users.first; 
+        final cepUser = user['cep_id'] ?? "01001000"; 
+        vm.cepController.text = cepUser;
+        await _buscarLocalizacao(cepUser);
+      }
+    }
+
+    // Faz a requisição ao backend quando o usuário digita 8 números
+    Future<void> _buscarLocalizacao(String cep) async {
+      final cleanCep = cep.replaceAll(RegExp(r'[^0-9]'), '');
+      if (cleanCep.length != 8) return;
+
+      setState(() {
+        _locationInfo = "Buscando localização...";
+      });
+
+      final loc = await LocationService.fetchLocation(cleanCep);
+      if (!mounted) return;
+
+      setState(() {
+        if (loc != null) {
+          final district = loc['district'] ?? "";
+          _locationInfo = "${loc['city']} - ${loc['state']}" + (district.isNotEmpty ? ", $district" : "");
+        } else {
+          _locationInfo = "CEP não encontrado ou inválido.";
+        }
+      });
+    }
+
+
 
   /// Displays an alert dialog prompting the user to paste a URL for the book cover image.
   /// Updates the state with the provided URL upon confirmation.
@@ -314,9 +357,58 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
           const SizedBox(height: 20),
 
+
+          /// LOCALIZAÇÃO
+          const Text(
+            "Localização",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          _card(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: vm.cepController,
+                  keyboardType: TextInputType.number,
+                  maxLength: 8, // Limita o tamanho do CEP
+                  decoration: InputDecoration(
+                    hintText: "CEP",
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    counterText: "", // Esconde o contador 0/8
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (value) {
+                    if (value.length == 8) {
+                      _buscarLocalizacao(value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        _locationInfo,
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+                  
           /// SOBRE
           const Text(
-            "Sobre o livro",
+            "Sobre os livros",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),

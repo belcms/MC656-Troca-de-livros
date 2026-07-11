@@ -183,6 +183,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   publishYear: book.publishYear,
                   photo: book.realPhotoUrl ?? 'https://via.placeholder.com/300x400',
                   status: book.status,
+                  location: book.location,
                   onEdit: () => _openEditBook(book.id),
                 ),
               );

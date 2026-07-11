@@ -46,5 +46,5 @@ def read_item(item_id: int, q: str | None = None):
     return {"item_id": item_id, "q": q}
 
 @app.post("/create-dummy-data")
-def create_dummy(db: Session = Depends(get_db)):
-    return create_dummy_data(db)
+async def create_dummy(db: Session = Depends(get_db)):
+    return await create_dummy_data(db)

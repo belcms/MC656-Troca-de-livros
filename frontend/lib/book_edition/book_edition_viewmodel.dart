@@ -18,39 +18,31 @@ abstract class AnnouncementServiceInterface {
 
 /// adapts the real service to the interface used by the viewmodel
 class AnnouncementServiceAdapter implements AnnouncementServiceInterface {
-
-
   /// calls the service method that fetches announcement details
 
   @override
   Future<Map<String, dynamic>?> fetchAnnouncementDetails(String id) {
     return AnnouncementService.fetchAnnouncementDetailsRaw(id);
   }
+
   /// calls the service method that updates an announcement
   @override
   Future<bool> updateAnnouncement({
     required String id,
     required Map<String, dynamic> body,
   }) {
-
-    return AnnouncementService.updateAnnouncement(
-      id: id,
-      body: body,
-    );
-
+    return AnnouncementService.updateAnnouncement(id: id, body: body);
   }
 }
 
 /// manages the state and logic of the book edition screen
 class BookEditionViewModel {
-
   /// service responsible for backend communication
   final AnnouncementServiceInterface service;
 
   /// allows dependency injection for testing or custom implementations
-  BookEditionViewModel({
-    AnnouncementServiceInterface? service,
-  }) : service = service ?? AnnouncementServiceAdapter();
+  BookEditionViewModel({AnnouncementServiceInterface? service})
+    : service = service ?? AnnouncementServiceAdapter();
 
   /// controllers used to manage form field values
   final titleController = TextEditingController();
@@ -60,6 +52,7 @@ class BookEditionViewModel {
   final pagesController = TextEditingController();
   final synopsisController = TextEditingController();
   final descriptionController = TextEditingController();
+  final cepController = TextEditingController();
 
   /// selected values used in dropdowns and chips
   String genre = "Romance";
@@ -87,6 +80,8 @@ class BookEditionViewModel {
     synopsisController.text = book.synopsis;
     descriptionController.text = book.description;
 
+    cepController.text = data['cep_id'];
+
     genre = book.genre.isEmpty ? "Romance" : book.genre;
     language = book.language.isEmpty ? "Português" : book.language;
     status = book.status.isEmpty ? "Disponível" : book.status;
@@ -98,21 +93,16 @@ class BookEditionViewModel {
 
   /// updates selected announcement status
   void setStatus(String value) {
-
     status = value;
-
   }
 
   /// updates selected book condition
   void setCondition(String value) {
-
     condition = value;
-
   }
 
   /// creates a book object using current form values
   Book buildBook(String id) {
-
     return Book(
       id: id,
 
@@ -129,26 +119,22 @@ class BookEditionViewModel {
       status: status,
       condition: condition,
       coverUrl: coverUrl,
+      cep_id: cepController.text.trim()
     );
   }
 
   /// sends the edited data to backend
   /// returns true if update succeeds
   Future<bool> submit(String id) async {
-
     final book = buildBook(id);
 
-    final ok = await service.updateAnnouncement(
-      id: id,
-      body: book.toJson(),
-    );
+    final ok = await service.updateAnnouncement(id: id, body: book.toJson());
 
     return ok;
   }
 
   /// disposes all controllers to avoid memory leaks
   void dispose() {
-
     titleController.dispose();
     authorController.dispose();
     publisherController.dispose();
@@ -156,6 +142,5 @@ class BookEditionViewModel {
     pagesController.dispose();
     synopsisController.dispose();
     descriptionController.dispose();
-
   }
 }

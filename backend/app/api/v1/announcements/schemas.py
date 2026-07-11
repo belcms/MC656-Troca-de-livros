@@ -41,6 +41,7 @@ class MyBooksCardResponse(BaseModel):
         publish_year: Publication year from the selected edition.
         real_photo_url: Optional URL of the real book photo uploaded by user.
         status: Current trade lifecycle state.
+        location: Location string built from CEP-linked city and state.
     """
 
     id: str
@@ -48,6 +49,7 @@ class MyBooksCardResponse(BaseModel):
     publish_year: int
     real_photo_url: Optional[str]
     status: Status
+    location: str
 
     model_config = ConfigDict(from_attributes=True)
 

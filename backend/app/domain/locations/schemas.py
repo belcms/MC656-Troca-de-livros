@@ -9,6 +9,7 @@ class LocationPydantic(BaseModel):
     city: str
     state: str
     country: str
+    district: Optional[str] = None
     lat: float
     long: float
 

@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import case
 from . import models
+from app.domain.locations.models import location as LocationModel
+import httpx
 from app.domain.announcements.models import TradeAnnouncement, Status
 from app.domain.books.models import Edition, Book
 from app.domain.users.models import User
@@ -41,26 +43,81 @@ def get_user_announcements(db: Session, user_id: str):
     results = (
         db.query(
             TradeAnnouncement.id,
+            TradeAnnouncement.cep_id,
             TradeAnnouncement.real_photo_url,
             TradeAnnouncement.status,
             Book.title,
             Edition.publish_year,
+            LocationModel.city, # Novo
+            LocationModel.state # Novo
         )
         .join(Edition, TradeAnnouncement.edition_id == Edition.id)
         .join(Book, Edition.book_id == Book.id)
+        .outerjoin(LocationModel, TradeAnnouncement.cep_id == LocationModel.cep)
         .filter(TradeAnnouncement.user_id == user_id)
         .order_by(status_order)
         .all()
     )
     
     cards = []
+    # Helper: ensure location exists in DB for a cep; if absent, fetch and persist synchronously
+    def _ensure_location_for_cep(cep_value: str):
+        if not cep_value:
+            return None
+        # check existing
+        loc = db.query(LocationModel).filter(LocationModel.cep == cep_value).first()
+        if loc:
+            return loc
+        # fetch from external API synchronously and persist
+        try:
+            url = f"https://cep.awesomeapi.com.br/json/{cep_value}"
+            with httpx.Client(timeout=5.0) as client:
+                resp = client.get(url)
+            if resp.status_code != 200:
+                return None
+            data = resp.json()
+            new_loc = LocationModel(
+                city=data.get("city"),
+                state=data.get("state"),
+                country='Brasil',
+                district=data.get("district"),
+                lat=data.get("lat"),
+                long=data.get("lng"),
+                cep=data.get("cep").replace("-", "") if data.get("cep") else cep_value,
+            )
+            db.add(new_loc)
+            db.commit()
+            db.refresh(new_loc)
+            return new_loc
+        except Exception:
+            return None
     for row in results:
+        city = getattr(row, 'city', None)
+        state = getattr(row, 'state', None)
+
+        # If location fields are missing but cep_id exists, try to ensure location is persisted
+        if (not city or not state) and getattr(row, 'cep_id', None):
+            loc = _ensure_location_for_cep(getattr(row, 'cep_id'))
+            if loc:
+                city = loc.city
+                state = loc.state
+
+        if city and state:
+            location = f"{city} - {state}"
+        elif city:
+            location = city
+        elif state:
+            location = state
+        else:
+            location = "Localização não informada"
+
         cards.append({
             "id": row.id,
             "title": row.title,
             "publish_year": row.publish_year,
             "real_photo_url": row.real_photo_url,
             "status": row.status,
+            "location": location
         })
         
     return cards

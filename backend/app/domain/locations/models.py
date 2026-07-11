@@ -17,6 +17,9 @@ class location(Base):
     lat = Column(Float)
     long = Column(Float)
 
+    # Relacionamentos reversos
+    users = relationship("User", back_populates="location")
+    announcements = relationship("TradeAnnouncement", back_populates="location")
 
 #pydantic
 class LocationPydantic(BaseModel):

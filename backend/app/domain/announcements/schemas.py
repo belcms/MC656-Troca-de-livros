@@ -8,7 +8,9 @@ class TradeAnnouncementPydantic(BaseModel):
     
     user_id: Optional[str] = None 
     
-    edition_id: str = Field(alias="editionId") 
+    edition_id: str = Field(alias="editionId")
+
+    cep_id: str = Field(alias="cep") 
     
     condition: Condition
     description: str

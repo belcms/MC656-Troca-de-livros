@@ -8,6 +8,7 @@ class MyBooksModel {
   final int publishYear;
   final String? realPhotoUrl;
   final String status;
+  final String location;
 
   MyBooksModel({
     required this.id,
@@ -15,6 +16,7 @@ class MyBooksModel {
     required this.publishYear,
     this.realPhotoUrl,
     required this.status,
+    required this.location,
   });
 
   /// Builds a model instance from backend JSON.
@@ -22,9 +24,12 @@ class MyBooksModel {
     return MyBooksModel(
       id: json['id'] as String,
       title: json['title'] as String,
-      publishYear: json['publish_year'] as int,
+      publishYear: json['publish_year'] is int
+          ? json['publish_year'] as int
+          : int.tryParse(json['publish_year']?.toString() ?? '') ?? 0,
       realPhotoUrl: json['real_photo_url'] as String?,
       status: json['status'] as String,
+      location: (json['location'] as String?) ?? "Localização não informada",
     );
   }
 }
