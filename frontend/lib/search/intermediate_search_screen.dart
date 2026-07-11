@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:frontend/book_details/announcement_detail_screen.dart';
 import 'package:frontend/search/announcement_search_models.dart';
+import 'package:frontend/search/final_search_results_screen.dart';
 import 'package:frontend/services/announcement_service.dart';
 import 'package:frontend/search/widgets/custom_search_bar.dart';
 import 'package:frontend/search/widgets/intermediate_post_result_card.dart';
@@ -58,8 +59,18 @@ class _IntermediateSearchScreenState extends State<IntermediateSearchScreen> {
   }
 
   void _handleSubmitted(String value) {
+    final trimmed = value.trim();
+    if (trimmed.length < 2) {
+      return;
+    }
+
     _debounceTimer?.cancel();
-    _performSearch(value);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FinalSearchResultsScreen(query: trimmed),
+      ),
+    );
   }
 
   void _handleClear() {
@@ -238,7 +249,15 @@ class _IntermediateSearchScreenState extends State<IntermediateSearchScreen> {
                                 width: 260,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    debugPrint('Ver mais resultados');
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            FinalSearchResultsScreen(
+                                              query: _query.trim(),
+                                            ),
+                                      ),
+                                    );
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF416956),
