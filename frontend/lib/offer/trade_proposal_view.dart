@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/book_creation/book_creation_screen.dart';
 import 'offer_proposal_view_model.dart';
 import 'offer_book_model.dart';
 
@@ -100,11 +101,7 @@ class _TradeProposalScreenState extends State<TradeProposalScreen> {
                             ),
                           )
                         else if (_viewModel.availableBooks.isEmpty)
-                          const Center(
-                            child: Text(
-                              "Você não tem livros disponíveis para troca.",
-                            ),
-                          ) // Empty State!
+                          _buildEmptyState(context)
                         else
                           _buildMyBooksGrid(),
 
@@ -316,6 +313,61 @@ class _TradeProposalScreenState extends State<TradeProposalScreen> {
             color: Colors.white,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.library_books_outlined, size: 80, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          const Text(
+            "Nenhum livro disponível",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Você precisa ter pelo menos um livro anunciado na sua estante para poder propor uma troca.",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const BookCreationPage(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: const Text(
+              "Anunciar um livro",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(
+                0xFF6B528B,
+              ), // Usando a cor roxa do seu app
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
