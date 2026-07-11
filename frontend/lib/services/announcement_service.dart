@@ -4,6 +4,7 @@ import 'api_client.dart';
 import '../book_details/announcement_detail_model.dart';
 import '../feed/announcement_filters.dart';
 
+
 /// A service class responsible for handling HTTP requests related to book announcements.
 ///
 /// This class acts as the bridge between the Flutter application and the 
@@ -105,18 +106,18 @@ class AnnouncementService {
   /// Returns a `List<dynamic>` containing the decoded JSON data if successful,
   /// or `null` if the request encounters an error.
   
-static Future<List<dynamic>?> fetchFeedAnnouncements({
-  required String currentUserId,
-  int limit = 20,
-  int offset = 0,
-  AnnouncementFilters filters =
-      const AnnouncementFilters(),
-}) async {
-  try {
-    final queryParameters = <String, dynamic>{
-      'limit': limit.toString(),
-      'offset': offset.toString(),
-    };
+  static Future<List<dynamic>?> fetchFeedAnnouncements({
+    required String currentUserId,
+    int limit = 20,
+    int offset = 0,
+    AnnouncementFilters filters =
+        const AnnouncementFilters(),
+  }) async {
+    try {
+      final queryParameters = <String, dynamic>{
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+      };
 
       if (filters.hasYearFilter) {
         queryParameters['start_year'] =
@@ -139,42 +140,41 @@ static Future<List<dynamic>?> fetchFeedAnnouncements({
       if (filters.maxDistanceKm != null) {
         queryParameters['max_distance_km'] =
             filters.maxDistanceKm.toString();
+
+        queryParameters['current_user_id'] =
+            currentUserId;
       }
 
-      queryParameters['current_user_id'] =
-          currentUserId;
+      final url = Uri.parse(
+        '${ApiClient.baseUrl}'
+        '/api/v1/announcements/feed',
+      ).replace(
+        queryParameters: queryParameters,
+      );
+
+      print('FEED URL: $url');
+
+      final response = await http.get(url);
+
+      print(
+        'FEED STATUS: ${response.statusCode}',
+      );
+
+      print(
+        'FEED RESPONSE: ${response.body}',
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body)
+            as List<dynamic>;
+      }
+
+      return null;
+    } catch (e) {
+      print('FEED ERROR: $e');
+      return null;
     }
-
-    final url = Uri.parse(
-      '${ApiClient.baseUrl}'
-      '/api/v1/announcements/feed',
-    ).replace(
-      queryParameters: queryParameters,
-    );
-
-    print('FEED URL: $url');
-
-    final response = await http.get(url);
-
-    print(
-      'FEED STATUS: ${response.statusCode}',
-    );
-
-    print(
-      'FEED RESPONSE: ${response.body}',
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body)
-          as List<dynamic>;
-    }
-
-    return null;
-  } catch (e) {
-    print('FEED ERROR: $e');
-    return null;
   }
-}
 
   //  Creates an announcement.
   //

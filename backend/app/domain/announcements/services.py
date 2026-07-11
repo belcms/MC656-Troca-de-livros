@@ -14,6 +14,8 @@ import app.domain.books.schemas as books_schemas
 import app.domain.announcements.schemas as announcements_schemas
 from app.api.v1.announcements.schemas import FeedAnnouncementResponse
 from app.api.v1.announcements.schemas import FeedAnnouncementResponse
+from app.domain.locations import models as location_models
+from app.domain.locations.services import _calculate_distance
 
 def get_announcement_details(db: Session, id: str):
     """
