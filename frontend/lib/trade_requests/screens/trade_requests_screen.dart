@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../config/api_config.dart';
 import '../models/trade_request.dart';
-import '../services/mock_trade_request_service.dart';
+import '../services/api_trade_request_service.dart';
 import '../services/trade_request_service.dart';
 import '../widgets/trade_request_card.dart';
 import 'trade_request_details_screen.dart';
@@ -25,7 +26,11 @@ class _TradeRequestsScreenState extends State<TradeRequestsScreen> {
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? MockTradeRequestService();
+    _service = widget.service ??
+        ApiTradeRequestService(
+          baseUrl: ApiConfig.baseUrl,
+          currentUserId: ApiConfig.currentUserId,
+        );
     _loadRequests();
   }
 
@@ -51,6 +56,14 @@ class _TradeRequestsScreenState extends State<TradeRequestsScreen> {
     if (mounted) {
       setState(_loadRequests);
     }
+  }
+
+  @override
+  void dispose() {
+    if (widget.service == null && _service is ApiTradeRequestService) {
+      (_service as ApiTradeRequestService).dispose();
+    }
+    super.dispose();
   }
 
   @override
@@ -81,7 +94,10 @@ class _TradeRequestsScreenState extends State<TradeRequestsScreen> {
                   }
 
                   if (snapshot.hasError) {
-                    return _ErrorState(onRetry: () => setState(_loadRequests));
+                    return _ErrorState(
+                      message: _errorMessage(snapshot.error),
+                      onRetry: () => setState(_loadRequests),
+                    );
                   }
 
                   final requests = snapshot.data ?? const <TradeRequest>[];
@@ -117,6 +133,13 @@ class _TradeRequestsScreenState extends State<TradeRequestsScreen> {
       ),
     );
   }
+
+  String _errorMessage(Object? error) {
+    if (error is TradeRequestServiceException) {
+      return error.message;
+    }
+    return 'Não foi possível carregar as solicitações.';
+  }
 }
 
 class _EmptyState extends StatelessWidget {
@@ -145,8 +168,12 @@ class _EmptyState extends StatelessWidget {
 }
 
 class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.onRetry});
+  const _ErrorState({
+    required this.message,
+    required this.onRetry,
+  });
 
+  final String message;
   final VoidCallback onRetry;
 
   @override
@@ -159,8 +186,8 @@ class _ErrorState extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, size: 56),
             const SizedBox(height: 14),
-            const Text(
-              'Não foi possível carregar as solicitações.',
+            Text(
+              message,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),

@@ -19,16 +19,18 @@ extension OfferStatusPresentation on OfferStatus {
     }
   }
 
-  static OfferStatus fromJson(String value) {
-    switch (value.toUpperCase()) {
-      case 'PENDING':
+  static OfferStatus fromJson(Object? value) {
+    final normalized = value?.toString().trim().toLowerCase();
+
+    switch (normalized) {
+      case 'pending':
         return OfferStatus.pending;
-      case 'ACCEPTED':
+      case 'accepted':
         return OfferStatus.accepted;
-      case 'REJECTED':
+      case 'rejected':
         return OfferStatus.rejected;
-      case 'CANCELED':
-      case 'CANCELLED':
+      case 'canceled':
+      case 'cancelled':
         return OfferStatus.canceled;
       default:
         throw FormatException('Status de oferta inválido: $value');
@@ -38,13 +40,13 @@ extension OfferStatusPresentation on OfferStatus {
   String toJson() {
     switch (this) {
       case OfferStatus.pending:
-        return 'PENDING';
+        return 'Pending';
       case OfferStatus.accepted:
-        return 'ACCEPTED';
+        return 'Accepted';
       case OfferStatus.rejected:
-        return 'REJECTED';
+        return 'Rejected';
       case OfferStatus.canceled:
-        return 'CANCELED';
+        return 'Canceled';
     }
   }
 }
@@ -64,15 +66,22 @@ class TradeUser {
   final String state;
   final String? photoUrl;
 
-  String get location => '$city - $state';
+  String get location {
+    if (city.isEmpty && state.isEmpty) return '';
+    if (state.isEmpty) return city;
+    if (city.isEmpty) return state;
+    return '$city - $state';
+  }
 
   factory TradeUser.fromJson(Map<String, dynamic> json) {
     return TradeUser(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      city: json['city'] as String,
-      state: (json['state'] as String?) ?? '',
-      photoUrl: json['photo_url'] as String? ?? json['photoUrl'] as String?,
+      id: _stringValue(json['id']),
+      name: _stringValue(json['name'], fallback: 'Usuário'),
+      city: _stringValue(json['city']),
+      state: _stringValue(json['state']),
+      photoUrl: _nullableString(
+        json['photoUrl'] ?? json['photo_url'] ?? json['photo'],
+      ),
     );
   }
 
@@ -81,7 +90,7 @@ class TradeUser {
         'name': name,
         'city': city,
         'state': state,
-        'photo_url': photoUrl,
+        'photoUrl': photoUrl,
       };
 }
 
@@ -106,31 +115,46 @@ class TradeBook {
   final String condition;
   final String? coverUrl;
 
-  String get location => '$city - $state';
+  String get location {
+    if (city.isEmpty && state.isEmpty) return '';
+    if (state.isEmpty) return city;
+    if (city.isEmpty) return state;
+    return '$city - $state';
+  }
 
   factory TradeBook.fromJson(Map<String, dynamic> json) {
     return TradeBook(
-      announcementId:
-          (json['announcement_id'] ?? json['announcementId']) as String,
-      title: json['title'] as String,
-      author: (json['author'] as String?) ?? '',
-      publishYear: (json['publish_year'] ?? json['publishYear']) as int,
-      city: (json['city'] as String?) ?? '',
-      state: (json['state'] as String?) ?? '',
-      condition: (json['condition'] as String?) ?? '',
-      coverUrl: json['cover_url'] as String? ?? json['coverUrl'] as String?,
+      announcementId: _stringValue(
+        json['announcementId'] ??
+            json['announcement_id'] ??
+            json['id'],
+      ),
+      title: _stringValue(json['title'], fallback: 'Livro sem título'),
+      author: _stringValue(json['author']),
+      publishYear: _intValue(
+        json['publishYear'] ?? json['publish_year'],
+      ),
+      city: _stringValue(json['city']),
+      state: _stringValue(json['state']),
+      condition: _stringValue(json['condition']),
+      coverUrl: _nullableString(
+        json['coverUrl'] ??
+            json['cover_url'] ??
+            json['realPhotoUrl'] ??
+            json['real_photo_url'],
+      ),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'announcement_id': announcementId,
+        'announcementId': announcementId,
         'title': title,
         'author': author,
-        'publish_year': publishYear,
+        'publishYear': publishYear,
         'city': city,
         'state': state,
         'condition': condition,
-        'cover_url': coverUrl,
+        'coverUrl': coverUrl,
       };
 }
 
@@ -171,29 +195,89 @@ class TradeRequest {
   }
 
   factory TradeRequest.fromJson(Map<String, dynamic> json) {
+    final requesterJson = _mapValue(
+      json['requester'] ?? json['user'],
+      fieldName: 'requester',
+    );
+
+    final requestedBookJson = _mapValue(
+      json['requestedBook'] ??
+          json['requested_book'] ??
+          json['targetAnnouncement'] ??
+          json['target_announcement'],
+      fieldName: 'requestedBook',
+    );
+
+    final offeredRaw = json['offeredBooks'] ??
+        json['offered_books'] ??
+        json['offeredAnnouncements'] ??
+        json['offered_announcements'] ??
+        const <dynamic>[];
+
+    if (offeredRaw is! List) {
+      throw const FormatException(
+        'O campo offeredBooks precisa ser uma lista.',
+      );
+    }
+
     return TradeRequest(
-      id: json['id'] as String,
-      requester: TradeUser.fromJson(json['requester'] as Map<String, dynamic>),
-      requestedBook: TradeBook.fromJson(
-        (json['requested_book'] ?? json['requestedBook'])
-            as Map<String, dynamic>,
-      ),
-      offeredBooks: ((json['offered_books'] ?? json['offeredBooks']) as List)
-          .map((item) => TradeBook.fromJson(item as Map<String, dynamic>))
+      id: _stringValue(json['id']),
+      requester: TradeUser.fromJson(requesterJson),
+      requestedBook: TradeBook.fromJson(requestedBookJson),
+      offeredBooks: offeredRaw
+          .map((item) => TradeBook.fromJson(
+                _mapValue(item, fieldName: 'offeredBooks item'),
+              ))
           .toList(growable: false),
-      status: OfferStatusPresentation.fromJson(json['status'] as String),
-      createdAt: DateTime.parse(
-        (json['created_at'] ?? json['createdAt']) as String,
+      status: OfferStatusPresentation.fromJson(
+        json['status'] ?? json['statusOffer'] ?? json['status_offer'],
       ),
+      createdAt: DateTime.tryParse(
+            _stringValue(json['createdAt'] ?? json['created_at']),
+          ) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'requester': requester.toJson(),
-        'requested_book': requestedBook.toJson(),
-        'offered_books': offeredBooks.map((book) => book.toJson()).toList(),
+        'requestedBook': requestedBook.toJson(),
+        'offeredBooks': offeredBooks.map((book) => book.toJson()).toList(),
         'status': status.toJson(),
-        'created_at': createdAt.toIso8601String(),
+        'createdAt': createdAt.toIso8601String(),
       };
+}
+
+Map<String, dynamic> _mapValue(
+  Object? value, {
+  required String fieldName,
+}) {
+  if (value is Map<String, dynamic>) return value;
+
+  if (value is Map) {
+    return value.map(
+      (key, value) => MapEntry(key.toString(), value),
+    );
+  }
+
+  throw FormatException('Campo inválido: $fieldName');
+}
+
+String _stringValue(Object? value, {String fallback = ''}) {
+  if (value == null) return fallback;
+  final result = value.toString();
+  return result.isEmpty ? fallback : result;
+}
+
+String? _nullableString(Object? value) {
+  if (value == null) return null;
+  final result = value.toString().trim();
+  return result.isEmpty ? null : result;
+}
+
+int _intValue(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? 0;
 }
