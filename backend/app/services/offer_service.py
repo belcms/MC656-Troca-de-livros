@@ -230,8 +230,8 @@ def _offer_to_response(offer: Offer) -> TradeRequestResponse:
         id=offer.id,
         requester=TradeRequestUserResponse(
             id=requester.id,
-            name=requester.name,
-            city=requester.city or "",
+            name=requester.full_name or requester.username,
+            city=requester.cep or "",
             state="",
             photoUrl=getattr(requester, "photo", None),
         ),
@@ -254,7 +254,7 @@ def _announcement_to_book(
         title=book.title if book is not None else "Livro sem título",
         author=book.author if book is not None else "",
         publishYear=edition.publish_year if edition is not None else 0,
-        city=owner.city if owner is not None and owner.city else "",
+        city=owner.cep if owner is not None and owner.cep else "",
         state="",
         condition=(
             announcement.condition.value
