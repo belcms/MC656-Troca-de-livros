@@ -33,22 +33,29 @@ def get_book_details_route(id: str, db: Session = Depends(get_db)):
 def feed_announcements_route(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    condition: str | None = Query(default=None),
+    genre: str | None = Query(default=None),
     db: Session = Depends(get_db)
 ):
     """Return the feed list used by the main announcements timeline.
 
-    The endpoint delegates to the announcements service to retrieve a paginated
-    list of announcements for the general feed.
-
     Args:
-        limit: Maximum number of announcements to return. Constrained between 1 and 100.
+        limit: Maximum number of announcements to return.
         offset: Number of announcements to skip for pagination.
+        condition: Optional filter for the book conservation condition.
+        genre: Optional filter for the literary genre.
         db: SQLAlchemy session injected by FastAPI.
 
     Returns:
-        list[FeedAnnouncementResponse]: A list of announcements for the feed.
+        list[FeedAnnouncementResponse]: A filtered list of announcements.
     """
-    return get_feed_announcements(db, limit=limit, offset=offset)
+    return get_feed_announcements(
+        db,
+        limit=limit,
+        offset=offset,
+        condition=condition,
+        genre=genre
+    )
 
 @router.post("/{user_id}", status_code=201)
 def create_announcement_route(user_id: str, body: announcements_schemas.TradeAnnouncementPydantic, db: Session = Depends(get_db)):
@@ -66,3 +73,4 @@ def create_announcement_route(user_id: str, body: announcements_schemas.TradeAnn
         The created announcement payload with HTTP 201 status.
     """
     return service_create_announcement(user_id, body, db)
+

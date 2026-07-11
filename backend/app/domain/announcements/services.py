@@ -108,30 +108,53 @@ def get_announcement_details(db: Session, id: str):
     
     return text
 
-def get_feed_announcements(db: Session, limit: int = 20, offset: int = 0):
-    """
-    Retrieves a paginated list of available trade announcements for the feed.
+def get_feed_announcements(
+    db: Session,
+    limit: int = 20,
+    offset: int = 0,
+    condition: str | None = None,
+    genre: str | None = None
+):
+    query = (
+        db.query(models.TradeAnnouncement)
+        .join(
+            Edition,
+            models.TradeAnnouncement.edition_id == Edition.id
+        )
+        .join(
+            Book,
+            Edition.book_id == Book.id
+        )
+        .options(
+            joinedload(models.TradeAnnouncement.edition)
+                .joinedload(Edition.book),
+            joinedload(models.TradeAnnouncement.user)
+        )
+        .filter(
+            models.TradeAnnouncement.status == Status.Available
+        )
+    )
 
-    This function queries the database for announcements with an 'Available' status, 
-    ordering them from newest to oldest. It uses eager loading (joinedload) to 
-    fetch related Edition, Book, and User data in a single query, preventing N+1 
-    performance issues.
+    if condition is not None:
+        query = query.filter(
+            models.TradeAnnouncement.condition
+            == map_condition(condition)
+        )
 
-    Args:
-        db (Session): The active SQLAlchemy database session.
-        limit (int, optional): The maximum number of records to return. Defaults to 20.
-        offset (int, optional): The number of records to skip for pagination. Defaults to 0.
+    if genre is not None:
+        query = query.filter(
+            Book.genre == map_genre(genre)
+        )
 
-    Returns:
-        list[FeedAnnouncementResponse]: A list of mapped announcement objects 
-        containing the necessary data for the feed UI.
-    """
-    
-    announcements = db.query(models.TradeAnnouncement).options(
-        joinedload(models.TradeAnnouncement.edition).joinedload(Edition.book),
-        joinedload(models.TradeAnnouncement.user)
-    ).filter(models.TradeAnnouncement.status == Status.Available).order_by(models.TradeAnnouncement.create_date.desc()).limit(limit).offset(offset).all()
-
+    announcements = (
+        query
+        .order_by(
+            models.TradeAnnouncement.create_date.desc()
+        )
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     return [
         FeedAnnouncementResponse(
@@ -144,9 +167,6 @@ def get_feed_announcements(db: Session, limit: int = 20, offset: int = 0):
         for ann in announcements
     ]
     
-
-
-
 def map_genre(value: str):
     """
     Map a string value to the corresponding Genre enum.

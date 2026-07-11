@@ -72,3 +72,20 @@ class FeedAnnouncementResponse(BaseModel):
     real_photo_url: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AnnouncementFilters(BaseModel):
+    """"
+    Schema representation for the Filter
+    """
+    genre: str | None = None
+    publish_year: int | None = Field(
+        default=None,
+        ge=1000,
+        le=2100,
+    )
+    condition: str | None = None
+    max_distance_km: float | None = Field(
+        default=None,
+        gt=0,
+    )
