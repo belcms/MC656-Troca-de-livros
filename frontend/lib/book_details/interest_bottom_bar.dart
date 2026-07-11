@@ -8,15 +8,16 @@ class InterestBottomBar extends StatelessWidget {
   const InterestBottomBar({
     super.key,
     required this.isOwner,
-    this.isPending = false, // Valor padrão como false para não quebrar telas antigas
+    this.isPending = false,
     required this.onInterestPressed,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     // 1. Define o texto do botão com base no estado atual
     String buttonText = 'Tenho Interesse';
-  if (isPending) {
+    if (isPending) {
       buttonText = 'Proposta já enviada';
     }
 
@@ -27,7 +28,7 @@ class InterestBottomBar extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
+        color: theme.scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -37,11 +38,12 @@ class InterestBottomBar extends StatelessWidget {
         ],
       ),
       child: SafeArea(
-        top: false, // Evita padding extra na parte superior do botão
+        top: false,
         child: ElevatedButton(
-          // O botão fica cinza/desabilitado se passarmos null
           onPressed: isDisabled ? null : onInterestPressed,
           style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF416956),
+            disabledBackgroundColor: Colors.grey[400],
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -50,6 +52,7 @@ class InterestBottomBar extends StatelessWidget {
           child: Text(
             buttonText,
             style: const TextStyle(
+              color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
