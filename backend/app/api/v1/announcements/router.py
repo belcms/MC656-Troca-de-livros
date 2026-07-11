@@ -33,31 +33,51 @@ def get_book_details_route(id: str, db: Session = Depends(get_db)):
 def feed_announcements_route(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    condition: str | None = Query(default=None),
-    genre: str | None = Query(default=None),
+
+    start_year: int | None = Query(
+        default=None,
+        ge=1000,
+        le=2100,
+    ),
+    end_year: int | None = Query(
+        default=None,
+        ge=1000,
+        le=2100,
+    ),
+
+    condition: list[str] | None = Query(
+        default=None,
+    ),
+    genre: list[str] | None = Query(
+        default=None,
+    ),
+
     db: Session = Depends(get_db),
-    publish_year: int | None = Query(default=None),
 ):
-    """Return the feed list used by the main announcements timeline.
+    """Return the filtered announcements feed.
 
     Args:
-        limit: Maximum number of announcements to return.
-        offset: Number of announcements to skip for pagination.
-        condition: Optional filter for the book conservation condition.
-        genre: Optional filter for the literary genre.
+        limit: Maximum number of announcements returned.
+        offset: Number of announcements skipped.
+        start_year: Minimum publication year.
+        end_year: Maximum publication year.
+        condition: One or more conservation conditions.
+        genre: One or more literary genres.
         db: SQLAlchemy session injected by FastAPI.
 
     Returns:
-        list[FeedAnnouncementResponse]: A filtered list of announcements.
+        A filtered list of feed announcements.
     """
     return get_feed_announcements(
-        db,
+        db=db,
         limit=limit,
         offset=offset,
-        condition=condition,
-        genre=genre,
-        publish_year=publish_year
+        start_year=start_year,
+        end_year=end_year,
+        conditions=condition,
+        genres=genre,
     )
+    
 
 @router.post("/{user_id}", status_code=201)
 def create_announcement_route(user_id: str, body: announcements_schemas.TradeAnnouncementPydantic, db: Session = Depends(get_db)):

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'api_client.dart';
 import '../book_details/announcement_detail_model.dart';
-
+import '../feed/announcement_filters.dart';
 
 /// A service class responsible for handling HTTP requests related to book announcements.
 ///
@@ -108,22 +108,58 @@ class AnnouncementService {
   static Future<List<dynamic>?> fetchFeedAnnouncements({
     int limit = 20,
     int offset = 0,
+    AnnouncementFilters filters =
+        const AnnouncementFilters(),
   }) async {
     try {
-      final url = Uri.parse('${ApiClient.baseUrl}/api/v1/announcements/feed')
+      final queryParameters = <String, dynamic>{
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+      };
 
-          .replace(
-            queryParameters: {
-              'limit': limit.toString(),
-              'offset': offset.toString(),
-            },
-          );
+      if (filters.hasYearFilter) {
+        queryParameters['start_year'] =
+            filters.startYear.toString();
+
+        queryParameters['end_year'] =
+            filters.endYear.toString();
+      }
+
+      if (filters.conditions.isNotEmpty) {
+        queryParameters['condition'] =
+            filters.conditions;
+      }
+
+      if (filters.genres.isNotEmpty) {
+        queryParameters['genre'] =
+            filters.genres;
+      }
+
+      if (filters.maxDistanceKm != null) {
+        queryParameters['max_distance_km'] =
+            filters.maxDistanceKm.toString();
+      }
+
+      final url = Uri.parse(
+        '${ApiClient.baseUrl}/api/v1/announcements/feed',
+      ).replace(
+        queryParameters: queryParameters,
+      );
+
+      print('FEED URL: $url');
+
       final response = await http.get(url);
+
+      print('FEED STATUS: ${response.statusCode}');
+      print('FEED RESPONSE: ${response.body}');
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as List<dynamic>;
       }
+
       return null;
     } catch (e) {
+      print('FEED ERROR: $e');
       return null;
     }
   }

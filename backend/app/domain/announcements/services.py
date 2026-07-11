@@ -112,45 +112,65 @@ def get_feed_announcements(
     db: Session,
     limit: int = 20,
     offset: int = 0,
-    condition: str | None = None,
-    genre: str | None = None,
-    publish_year: int | None = None
-
+    start_year: int | None = None,
+    end_year: int | None = None,
+    conditions: list[str] | None = None,
+    genres: list[str] | None = None,
 ):
     query = (
         db.query(models.TradeAnnouncement)
         .join(
             Edition,
-            models.TradeAnnouncement.edition_id == Edition.id
+            models.TradeAnnouncement.edition_id == Edition.id,
         )
         .join(
             Book,
-            Edition.book_id == Book.id
+            Edition.book_id == Book.id,
         )
         .options(
-            joinedload(models.TradeAnnouncement.edition)
-                .joinedload(Edition.book),
-            joinedload(models.TradeAnnouncement.user)
+            joinedload(
+                models.TradeAnnouncement.edition
+            ).joinedload(Edition.book),
+            joinedload(
+                models.TradeAnnouncement.user
+            ),
         )
         .filter(
-            models.TradeAnnouncement.status == Status.Available
+            models.TradeAnnouncement.status
+            == Status.Available
         )
     )
 
-    if condition is not None:
+    if conditions:
+        mapped_conditions = [
+            map_condition(condition)
+            for condition in conditions
+        ]
+
         query = query.filter(
-            models.TradeAnnouncement.condition
-            == map_condition(condition)
+            models.TradeAnnouncement.condition.in_(
+                mapped_conditions
+            )
         )
 
-    if genre is not None:
+    if genres:
+        mapped_genres = [
+            map_genre(genre)
+            for genre in genres
+        ]
+
         query = query.filter(
-            Book.genre == map_genre(genre)
+            Book.genre.in_(mapped_genres)
         )
-    
-    if publish_year is not None:
+
+    if start_year is not None:
         query = query.filter(
-            Edition.publish_year == publish_year
+            Edition.publish_year >= start_year
+        )
+
+    if end_year is not None:
+        query = query.filter(
+            Edition.publish_year <= end_year
         )
 
     announcements = (
@@ -165,13 +185,13 @@ def get_feed_announcements(
 
     return [
         FeedAnnouncementResponse(
-            id=ann.id,
-            title=ann.edition.book.title,
-            real_photo_url=ann.real_photo_url,
-            publishYear=ann.edition.publish_year,
-            cep=ann.user.cep
+            id=announcement.id,
+            title=announcement.edition.book.title,
+            real_photo_url=announcement.real_photo_url,
+            publishYear=announcement.edition.publish_year,
+            cep=announcement.user.cep,
         )
-        for ann in announcements
+        for announcement in announcements
     ]
     
 def map_genre(value: str):

@@ -75,16 +75,28 @@ class FeedAnnouncementResponse(BaseModel):
 
 
 class AnnouncementFilters(BaseModel):
-    """"
-    Schema representation for the Filter
-    """
-    genre: str | None = None
-    publish_year: int | None = Field(
+    """Filters supported by the announcements feed."""
+
+    start_year: int | None = Field(
         default=None,
         ge=1000,
         le=2100,
     )
-    condition: str | None = None
+
+    end_year: int | None = Field(
+        default=None,
+        ge=1000,
+        le=2100,
+    )
+
+    conditions: list[str] = Field(
+        default_factory=list,
+    )
+
+    genres: list[str] = Field(
+        default_factory=list,
+    )
+
     max_distance_km: float | None = Field(
         default=None,
         gt=0,
