@@ -105,17 +105,18 @@ class AnnouncementService {
   /// Returns a `List<dynamic>` containing the decoded JSON data if successful,
   /// or `null` if the request encounters an error.
   
-  static Future<List<dynamic>?> fetchFeedAnnouncements({
-    int limit = 20,
-    int offset = 0,
-    AnnouncementFilters filters =
-        const AnnouncementFilters(),
-  }) async {
-    try {
-      final queryParameters = <String, dynamic>{
-        'limit': limit.toString(),
-        'offset': offset.toString(),
-      };
+static Future<List<dynamic>?> fetchFeedAnnouncements({
+  required String currentUserId,
+  int limit = 20,
+  int offset = 0,
+  AnnouncementFilters filters =
+      const AnnouncementFilters(),
+}) async {
+  try {
+    final queryParameters = <String, dynamic>{
+      'limit': limit.toString(),
+      'offset': offset.toString(),
+    };
 
       if (filters.hasYearFilter) {
         queryParameters['start_year'] =
@@ -140,29 +141,40 @@ class AnnouncementService {
             filters.maxDistanceKm.toString();
       }
 
-      final url = Uri.parse(
-        '${ApiClient.baseUrl}/api/v1/announcements/feed',
-      ).replace(
-        queryParameters: queryParameters,
-      );
-
-      print('FEED URL: $url');
-
-      final response = await http.get(url);
-
-      print('FEED STATUS: ${response.statusCode}');
-      print('FEED RESPONSE: ${response.body}');
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as List<dynamic>;
-      }
-
-      return null;
-    } catch (e) {
-      print('FEED ERROR: $e');
-      return null;
+      queryParameters['current_user_id'] =
+          currentUserId;
     }
+
+    final url = Uri.parse(
+      '${ApiClient.baseUrl}'
+      '/api/v1/announcements/feed',
+    ).replace(
+      queryParameters: queryParameters,
+    );
+
+    print('FEED URL: $url');
+
+    final response = await http.get(url);
+
+    print(
+      'FEED STATUS: ${response.statusCode}',
+    );
+
+    print(
+      'FEED RESPONSE: ${response.body}',
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body)
+          as List<dynamic>;
+    }
+
+    return null;
+  } catch (e) {
+    print('FEED ERROR: $e');
+    return null;
   }
+}
 
   //  Creates an announcement.
   //

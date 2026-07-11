@@ -12,6 +12,8 @@ from app.domain.users import models as users_models
 from app.core.database import get_db
 import app.domain.books.schemas as books_schemas
 import app.domain.announcements.schemas as announcements_schemas
+from app.api.v1.announcements.schemas import FeedAnnouncementResponse
+from app.api.v1.announcements.schemas import FeedAnnouncementResponse
 
 def get_announcement_details(db: Session, id: str):
     """
@@ -117,12 +119,14 @@ def get_feed_announcements(
     conditions: list[str] | None = None,
     genres: list[str] | None = None,
     max_distance_km: float | None = None,
+    current_user_id: str | None = None,
 ):
     query = (
         db.query(models.TradeAnnouncement)
         .join(
             Edition,
-            models.TradeAnnouncement.edition_id == Edition.id,
+            models.TradeAnnouncement.edition_id
+            == Edition.id,
         )
         .join(
             Book,
@@ -174,15 +178,135 @@ def get_feed_announcements(
             Edition.publish_year <= end_year
         )
 
+    # A paginação será feita somente depois
+    # do filtro por distância.
     announcements = (
         query
         .order_by(
             models.TradeAnnouncement.create_date.desc()
         )
-        .limit(limit)
-        .offset(offset)
         .all()
     )
+
+    if max_distance_km is not None:
+        if current_user_id is None:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "current_user_id is required "
+                    "when filtering by distance"
+                ),
+            )
+
+        current_user = (
+            db.query(User)
+            .filter(User.id == current_user_id)
+            .first()
+        )
+
+        if current_user is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Current user not found",
+            )
+
+        if current_user.cep is None:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "The current user does not "
+                    "have a registered CEP"
+                ),
+            )
+
+        current_user_cep = (
+            current_user.cep
+            .replace("-", "")
+            .strip()
+        )
+
+        current_location = (
+            db.query(location_models.location)
+            .filter(
+                location_models.location.cep
+                == current_user_cep
+            )
+            .first()
+        )
+
+        if current_location is None:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    "Location for the current "
+                    "user CEP was not found"
+                ),
+            )
+
+        owner_ceps = {
+            announcement.user.cep
+            .replace("-", "")
+            .strip()
+            for announcement in announcements
+            if (
+                announcement.user is not None
+                and announcement.user.cep is not None
+            )
+        }
+
+        stored_locations = (
+            db.query(location_models.location)
+            .filter(
+                location_models.location.cep.in_(
+                    owner_ceps
+                )
+            )
+            .all()
+        )
+
+        locations_by_cep = {
+            stored_location.cep: stored_location
+            for stored_location in stored_locations
+        }
+
+        filtered_announcements = []
+
+        for announcement in announcements:
+            owner = announcement.user
+
+            if owner is None or owner.cep is None:
+                continue
+
+            owner_cep = (
+                owner.cep
+                .replace("-", "")
+                .strip()
+            )
+
+            owner_location = locations_by_cep.get(
+                owner_cep
+            )
+
+            if owner_location is None:
+                continue
+
+            distance_km = _calculate_distance(
+                current_location,
+                owner_location,
+            )
+
+            if distance_km <= max_distance_km:
+                filtered_announcements.append(
+                    announcement
+                )
+
+        announcements = filtered_announcements
+
+    # Paginação aplicada uma única vez,
+    # após todos os filtros.
+    announcements = announcements[
+        offset:offset + limit
+    ]
 
     return [
         FeedAnnouncementResponse(
@@ -319,13 +443,13 @@ def create_dummy_data(db: Session = Depends(get_db)):
         username="rafael",
         email="rafael@example.com",
         full_name="Rafael Feltrin",
-        cep="Hortolândia - SP" #Just for now while we don't integrate with a Sedex API
+        cep="13083852" #Just for now while we don't integrate with a Sedex API
     )
     user2 = users_models.User(
         username="Neymar",
         email="neymar@example.com",
         full_name="Neymar Jr.",
-        cep="Santos - SP" #Just for now while we don't integrate with a Sedex API
+        cep="11060002" #Just for now while we don't integrate with a Sedex API
     )
     db.add_all([user1, user2])
     db.commit()

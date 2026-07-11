@@ -57,6 +57,9 @@ def feed_announcements_route(
         gt=0,
     ),
 
+    current_user_id: str | None = Query(
+        default=None,
+    ),
 
     db: Session = Depends(get_db),
 ):
@@ -83,7 +86,7 @@ def feed_announcements_route(
         conditions=condition,
         genres=genre,
         max_distance_km=max_distance_km,
-
+        current_user_id=current_user_id,
     )
     
 

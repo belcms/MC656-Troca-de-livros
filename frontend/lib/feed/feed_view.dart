@@ -22,6 +22,8 @@ class FeedView extends StatefulWidget {
 class _FeedViewState extends State<FeedView> {
   List<dynamic> announcements = [];
   bool isLoading = true;
+  static const String currentUserId =
+    'ID_DO_USUARIO';
 
   AnnouncementFilters activeFilters =
       const AnnouncementFilters();
@@ -39,8 +41,11 @@ class _FeedViewState extends State<FeedView> {
     });
 
     final data =
-        await AnnouncementService.fetchFeedAnnouncements();
-
+        await AnnouncementService.fetchFeedAnnouncements(
+      currentUserId: currentUserId,
+      filters: activeFilters,
+    );
+    
     if (!mounted) {
       return;
     }
@@ -490,3 +495,4 @@ class EmptyFeedState extends StatelessWidget {
     );
   }
 }
+
