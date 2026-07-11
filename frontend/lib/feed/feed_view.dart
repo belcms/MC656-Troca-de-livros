@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/book_details/announcement_detail_screen.dart';
-import 'announcement_card.dart';
-import '../services/announcement_service.dart';
 
+import '../services/announcement_service.dart';
+import 'announcement_card.dart';
+import 'announcement_filter_sheet.dart';
+import 'announcement_filters.dart';
 
 /// The main screen of the application that displays the feed of book announcements.
 ///
@@ -21,6 +23,9 @@ class _FeedViewState extends State<FeedView> {
   List<dynamic> announcements = [];
   bool isLoading = true;
 
+  AnnouncementFilters activeFilters =
+      const AnnouncementFilters();
+
   @override
   void initState() {
     super.initState();
@@ -29,11 +34,139 @@ class _FeedViewState extends State<FeedView> {
 
   /// Fetches the feed data from the backend and updates the UI state.
   Future<void> _loadFeed() async {
-    final data = await AnnouncementService.fetchFeedAnnouncements();
+    setState(() {
+      isLoading = true;
+    });
+
+    final data =
+        await AnnouncementService.fetchFeedAnnouncements();
+
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
       announcements = data ?? [];
       isLoading = false;
     });
+  }
+
+  Future<void> _openFilters() async {
+    final result =
+        await showModalBottomSheet<AnnouncementFilters>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(24),
+        ),
+      ),
+      builder: (context) {
+        return AnnouncementFilterSheet(
+          initialFilters: activeFilters,
+        );
+      },
+    );
+
+    if (result == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      activeFilters = result;
+    });
+
+    await _loadFeed();
+  }
+
+  Future<void> _clearAllFilters() async {
+    setState(() {
+      activeFilters = const AnnouncementFilters();
+    });
+
+    await _loadFeed();
+  }
+
+  Future<void> _removeYearFilter() async {
+    setState(() {
+      activeFilters = activeFilters.copyWith(
+        clearYears: true,
+      );
+    });
+
+    await _loadFeed();
+  }
+
+  Future<void> _removeCondition(
+    String condition,
+  ) async {
+    final updatedConditions = List<String>.from(
+      activeFilters.conditions,
+    )..remove(condition);
+
+    setState(() {
+      activeFilters = activeFilters.copyWith(
+        conditions: updatedConditions,
+      );
+    });
+
+    await _loadFeed();
+  }
+
+  Future<void> _removeGenre(
+    String genre,
+  ) async {
+    final updatedGenres = List<String>.from(
+      activeFilters.genres,
+    )..remove(genre);
+
+    setState(() {
+      activeFilters = activeFilters.copyWith(
+        genres: updatedGenres,
+      );
+    });
+
+    await _loadFeed();
+  }
+
+  Future<void> _removeDistanceFilter() async {
+    setState(() {
+      activeFilters = activeFilters.copyWith(
+        clearDistance: true,
+      );
+    });
+
+    await _loadFeed();
+  }
+
+  String _conditionLabel(String value) {
+    const labels = {
+      'New': 'Novo',
+      'Good': 'Bom',
+      'Used': 'Usado',
+      'Worn': 'Desgastado',
+    };
+
+    return labels[value] ?? value;
+  }
+
+  String _genreLabel(String value) {
+    const labels = {
+      'Fantasy': 'Fantasia',
+      'Romance': 'Romance',
+      'Sci_fic': 'Ficção científica',
+      'Non_fiction': 'Não ficção',
+      'Biography': 'Biografia',
+      'Graphic_novel': 'Graphic novel',
+      'Horror': 'Terror',
+      'Self_help': 'Autoajuda',
+      'Thriller': 'Suspense',
+      'Education': 'Educação',
+    };
+
+    return labels[value] ?? value;
   }
 
   @override
@@ -44,55 +177,121 @@ class _FeedViewState extends State<FeedView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(left: 16.0, bottom: 16.0),
-              child: Text(
-                'Home',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              padding: const EdgeInsets.fromLTRB(
+                16,
+                8,
+                12,
+                12,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Home',
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineLarge
+                          ?.copyWith(
+                            fontWeight:
+                                FontWeight.bold,
+                          ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _openFilters,
+                    tooltip: 'Filtrar livros',
+                    icon: Badge(
+                      isLabelVisible:
+                          activeFilters
+                              .hasActiveFilters,
+                      child: const Icon(
+                        Icons.tune,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+
+            if (activeFilters.hasActiveFilters)
+              _ActiveFiltersSection(
+                filters: activeFilters,
+                conditionLabel:
+                    _conditionLabel,
+                genreLabel: _genreLabel,
+                onRemoveYear:
+                    _removeYearFilter,
+                onRemoveCondition:
+                    _removeCondition,
+                onRemoveGenre:
+                    _removeGenre,
+                onRemoveDistance:
+                    _removeDistanceFilter,
+                onClearAll:
+                    _clearAllFilters,
+              ),
+
             Expanded(
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : announcements.isEmpty
-                  ? const EmptyFeedState()
-                  : GridView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      physics: const BouncingScrollPhysics(
-                        parent: AlwaysScrollableScrollPhysics(),
-                      ),
-                      itemCount: announcements.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 1.0,
-                            mainAxisSpacing: 16.0,
-                            childAspectRatio: 0.50,
-                          ),
-                      itemBuilder: (context, index) {
-                        final ann = announcements[index];
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AnnouncementDetailScreen(
-                                  announcementId: ann['id'].toString(),
-                                ),
-                              ),
-                            );
-                          },
+                      ? const EmptyFeedState()
+                      : RefreshIndicator(
+                          onRefresh: _loadFeed,
+                          child: GridView.builder(
+                            padding:
+                                const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            physics:
+                                const AlwaysScrollableScrollPhysics(),
+                            itemCount:
+                                announcements.length,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 0.50,
+                            ),
+                            itemBuilder:
+                                (context, index) {
+                              final ann =
+                                  announcements[index];
 
-                          child: AnnouncementCard(
-                            title: ann['title'],
-                            publishYear: ann['publishYear'],
-                            photo: ann['real_photo_url'] ?? '',
-                            cep: ann['cep'],
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) =>
+                                              AnnouncementDetailScreen(
+                                        announcementId:
+                                            ann['id']
+                                                .toString(),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child:
+                                    AnnouncementCard(
+                                  title:
+                                      ann['title'],
+                                  publishYear:
+                                      ann[
+                                          'publishYear'],
+                                  photo:
+                                      ann['real_photo_url'] ??
+                                          '',
+                                  cep: ann['cep'],
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
+                        ),
             ),
           ],
         ),
@@ -101,6 +300,160 @@ class _FeedViewState extends State<FeedView> {
   }
 }
 
+class _ActiveFiltersSection extends StatelessWidget {
+  final AnnouncementFilters filters;
+  final String Function(String) conditionLabel;
+  final String Function(String) genreLabel;
+  final VoidCallback onRemoveYear;
+  final ValueChanged<String> onRemoveCondition;
+  final ValueChanged<String> onRemoveGenre;
+  final VoidCallback onRemoveDistance;
+  final VoidCallback onClearAll;
+
+  const _ActiveFiltersSection({
+    required this.filters,
+    required this.conditionLabel,
+    required this.genreLabel,
+    required this.onRemoveYear,
+    required this.onRemoveCondition,
+    required this.onRemoveGenre,
+    required this.onRemoveDistance,
+    required this.onClearAll,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        bottom: 12,
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(
+              horizontal: 16,
+            ),
+            child: Row(
+              children: [
+                Text(
+                  'Filtros ativos',
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelLarge
+                      ?.copyWith(
+                        fontWeight:
+                            FontWeight.w600,
+                      ),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: onClearAll,
+                  child: const Text('Limpar'),
+                ),
+              ],
+            ),
+          ),
+
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding:
+                const EdgeInsets.symmetric(
+              horizontal: 16,
+            ),
+            child: Row(
+              children: [
+                if (filters.hasYearFilter)
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(
+                      right: 8,
+                    ),
+                    child: InputChip(
+                      label: Text(
+                        '${filters.startYear}'
+                        '–'
+                        '${filters.endYear}',
+                      ),
+                      avatar: const Icon(
+                        Icons.calendar_today_outlined,
+                        size: 18,
+                      ),
+                      onDeleted: onRemoveYear,
+                    ),
+                  ),
+
+                ...filters.conditions.map(
+                  (condition) => Padding(
+                    padding:
+                        const EdgeInsets.only(
+                      right: 8,
+                    ),
+                    child: InputChip(
+                      label: Text(
+                        conditionLabel(condition),
+                      ),
+                      avatar: const Icon(
+                        Icons.auto_stories_outlined,
+                        size: 18,
+                      ),
+                      onDeleted: () {
+                        onRemoveCondition(condition);
+                      },
+                    ),
+                  ),
+                ),
+
+                ...filters.genres.map(
+                  (genre) => Padding(
+                    padding:
+                        const EdgeInsets.only(
+                      right: 8,
+                    ),
+                    child: InputChip(
+                      label: Text(
+                        genreLabel(genre),
+                      ),
+                      avatar: const Icon(
+                        Icons.menu_book_outlined,
+                        size: 18,
+                      ),
+                      onDeleted: () {
+                        onRemoveGenre(genre);
+                      },
+                    ),
+                  ),
+                ),
+
+                if (filters.maxDistanceKm != null)
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(
+                      right: 8,
+                    ),
+                    child: InputChip(
+                      label: Text(
+                        'Até '
+                        '${filters.maxDistanceKm!.toInt()} km',
+                      ),
+                      avatar: const Icon(
+                        Icons.location_on_outlined,
+                        size: 18,
+                      ),
+                      onDeleted:
+                          onRemoveDistance,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// A visual placeholder displayed when the feed has no announcements.
 ///
