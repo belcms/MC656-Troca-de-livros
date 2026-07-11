@@ -41,7 +41,7 @@ class OfferService {
     };
 
     final response = await http.post(
-      Uri.parse('$baseUrl/offers'),
+      Uri.parse('$baseUrl/api/v1/offers/create-offer'),
       headers: {"Content-Type": "application/json"},
       body: json.encode(payload),
     );
@@ -49,9 +49,18 @@ class OfferService {
     if (response.statusCode == 201 || response.statusCode == 200) {
       return true;
     } else {
-      throw Exception(
-        "Falha ao criar proposta. Código: ${response.statusCode}",
-      );
+      // Vamos tentar ler a mensagem exata que o FastAPI mandou no "detail"
+      try {
+        final errorData = jsonDecode(response.body);
+        if (errorData.containsKey('detail')) {
+          // Lança a mensagem real do backend para a ViewModel exibir na tela
+          throw Exception(errorData['detail']);
+        }
+      } catch (e) {
+        // Se der ruim ao ler o JSON, cai no erro genérico
+      }
+      
+      throw Exception("Falha ao criar proposta. Código: ${response.statusCode}");
     }
   }
 }

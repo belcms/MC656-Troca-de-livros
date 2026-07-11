@@ -30,4 +30,12 @@ class OfferPydantic(BaseModel):
         populate_by_name=True
     )
 
+class OfferedAnnouncementItem(BaseModel):
+    offeredAnnouncementId: str 
+
+class OfferCreate(BaseModel):
+    userId: str
+    targetAnnouncementId: str
+    offeredAnnouncements: List[OfferedAnnouncementItem]
+
 
