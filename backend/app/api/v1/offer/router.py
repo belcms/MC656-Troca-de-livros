@@ -55,3 +55,14 @@ def create_offer_endpoint(
             status_code=status.HTTP_400_BAD_REQUEST, 
             detail=f"Erro ao processar a proposta: {str(e)}"
         )
+    
+@router_offer.get("/check-pending")
+def check_pending_offer(
+    user_id: str, 
+    target_announcement_id: str, 
+    db: Session = Depends(get_db)
+):
+    # O router só delega a responsabilidade para o service
+    exists = offer_services.has_pending_offer(db, user_id, target_announcement_id)
+    
+    return {"hasPendingOffer": exists}

@@ -3,6 +3,7 @@ import '../services/announcement_service.dart';
 import 'announcement_detail_model.dart';
 import 'interest_bottom_bar.dart';
 import 'package:frontend/offer/trade_proposal_view.dart';
+import 'package:frontend/services/offer_service.dart';
 
 /// Screen responsible for displaying detailed information about a trade announcement.
 ///
@@ -48,6 +49,8 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   /// This is initialized in `initState` and reused by the `FutureBuilder`
   /// to manage UI updates.
   late Future<AnnouncementDetail?> _future;
+  bool _hasPendingOffer = false;
+  bool _isLoadingOfferStatus = true;
 
   @override
   void initState() {
@@ -57,6 +60,21 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
     _future = AnnouncementService.fetchAnnouncementDetails(
       widget.announcementId,
     );
+    _checkIfHasOffer();
+  }
+
+  Future<void> _checkIfHasOffer() async {
+    final hasOffer = await OfferService().checkPendingOffer(
+       "cd1be270-d415-4db5-9d6f-c7ca619e69ed", // O ID mockado do usuário logado
+       widget.announcementId,
+    );
+    
+    if (mounted) {
+      setState(() {
+        _hasPendingOffer = hasOffer;
+        _isLoadingOfferStatus = false;
+      });
+    }
   }
 
   @override
@@ -116,7 +134,8 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
             final book = data.book;
             final edition = data.edition;
 
-            final String meuUsuarioLogadoId = "cd1be270-d415-4db5-9d6f-c7ca619e69ed";
+            final String meuUsuarioLogadoId =
+                "cd1be270-d415-4db5-9d6f-c7ca619e69ed";
 
             final bool isOwner = data.userId == meuUsuarioLogadoId;
 
@@ -172,8 +191,9 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                 ),
 
                 /// 2. O seu componente fixado no final da tela
-                  InterestBottomBar(
+                InterestBottomBar(
                   isOwner: isOwner,
+                  isPending: _isLoadingOfferStatus ? false : _hasPendingOffer,
                   onInterestPressed: () {
                     // Passando os dados reais do anúncio para a próxima tela
                     Navigator.push(
@@ -182,9 +202,13 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                         builder: (context) => TradeProposalScreen(
                           targetAnnouncementId: widget.announcementId,
                           targetBookTitle: book?.title ?? 'Título desconhecido',
-                          targetBookYear: edition?.publishYear?.toString() ?? 'Ano não informado',
-                          targetBookLocation: data.userCep ?? 'Localização não informada', 
-                          targetBookImageUrl: data.realPhotoUrl ?? 'URL_DA_IMAGEM_PADRAO_AQUI',
+                          targetBookYear:
+                              edition?.publishYear?.toString() ??
+                              'Ano não informado',
+                          targetBookLocation:
+                              data.userCep ?? 'Localização não informada',
+                          targetBookImageUrl:
+                              data.realPhotoUrl ?? 'URL_DA_IMAGEM_PADRAO_AQUI',
                         ),
                       ),
                     );

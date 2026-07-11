@@ -63,4 +63,22 @@ class OfferService {
       throw Exception("Falha ao criar proposta. Código: ${response.statusCode}");
     }
   }
+
+  Future<bool> checkPendingOffer(String userId, String announcementId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/v1/offers/check-pending?user_id=$userId&target_announcement_id=$announcementId'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['hasPendingOffer'] ?? false;
+      }
+      return false;
+    } catch (e) {
+      print("Erro ao checar proposta pendente: $e");
+      return false; // Em caso de erro de rede, liberamos o botão por padrão
+    }
+  }
 }
+

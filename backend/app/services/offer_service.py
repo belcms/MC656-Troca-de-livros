@@ -33,3 +33,13 @@ def create_new_offer(db: Session, offer_data: OfferCreate):
     except Exception as e:
         db.rollback() 
         raise e
+    
+def has_pending_offer(db: Session, user_id: str, target_announcement_id: str) -> bool:
+    """Verifica se já existe uma oferta pendente entre usuário e anúncio."""
+    existing_offer = db.query(Offer).filter(
+        Offer.user_id == user_id,
+        Offer.target_announcement_id == target_announcement_id,
+        Offer.status_offer == "Pending" 
+    ).first()
+    
+    return existing_offer is not None
