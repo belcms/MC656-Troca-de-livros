@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.domain.books import models as books_models
 from app.domain.users import models as users_models
 from app.domain.announcements import models as announcements_models
+from app.domain.locations import models as location_model
 
 from app.domain.announcements import models as announcements_models
 from app.domain.announcements.services import create_dummy_data
@@ -18,6 +19,7 @@ from app.api.v1.locations.router import router as locations_router
 books_models.Base.metadata.create_all(bind=engine)
 users_models.Base.metadata.create_all(bind=engine)
 announcements_models.Base.metadata.create_all(bind=engine)
+location_model.Base.metadata.create_all(bind=engine)
 
 Base.metadata.create_all(bind=engine)
 

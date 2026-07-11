@@ -114,11 +114,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       child: GestureDetector(
-        onTap: () {
-          Navigator.push(
+        onTap: () async{
+          // Espera a tela de Meus Livros ser fechada
+          await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const MyBooksScreen()),
           );
+          
+          // Quando o usuário apertar na seta de voltar, recarregamos o carrossel do perfil
+          setState(() {
+            _booksFuture = _loadInitialBooks();
+          });
         },
         child: Row(
           children: [
@@ -178,14 +184,33 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                   );
                 },
-                child: MyBookCard(
-                  title: book.title,
-                  publishYear: book.publishYear,
-                  photo: book.realPhotoUrl ?? 'https://via.placeholder.com/300x400',
-                  status: book.status,
-                  location: book.location,
-                  onEdit: () => _openEditBook(book.id),
-                ),
+                    child: MyBookCard(
+                      title: book.title,
+                      publishYear: book.publishYear,
+                      photo:
+                          book.realPhotoUrl ??
+                          'https://via.placeholder.com/300x400',
+                      status: book.status,
+                      location: book.location,
+                      onEdit: () async {
+                        // 1. Espera a tela de edição fechar e recebe a resposta (updated)
+                        final updated = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BookEditionPage(
+                              id: book.id,
+                            ),
+                          ),
+                        );
+                        
+                        // 2. Se salvou com sucesso (true), recarrega o banco!
+                        if (updated == true) {
+                          setState(() {
+                            _booksFuture = _loadInitialBooks();
+                          });
+                        }
+                      },
+                    ),
               );
             },
           ),

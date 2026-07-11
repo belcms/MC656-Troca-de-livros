@@ -80,7 +80,7 @@ class BookEditionViewModel {
     synopsisController.text = book.synopsis;
     descriptionController.text = book.description;
 
-    cepController.text = data['cep_id'];
+    cepController.text = (data['cep_id'] ?? '').toString();
 
     genre = book.genre.isEmpty ? "Romance" : book.genre;
     language = book.language.isEmpty ? "Português" : book.language;
@@ -142,5 +142,6 @@ class BookEditionViewModel {
     pagesController.dispose();
     synopsisController.dispose();
     descriptionController.dispose();
+    cepController.dispose();
   }
 }

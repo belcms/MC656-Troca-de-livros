@@ -2,6 +2,7 @@ from fastapi.params import Body, Depends
 from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 from app.domain.announcements import models
+import httpx
 from app.domain.announcements.models import Status
 from app.api.v1.announcements.schemas import FeedAnnouncementResponse
 from app.domain.books.models import Edition, Book
@@ -144,7 +145,7 @@ def get_feed_announcements(db: Session, limit: int = 20, offset: int = 0):
             title=ann.edition.book.title,
             real_photo_url=ann.real_photo_url,
             publishYear=ann.edition.publish_year,
-            cep=f'{ann.location.city} - {ann.location.state}' if ann.location else None (ann.cep_id or ann.user.cep_id),
+            cep=f'{ann.location.city} - {ann.location.state}' if ann.location else (ann.cep_id or ann.user.cep_id),
         )
         for ann in announcements
     ]
@@ -463,7 +464,6 @@ def update_book(
         
         # 2. Se for um CEP inédito, busca na API e cria no banco ANTES do anúncio
         if not loc:
-            import httpx # Importando aqui para garantir o carregamento
             try:
                 url = f"https://cep.awesomeapi.com.br/json/{cep_val}"
                 with httpx.Client(timeout=5.0) as client:
@@ -572,7 +572,6 @@ def create_announcement(user_id: str, body: announcements_schemas.TradeAnnouncem
         loc = db.query(location_model.location).filter(location_model.location.cep == cep_val).first()
         
         if not loc:
-            import httpx
             try:
                 url = f"https://cep.awesomeapi.com.br/json/{cep_val}"
                 with httpx.Client(timeout=5.0) as client:
@@ -599,73 +598,3 @@ def create_announcement(user_id: str, body: announcements_schemas.TradeAnnouncem
     db.commit()
     db.refresh(announcement)
     return {"data": announcement, "message": "Announcement created successfully"}
-
-def get_book_details(id: str, db: Session = Depends(get_db)):
-    announcement = (
-        db.query(announcements_models.TradeAnnouncement)
-        .filter(announcements_models.TradeAnnouncement.id == id)
-        .first()
-    )
-
-    if not announcement:
-        raise HTTPException(status_code=404, detail="Announcement not found")
-
-    edition = announcement.edition
-    book = edition.book
-
-    return {
-        "id": announcement.id,
-        "title": book.title,
-        "author": book.author,
-        "publisher": edition.publisher,
-        "genre": book.genre.value,
-        "language": edition.language.value,
-        "publishYear": edition.publish_year,
-        "pages": edition.number_of_pages,
-        "synopsis": book.synopsis,
-        "description": announcement.description,
-        "status": announcement.status.value,
-        "condition": announcement.condition.value,
-        "real_photo_url": announcement.real_photo_url,
-    }
-
-
-def update_book(
-    id: str,
-    body: dict = Body(...),
-    db: Session = Depends(get_db),
-):
-    announcement = (
-        db.query(announcements_models.TradeAnnouncement)
-        .filter(announcements_models.TradeAnnouncement.id == id)
-        .first()
-    )
-
-    if not announcement:
-        raise HTTPException(status_code=404, detail="Announcement not found")
-
-    edition = announcement.edition
-    book = edition.book
-
-    book.title = body.get("title", book.title)
-    book.author = body.get("author", book.author)
-    book.synopsis = body.get("synopsis", book.synopsis)
-    book.genre = map_genre(body.get("genre", book.genre.value))
-
-    edition.publisher = body.get("publisher", edition.publisher)
-    edition.language = map_language(body.get("language", edition.language.value))
-
-    if body.get("publishYear"):
-        edition.publish_year = int(body["publishYear"])
-
-    if body.get("pages"):
-        edition.number_of_pages = int(body["pages"])
-
-    announcement.description = body.get("description", announcement.description)
-    announcement.real_photo_url = body.get("real_photo_url", announcement.real_photo_url)
-    announcement.status = map_status(body.get("status", announcement.status.value))
-    announcement.condition = map_condition(body.get("condition", announcement.condition.value))
-
-    db.commit()
-
-    return {"message": "Book updated successfully"}
