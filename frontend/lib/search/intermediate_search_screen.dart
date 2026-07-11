@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:frontend/book_details/announcement_detail_screen.dart';
 import 'package:frontend/search/announcement_search_models.dart';
 import 'package:frontend/services/announcement_service.dart';
 import 'package:frontend/search/widgets/custom_search_bar.dart';
@@ -149,6 +150,16 @@ class _IntermediateSearchScreenState extends State<IntermediateSearchScreen> {
   bool get _shouldShowMoreButton =>
       !_isLoading && _totalResults > _results.length && _results.isNotEmpty;
 
+  void _openAnnouncementDetails(String announcementId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            AnnouncementDetailScreen(announcementId: announcementId),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -214,6 +225,7 @@ class _IntermediateSearchScreenState extends State<IntermediateSearchScreen> {
                         children: [
                           for (final result in _results)
                             IntermediatePostResultCard(
+                              onTap: () => _openAnnouncementDetails(result.id),
                               title: result.title,
                               publishYear: result.publishYear.toString(),
                               location: result.cep,

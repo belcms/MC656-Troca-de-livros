@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:frontend/book_details/announcement_detail_screen.dart';
+import 'package:frontend/search/announcement_search_models.dart';
 import 'package:frontend/search/intermediate_search_screen.dart';
 
 Widget _testApp(Widget child) {
@@ -32,20 +34,152 @@ Widget _testApp(Widget child) {
 }
 
 void main() {
-  testWidgets('renders the mock search layout', (tester) async {
+  testWidgets('debounces search requests before hitting the loader', (
+    tester,
+  ) async {
+    var callCount = 0;
+
+    Future<AnnouncementSearchResponse> fakeLoader({
+      required String query,
+      required int limit,
+      required int offset,
+    }) async {
+      callCount++;
+      return const AnnouncementSearchResponse(results: [], total: 0);
+    }
+
     await tester.pumpWidget(
-      const _AppWrapper(child: IntermediateSearchScreen()),
+      _testApp(IntermediateSearchScreen(searchLoader: fakeLoader)),
     );
+
+    expect(find.byType(TextField), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'Har');
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(callCount, 0);
+
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(callCount, 1);
+  });
+
+  testWidgets('renders populated results from the API response', (
+    tester,
+  ) async {
+    Future<AnnouncementSearchResponse> fakeLoader({
+      required String query,
+      required int limit,
+      required int offset,
+    }) async {
+      return const AnnouncementSearchResponse(
+        total: 7,
+        results: [
+          AnnouncementSearchItem(
+            id: '1',
+            title: 'Flores para Algernon',
+            publishYear: 2000,
+            cep: '13000-000',
+            realPhotoUrl: 'https://example.com/flores.jpg',
+          ),
+          AnnouncementSearchItem(
+            id: '2',
+            title: 'O tal do 1984',
+            publishYear: 2000,
+            cep: '13000-000',
+            realPhotoUrl: 'https://example.com/1984.jpg',
+          ),
+          AnnouncementSearchItem(
+            id: '3',
+            title: 'O poder do hábito',
+            publishYear: 2000,
+            cep: '13000-000',
+            realPhotoUrl: 'https://example.com/habito.jpg',
+          ),
+          AnnouncementSearchItem(
+            id: '4',
+            title: 'Mais um livro',
+            publishYear: 2000,
+            cep: '13000-000',
+            realPhotoUrl: 'https://example.com/mais-um.jpg',
+          ),
+        ],
+      );
+    }
+
+    await tester.pumpWidget(
+      _testApp(IntermediateSearchScreen(searchLoader: fakeLoader)),
+    );
+
+    await tester.enterText(find.byType(TextField), 'Harr');
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pump();
 
     expect(find.text('Resultados'), findsOneWidget);
     expect(find.text('Encontramos 7 resultados para "Harr"'), findsOneWidget);
-    expect(find.byType(IntermediateSearchScreen), findsOneWidget);
-    expect(find.byType(TextField), findsOneWidget);
-    expect(find.text('Ver mais resultados'), findsOneWidget);
-    expect(find.byType(IntermediateSearchScreen), findsOneWidget);
     expect(find.text('Flores para Algernon'), findsOneWidget);
     expect(find.text('O tal do 1984'), findsOneWidget);
     expect(find.text('O poder do hábito'), findsOneWidget);
+    expect(find.text('Ver mais resultados'), findsOneWidget);
+  });
+
+  testWidgets('opens the announcement details screen when a result is tapped', (
+    tester,
+  ) async {
+    Future<AnnouncementSearchResponse> fakeLoader({
+      required String query,
+      required int limit,
+      required int offset,
+    }) async {
+      return const AnnouncementSearchResponse(
+        total: 1,
+        results: [
+          AnnouncementSearchItem(
+            id: 'announcement-1',
+            title: 'Flores para Algernon',
+            publishYear: 2000,
+            cep: '13000-000',
+            realPhotoUrl: 'https://example.com/flores.jpg',
+          ),
+        ],
+      );
+    }
+
+    await tester.pumpWidget(
+      _testApp(IntermediateSearchScreen(searchLoader: fakeLoader)),
+    );
+
+    await tester.enterText(find.byType(TextField), 'Har');
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pump();
+
+    await tester.tap(find.text('Flores para Algernon'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(IntermediateSearchScreen), findsNothing);
+    expect(find.byType(AnnouncementDetailScreen), findsOneWidget);
+  });
+
+  testWidgets('shows the empty state for short queries and clears results', (
+    tester,
+  ) async {
+    Future<AnnouncementSearchResponse> fakeLoader({
+      required String query,
+      required int limit,
+      required int offset,
+    }) async {
+      return const AnnouncementSearchResponse(results: [], total: 0);
+    }
+
+    await tester.pumpWidget(
+      _testApp(IntermediateSearchScreen(searchLoader: fakeLoader)),
+    );
+
+    await tester.enterText(find.byType(TextField), 'H');
+    await tester.pump();
+
+    expect(find.text('Nenhum livro encontrado.'), findsOneWidget);
+    expect(find.text('Ver mais resultados'), findsNothing);
   });
 
   testWidgets('returns to the previous screen when back is pressed', (
@@ -63,7 +197,17 @@ void main() {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const IntermediateSearchScreen(),
+                        builder: (_) => IntermediateSearchScreen(
+                          searchLoader:
+                              ({
+                                required String query,
+                                required int limit,
+                                required int offset,
+                              }) async => const AnnouncementSearchResponse(
+                                results: [],
+                                total: 0,
+                              ),
+                        ),
                       ),
                     );
                   },
@@ -86,40 +230,4 @@ void main() {
 
     expect(find.text('Open search'), findsOneWidget);
   });
-}
-
-class _AppWrapper extends StatelessWidget {
-  const _AppWrapper({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        useMaterial3: true,
-        textTheme: const TextTheme(
-          headlineLarge: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 34,
-            fontWeight: FontWeight.w700,
-            color: Colors.black,
-          ),
-          bodyMedium: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF727272),
-          ),
-          titleMedium: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: Colors.black,
-          ),
-        ),
-      ),
-      home: child,
-    );
-  }
 }
