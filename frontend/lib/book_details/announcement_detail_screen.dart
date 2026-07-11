@@ -116,7 +116,9 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
             final book = data.book;
             final edition = data.edition;
 
-            final bool isOwner = false; //criar lógica de verificação!!!!
+            final String meuUsuarioLogadoId = "cd1be270-d415-4db5-9d6f-c7ca619e69ed";
+
+            final bool isOwner = data.userId == meuUsuarioLogadoId;
 
             // Trocamos o retorno direto do ScrollView por uma Column
             return Column(
@@ -195,63 +197,6 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
       ),
     );
   }
-
-  //           /// Success state
-  //           final data = snapshot.data!;
-  //           final book = data.book;
-  //           final edition = data.edition;
-
-  //           final bool isOwner = false; //criar lógica de verificação!!!!
-
-  //           return SingleChildScrollView(
-  //             padding: const EdgeInsets.all(16),
-
-  //             /// Main layout structure
-  //             child: Column(
-  //               crossAxisAlignment: CrossAxisAlignment.start,
-  //               children: [
-  //                 /// Back navigation button
-  //                 IconButton(
-  //                   icon: const Icon(Icons.arrow_back),
-  //                   onPressed: () => Navigator.pop(context),
-  //                   tooltip: 'Back',
-  //                 ),
-
-  //                 /// Book cover / announcement image
-  //                 _buildCover(data.realPhotoUrl),
-  //                 const SizedBox(height: 16),
-
-  //                 /// Title, author, and condition badge
-  //                 _buildHeader(
-  //                   title: book?.title,
-  //                   author: book?.author,
-  //                   condition: data.condition,
-  //                 ),
-
-  //                 const SizedBox(height: 16),
-
-  //                 /// User + edition info
-  //                 _buildInfoSection(
-  //                   tradedWith: data.userName,
-  //                   cep: data.userCep,
-  //                   description: data.description,
-  //                   year: edition?.publishYear,
-  //                   publisher: edition?.publisher,
-  //                 ),
-
-  //                 const SizedBox(height: 16),
-
-  //                 /// Book synopsis
-  //                 _buildDescription(synopsis: book?.synopsis),
-  //               ],
-  //             ),
-  //           );
-
-  //         },
-  //       ),
-  //     ),
-  //   );
-  // }
 
   // =========================
   // SECTIONS
