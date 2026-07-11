@@ -52,6 +52,12 @@ def feed_announcements_route(
         default=None,
     ),
 
+    max_distance_km: float | None = Query(
+        default=None,
+        gt=0,
+    ),
+
+
     db: Session = Depends(get_db),
 ):
     """Return the filtered announcements feed.
@@ -76,6 +82,8 @@ def feed_announcements_route(
         end_year=end_year,
         conditions=condition,
         genres=genre,
+        max_distance_km=max_distance_km,
+
     )
     
 

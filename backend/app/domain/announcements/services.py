@@ -116,6 +116,7 @@ def get_feed_announcements(
     end_year: int | None = None,
     conditions: list[str] | None = None,
     genres: list[str] | None = None,
+    max_distance_km: float | None = None,
 ):
     query = (
         db.query(models.TradeAnnouncement)
