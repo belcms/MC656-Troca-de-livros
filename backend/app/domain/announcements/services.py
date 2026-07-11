@@ -113,7 +113,9 @@ def get_feed_announcements(
     limit: int = 20,
     offset: int = 0,
     condition: str | None = None,
-    genre: str | None = None
+    genre: str | None = None,
+    publish_year: int | None = None
+
 ):
     query = (
         db.query(models.TradeAnnouncement)
@@ -144,6 +146,11 @@ def get_feed_announcements(
     if genre is not None:
         query = query.filter(
             Book.genre == map_genre(genre)
+        )
+    
+    if publish_year is not None:
+        query = query.filter(
+            Edition.publish_year == publish_year
         )
 
     announcements = (

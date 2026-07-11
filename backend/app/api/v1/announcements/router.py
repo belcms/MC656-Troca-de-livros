@@ -35,7 +35,8 @@ def feed_announcements_route(
     offset: int = Query(0, ge=0),
     condition: str | None = Query(default=None),
     genre: str | None = Query(default=None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    publish_year: int | None = Query(default=None),
 ):
     """Return the feed list used by the main announcements timeline.
 
@@ -54,7 +55,8 @@ def feed_announcements_route(
         limit=limit,
         offset=offset,
         condition=condition,
-        genre=genre
+        genre=genre,
+        publish_year=publish_year
     )
 
 @router.post("/{user_id}", status_code=201)
