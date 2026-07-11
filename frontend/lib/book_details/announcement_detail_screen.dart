@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/announcement_service.dart';
 import 'announcement_detail_model.dart';
+import 'interest_bottom_bar.dart';
+import 'package:frontend/offer/trade_proposal_view.dart';
 
 /// Screen responsible for displaying detailed information about a trade announcement.
 ///
@@ -114,54 +116,142 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
             final book = data.book;
             final edition = data.edition;
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+            final bool isOwner = false; //criar lógica de verificação!!!!
 
-              /// Main layout structure
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// Back navigation button
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
-                    tooltip: 'Back',
+            // Trocamos o retorno direto do ScrollView por uma Column
+            return Column(
+              children: [
+                /// 1. A área rolável do anúncio, envolvida em um Expanded
+                /// para ocupar todo o espaço disponível
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+
+                    /// Main layout structure
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        /// Back navigation button
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: () => Navigator.pop(context),
+                          tooltip: 'Back',
+                        ),
+
+                        /// Book cover / announcement image
+                        _buildCover(data.realPhotoUrl),
+                        const SizedBox(height: 16),
+
+                        /// Title, author, and condition badge
+                        _buildHeader(
+                          title: book?.title,
+                          author: book?.author,
+                          condition: data.condition,
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        /// User + edition info
+                        _buildInfoSection(
+                          tradedWith: data.userName,
+                          cep: data.userCep,
+                          description: data.description,
+                          year: edition?.publishYear,
+                          publisher: edition?.publisher,
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        /// Book synopsis
+                        _buildDescription(synopsis: book?.synopsis),
+                      ],
+                    ),
                   ),
+                ),
 
-                  /// Book cover / announcement image
-                  _buildCover(data.realPhotoUrl),
-                  const SizedBox(height: 16),
-
-                  /// Title, author, and condition badge
-                  _buildHeader(
-                    title: book?.title,
-                    author: book?.author,
-                    condition: data.condition,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  /// User + edition info
-                  _buildInfoSection(
-                    tradedWith: data.userName,
-                    cep: data.userCep,
-                    description: data.description,
-                    year: edition?.publishYear,
-                    publisher: edition?.publisher,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  /// Book synopsis
-                  _buildDescription(synopsis: book?.synopsis),
-                ],
-              ),
+                /// 2. O seu componente fixado no final da tela
+                  InterestBottomBar(
+                  isOwner: isOwner,
+                  onInterestPressed: () {
+                    // Passando os dados reais do anúncio para a próxima tela
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TradeProposalScreen(
+                          targetAnnouncementId: widget.announcementId,
+                          targetBookTitle: book?.title ?? 'Título desconhecido',
+                          targetBookYear: edition?.publishYear?.toString() ?? 'Ano não informado',
+                          targetBookLocation: data.userCep ?? 'Localização não informada', 
+                          targetBookImageUrl: data.realPhotoUrl ?? 'URL_DA_IMAGEM_PADRAO_AQUI',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             );
           },
         ),
       ),
     );
   }
+
+  //           /// Success state
+  //           final data = snapshot.data!;
+  //           final book = data.book;
+  //           final edition = data.edition;
+
+  //           final bool isOwner = false; //criar lógica de verificação!!!!
+
+  //           return SingleChildScrollView(
+  //             padding: const EdgeInsets.all(16),
+
+  //             /// Main layout structure
+  //             child: Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 /// Back navigation button
+  //                 IconButton(
+  //                   icon: const Icon(Icons.arrow_back),
+  //                   onPressed: () => Navigator.pop(context),
+  //                   tooltip: 'Back',
+  //                 ),
+
+  //                 /// Book cover / announcement image
+  //                 _buildCover(data.realPhotoUrl),
+  //                 const SizedBox(height: 16),
+
+  //                 /// Title, author, and condition badge
+  //                 _buildHeader(
+  //                   title: book?.title,
+  //                   author: book?.author,
+  //                   condition: data.condition,
+  //                 ),
+
+  //                 const SizedBox(height: 16),
+
+  //                 /// User + edition info
+  //                 _buildInfoSection(
+  //                   tradedWith: data.userName,
+  //                   cep: data.userCep,
+  //                   description: data.description,
+  //                   year: edition?.publishYear,
+  //                   publisher: edition?.publisher,
+  //                 ),
+
+  //                 const SizedBox(height: 16),
+
+  //                 /// Book synopsis
+  //                 _buildDescription(synopsis: book?.synopsis),
+  //               ],
+  //             ),
+  //           );
+
+  //         },
+  //       ),
+  //     ),
+  //   );
+  // }
 
   // =========================
   // SECTIONS
@@ -174,9 +264,10 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   Widget _buildCover(String? url) {
     // Define a URL padrão caso a fornecida seja inválida
     const String fallbackUrl = 'https://axiomprint.com/icons/default-squre.jpg';
-    
+
     // Verifica se a URL é nula, vazia ou apenas espaços
-    final bool isValidUrl = url != null && url.trim().isNotEmpty && url.startsWith('http');
+    final bool isValidUrl =
+        url != null && url.trim().isNotEmpty && url.startsWith('http');
 
     return Center(
       child: ClipRRect(
