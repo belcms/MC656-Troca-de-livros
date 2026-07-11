@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/book_details/announcement_detail_screen.dart';
 import 'package:frontend/search/announcement_search_models.dart';
+import 'package:frontend/search/final_search_results_screen.dart';
 import 'package:frontend/search/intermediate_search_screen.dart';
 
 Widget _testApp(Widget child) {
@@ -158,6 +159,43 @@ void main() {
 
     expect(find.byType(IntermediateSearchScreen), findsNothing);
     expect(find.byType(AnnouncementDetailScreen), findsOneWidget);
+  });
+
+  testWidgets('opens the final results screen when Enter is pressed', (
+    tester,
+  ) async {
+    Future<AnnouncementSearchResponse> fakeLoader({
+      required String query,
+      required int limit,
+      required int offset,
+    }) async {
+      return const AnnouncementSearchResponse(
+        total: 4,
+        results: [
+          AnnouncementSearchItem(
+            id: '1',
+            title: 'Flores para Algernon',
+            publishYear: 2000,
+            cep: '13000-000',
+            realPhotoUrl: 'https://example.com/flores.jpg',
+          ),
+        ],
+      );
+    }
+
+    await tester.pumpWidget(
+      _testApp(IntermediateSearchScreen(searchLoader: fakeLoader)),
+    );
+
+    await tester.enterText(find.byType(TextField), 'Har');
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pump();
+
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(IntermediateSearchScreen), findsNothing);
+    expect(find.byType(FinalSearchResultsScreen), findsOneWidget);
   });
 
   testWidgets('shows the empty state for short queries and clears results', (
