@@ -13,6 +13,7 @@ from app.api.v1.announcements.router import router as announcements_router
 from app.core.database import engine, Base, get_db
 from app.api.v1.users.router import router as users_router
 from app.api.v1.books.router import router as books_router
+from app.api.v1.locations.router import router as locations_router
 
 books_models.Base.metadata.create_all(bind=engine)
 users_models.Base.metadata.create_all(bind=engine)
@@ -33,6 +34,7 @@ app.add_middleware(
 app.include_router(announcements_router)
 app.include_router(users_router)
 app.include_router(books_router)
+app.include_router(locations_router)
 
 @app.get("/")
 def read_root():
