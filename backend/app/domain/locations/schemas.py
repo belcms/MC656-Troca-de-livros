@@ -15,3 +15,8 @@ class LocationPydantic(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SortPostsByDistanceRequest(BaseModel):
+    reference: LocationPydantic
+    posts: list[LocationPydantic]

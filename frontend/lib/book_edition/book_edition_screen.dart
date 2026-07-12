@@ -181,6 +181,24 @@ class _BookEditionPageState extends State<BookEditionPage> {
       return;
     }
     
+    final cleanCep = vm.cepController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (vm.cepController.text.trim().isNotEmpty) {
+      if (cleanCep.length != 8) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Informe um CEP com 8 dígitos.')),
+        );
+        return;
+      }
+
+      final loc = await LocationService.fetchLocation(cleanCep);
+      if (loc == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('CEP não encontrado ou inválido.')),
+        );
+        return;
+      }
+    }
+
     setState(() {
       isSaving = true;
     });

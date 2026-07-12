@@ -2,12 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.domain.locations.schemas import LocationPydantic
+from app.domain.locations.schemas import LocationPydantic, SortPostsByDistanceRequest
 from app.domain.locations import services
-
-from app.domain.locations.schemas import LocationPydantic
-from app.domain.locations import services
-
 
 router = APIRouter(
     prefix="/api/v1/locations",
@@ -31,7 +27,7 @@ async def get_location_by_cep(cep: str, db: Session = Depends(get_db)):
 
 #get sorted posts by distance from a given location
 @router.post("/sort_posts_by_distance", response_model=List[LocationPydantic], summary="Sort Posts by Distance", description="Sorts a list of posts based on their distance from a specified location.")
-async def sort_posts_by_distance_from_A(location_a: LocationPydantic, posts: List[LocationPydantic]):
+async def sort_posts_by_distance_from_A(body: SortPostsByDistanceRequest):
     """
     Sort posts by distance from a given location.
 
@@ -40,5 +36,5 @@ async def sort_posts_by_distance_from_A(location_a: LocationPydantic, posts: Lis
         posts (List[dict]): A list of posts, each containing a 'location' key with a LocationPydantic object.
     """
     
-    sorted_posts = await services.sort_posts_by_distance_from_A(location_a, posts)
+    sorted_posts = await services.sort_posts_by_distance_from_A(body.reference, body.posts)
     return sorted_posts

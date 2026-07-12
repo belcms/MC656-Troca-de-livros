@@ -132,7 +132,7 @@ class BookCreationViewModel {
       "status": mapStatus(), // <--- Usando o tradutor de Status
       "condition": mapCondition(), // <--- Usando o tradutor de Condição
       "coverUrl": coverUrl ?? "",
-      "cep": cepController.text.isNotEmpty ? cepController.text : '07115000', // <--- Enviando o CEP se preenchido
+      "cep": cepController.text.trim().isNotEmpty ? cepController.text.trim() : null,
     };
 
     try {

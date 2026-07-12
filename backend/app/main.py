@@ -11,7 +11,7 @@ from app.domain.announcements import models as announcements_models
 from app.domain.announcements.services import create_dummy_data
 # from app.domain.announcements.router import router as announcements_router
 from app.api.v1.announcements.router import router as announcements_router
-from app.core.database import engine, Base, get_db
+from app.core.database import engine, Base, get_db, ensure_schema_compatibility
 from app.api.v1.users.router import router as users_router
 from app.api.v1.books.router import router as books_router
 from app.api.v1.locations.router import router as locations_router
@@ -22,6 +22,7 @@ announcements_models.Base.metadata.create_all(bind=engine)
 location_model.Base.metadata.create_all(bind=engine)
 
 Base.metadata.create_all(bind=engine)
+ensure_schema_compatibility()
 
 app = FastAPI()
 

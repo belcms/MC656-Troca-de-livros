@@ -36,9 +36,11 @@ class _BookCreationPageState extends State<BookCreationPage> {
       final users = await UserService.fetchUsers();
       if (users != null && users.isNotEmpty) {
         final user = users.first; 
-        final cepUser = user['cep_id'] ?? "01001000"; 
-        vm.cepController.text = cepUser;
-        await _buscarLocalizacao(cepUser);
+        final cepUser = user['cep_id'];
+        if (cepUser != null && cepUser.toString().isNotEmpty) {
+          vm.cepController.text = cepUser.toString();
+          await _buscarLocalizacao(cepUser.toString());
+        }
       }
     }
 
@@ -197,6 +199,24 @@ class _BookCreationPageState extends State<BookCreationPage> {
         context,
       ).showSnackBar(const SnackBar(content: Text('O número de páginas é obrigatório.')));
       return;
+    }
+
+    final cleanCep = vm.cepController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (vm.cepController.text.trim().isNotEmpty) {
+      if (cleanCep.length != 8) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Informe um CEP com 8 dígitos.')),
+        );
+        return;
+      }
+
+      final loc = await LocationService.fetchLocation(cleanCep);
+      if (loc == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('CEP não encontrado ou inválido.')),
+        );
+        return;
+      }
     }
 
     setState(() {

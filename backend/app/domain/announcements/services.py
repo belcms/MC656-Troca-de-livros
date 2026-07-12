@@ -2,7 +2,6 @@ from fastapi.params import Body, Depends
 from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 from app.domain.announcements import models
-import httpx
 from app.domain.announcements.models import Status
 from app.api.v1.announcements.schemas import FeedAnnouncementResponse
 from app.domain.books.models import Edition, Book
@@ -13,7 +12,6 @@ from app.domain.users import models as users_models
 from app.core.database import get_db
 import app.domain.books.schemas as books_schemas
 import app.domain.announcements.schemas as announcements_schemas
-from app.domain.locations import models as location_model
 
 #excluir, não ideal (apenas para create_dummy_data/teste)
 import app.domain.locations.services as locations_services
@@ -456,35 +454,13 @@ def update_book(
     announcement.description = body.get("description", announcement.description)
     announcement.real_photo_url = body.get("real_photo_url", announcement.real_photo_url)
  # Rratar o CEP antes de salvar para evitar erro de Chave Estrangeira
-    if body.get("cep_id"):
-        cep_val = str(body["cep_id"]).replace("-", "")
-        
-        # 1. Verifica se a localização já existe no banco
-        loc = db.query(location_model.location).filter(location_model.location.cep == cep_val).first()
-        
-        # 2. Se for um CEP inédito, busca na API e cria no banco ANTES do anúncio
-        if not loc:
-            try:
-                url = f"https://cep.awesomeapi.com.br/json/{cep_val}"
-                with httpx.Client(timeout=5.0) as client:
-                    resp = client.get(url)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    new_loc = location_model.location(
-                        city=data.get("city"),
-                        state=data.get("state"),
-                        country='Brasil',
-                        district=data.get("district"),
-                        lat=data.get("lat"),
-                        long=data.get("lng"),
-                        cep=cep_val,
-                    )
-                    db.add(new_loc)
-                    db.flush() # Salva temporariamente para que o anúncio não quebre
-            except Exception as e:
-                print(f"Erro ao buscar nova localização: {e}")
-                
-        announcement.cep_id = cep_val
+    if "cep_id" in body:
+        clean_cep = locations_services.normalize_cep(body.get("cep_id"))
+        if clean_cep is None:
+            announcement.cep_id = None
+        else:
+            loc = locations_services.get_or_create_location_by_cep(clean_cep, db)
+            announcement.cep_id = loc.cep
     announcement.status = map_status(body.get("status", announcement.status.value))
     announcement.condition = map_condition(body.get("condition", announcement.condition.value))
 
@@ -567,33 +543,12 @@ def create_announcement(user_id: str, body: announcements_schemas.TradeAnnouncem
         a success message.
     """
     #transforma o body que está em um obj pydantic em um modelo do SQLAlchemy para persistir no banco
+    body_data = body.model_dump(exclude={"id", "user_id"})
     if body.cep_id:
-        cep_val = str(body.cep_id).replace("-", "")
-        loc = db.query(location_model.location).filter(location_model.location.cep == cep_val).first()
-        
-        if not loc:
-            try:
-                url = f"https://cep.awesomeapi.com.br/json/{cep_val}"
-                with httpx.Client(timeout=5.0) as client:
-                    resp = client.get(url)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    new_loc = location_model.location(
-                        city=data.get("city"),
-                        state=data.get("state"),
-                        country='Brasil',
-                        district=data.get("district"),
-                        lat=data.get("lat"),
-                        long=data.get("lng"),
-                        cep=cep_val,
-                    )
-                    db.add(new_loc)
-                    db.flush() # Salva temporariamente para prevenir a falha do banco
-            except Exception as e:
-                print(f"Erro ao buscar nova localização: {e}")
-
+        loc = locations_services.get_or_create_location_by_cep(body.cep_id, db)
+        body_data["cep_id"] = loc.cep
     #transforma o body que est  em um obj pydantic em um modelo do SQLAlchemy para persistir no banco
-    announcement = announcements_models.TradeAnnouncement(**body.model_dump(exclude={"id", "user_id"}), user_id=user_id) #vantagem, se mudarmos o modelo, n o quebra
+    announcement = announcements_models.TradeAnnouncement(**body_data, user_id=user_id) #vantagem, se mudarmos o modelo, n o quebra
     db.add(announcement)
     db.commit()
     db.refresh(announcement)

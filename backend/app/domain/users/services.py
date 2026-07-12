@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import case
 from . import models
 from app.domain.locations.models import location as LocationModel
-import httpx
+import app.domain.locations.services as locations_services
 from app.domain.announcements.models import TradeAnnouncement, Status
 from app.domain.books.models import Edition, Book
 from app.domain.users.models import User
@@ -64,31 +64,8 @@ def get_user_announcements(db: Session, user_id: str):
     def _ensure_location_for_cep(cep_value: str):
         if not cep_value:
             return None
-        # check existing
-        loc = db.query(LocationModel).filter(LocationModel.cep == cep_value).first()
-        if loc:
-            return loc
-        # fetch from external API synchronously and persist
         try:
-            url = f"https://cep.awesomeapi.com.br/json/{cep_value}"
-            with httpx.Client(timeout=5.0) as client:
-                resp = client.get(url)
-            if resp.status_code != 200:
-                return None
-            data = resp.json()
-            new_loc = LocationModel(
-                city=data.get("city"),
-                state=data.get("state"),
-                country='Brasil',
-                district=data.get("district"),
-                lat=data.get("lat"),
-                long=data.get("lng"),
-                cep=data.get("cep").replace("-", "") if data.get("cep") else cep_value,
-            )
-            db.add(new_loc)
-            db.commit()
-            db.refresh(new_loc)
-            return new_loc
+            return locations_services.get_or_create_location_by_cep(cep_value, db)
         except Exception:
             return None
     for row in results:
