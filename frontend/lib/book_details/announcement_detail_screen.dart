@@ -4,6 +4,7 @@ import 'announcement_detail_model.dart';
 import 'interest_bottom_bar.dart';
 import 'package:frontend/offer/trade_proposal_view.dart';
 import 'package:frontend/services/offer_service.dart';
+import 'package:frontend/services/user_service.dart';
 
 /// Screen responsible for displaying detailed information about a trade announcement.
 ///
@@ -51,6 +52,8 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   late Future<AnnouncementDetail?> _future;
   bool _hasPendingOffer = false;
   bool _isLoadingOfferStatus = true;
+  String? meuUsuarioLogadoId;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -61,6 +64,27 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
       widget.announcementId,
     );
     _checkIfHasOffer();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    // Busca os usuários
+    final users = await UserService.fetchUsers();
+
+    // Atualiza a tela com o resultado
+    setState(() {
+      if (users != null && users.isNotEmpty) {
+        meuUsuarioLogadoId = users.first['id'];
+      } else {
+        meuUsuarioLogadoId = "f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4";
+      }
+
+      // Quando terminar de pegar o ID, tiramos o loading
+      isLoading = false;
+    });
+
+    // Se precisar chamar o viewModel logo em seguida, pode fazer aqui:
+    // _viewModel.loadEligibleBooks(meuUsuarioLogadoId!);
   }
 
   Future<void> _checkIfHasOffer() async {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/book_creation/book_creation_screen.dart';
 import 'offer_proposal_view_model.dart';
 import 'offer_book_model.dart';
+import 'package:frontend/services/user_service.dart';
 
 class TradeProposalScreen extends StatefulWidget {
   final String targetAnnouncementId; // ID real do anúncio alvo
@@ -34,10 +35,27 @@ class _TradeProposalScreenState extends State<TradeProposalScreen> {
   @override
   void initState() {
     super.initState();
-    // Agora chamamos o novo nome do método da ViewModel
     _viewModel = widget.viewModel ?? TradeProposalViewModel();
-    _viewModel.loadEligibleBooks("f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4");
-    //   _viewModel.loadEligibleBooks("cd1be270-d415-4db5-9d6f-c7ca619e69ed");
+
+    // Chama o método assíncrono sem colocar 'await' aqui
+    _initData();
+  }
+
+  // Novo método assíncrono para lidar com o carregamento
+  Future<void> _initData() async {
+    final users = await UserService.fetchUsers();
+
+    // Declara a variável fora do if/else para poder usar depois
+    String firstUserId;
+
+    if (users != null && users.isNotEmpty) {
+      firstUserId = users.first['id'];
+    } else {
+      firstUserId =
+          "f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4"; // <-- Faltava o ponto e vírgula aqui
+    }
+
+    _viewModel.loadEligibleBooks(firstUserId);
   }
 
   @override
