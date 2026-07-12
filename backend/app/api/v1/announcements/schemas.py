@@ -73,3 +73,16 @@ class FeedAnnouncementResponse(BaseModel):
     real_photo_url: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SearchAnnouncementsResponse(BaseModel):
+    """Envelope returned by the announcement search endpoint.
+
+    The frontend needs both the matched cards and the total number of
+    matches for pagination and the result counter.
+    """
+
+    results: list[FeedAnnouncementResponse]
+    total: int
+
+    model_config = ConfigDict(from_attributes=True)
