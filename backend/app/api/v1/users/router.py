@@ -62,7 +62,7 @@ def get_user_announcements(user_id: str, db: Session = Depends(get_db), current_
     Current behavior:
         - Returns HTTP 200 with a list of cards.
         - Returns an empty list when the user has no announcements.
-        - Returns an empty list when user_id does not exist.
+        - Returns HTTP 403 when user_id differs from the authenticated user.
 
     Args:
         user_id: User identifier from path parameters.

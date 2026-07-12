@@ -20,11 +20,11 @@ def test_get_user_announcements_endpoint_returns_cards(users_client, db_session,
     assert set(payload[0].keys()) == {"id", "title", "publish_year", "real_photo_url", "status"}
 
 
-def test_get_user_announcements_endpoint_returns_empty_list_for_non_existent_user(users_client):
+def test_get_user_announcements_endpoint_rejects_non_existent_user_id(users_client):
     response = users_client.get("/api/v1/users/non-existent-user-id/announcements")
 
-    assert response.status_code == 200
-    assert response.json() == []
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Acesso negado"}
 
 
 def test_get_user_announcements_endpoint_returns_empty_list_for_existing_user_without_announcements(
