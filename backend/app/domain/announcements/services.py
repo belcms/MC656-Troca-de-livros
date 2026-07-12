@@ -147,6 +147,11 @@ def get_feed_announcements(
             == Status.Available
         )
     )
+    # removes posts created by you from the feed
+    if current_user_id is not None:
+        query = query.filter(
+        models.TradeAnnouncement.user_id != current_user_id
+    )
 
     if conditions:
         mapped_conditions = [

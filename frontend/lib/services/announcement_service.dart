@@ -137,12 +137,13 @@ class AnnouncementService {
             filters.genres;
       }
 
+    // removes posts created by you from the feed
+      queryParameters['current_user_id'] =
+          currentUserId;
+
       if (filters.maxDistanceKm != null) {
         queryParameters['max_distance_km'] =
             filters.maxDistanceKm.toString();
-
-        queryParameters['current_user_id'] =
-            currentUserId;
       }
 
       final url = Uri.parse(
