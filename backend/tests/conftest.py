@@ -23,6 +23,7 @@ from app.core.database import Base, get_db
 from app.domain.announcements.models import Condition, Status, TradeAnnouncement
 from app.domain.books.models import Book, Edition, Genre, Language
 from app.domain.users.models import User
+from app.domain.auth.security import get_current_user
 
 @pytest.fixture
 def fake_db():
@@ -41,17 +42,20 @@ def app_with_router(db_session: Session):
         yield db_session # Injeta o banco real nos testes
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = lambda: db_session.query(User).first() or User(id="id123", username="test", email="test@example.com", full_name="Test", cep="13000000")
     return app
 
 
 @pytest.fixture
 def client(app_with_router):
-    return TestClient(app_with_router)
+    with TestClient(app_with_router) as test_client:
+        yield test_client
 
 
 @pytest.fixture
 def client_no_raise(app_with_router):
-    return TestClient(app_with_router, raise_server_exceptions=False)
+    with TestClient(app_with_router, raise_server_exceptions=False) as test_client:
+        yield test_client
 
 
 @pytest.fixture
@@ -83,6 +87,7 @@ def users_client(db_session: Session) -> Generator[TestClient, None, None]:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = lambda: db_session.query(User).first() or User(id="id123", username="test", email="test@example.com", full_name="Test", cep="13000000")
     try:
         with TestClient(app) as test_client:
             yield test_client

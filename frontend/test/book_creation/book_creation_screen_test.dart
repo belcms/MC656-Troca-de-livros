@@ -7,7 +7,7 @@ void main() {
     // Monta a tela virtualmente
     await tester.pumpWidget(
       const MaterialApp(
-        home: BookCreationPage(userId: '123-abc'),
+        home: BookCreationPage(),
       ),
     );
 

@@ -1,0 +1,495 @@
+# Cadastro, login e autenticação
+
+Este documento explica as mudanças realizadas para adicionar cadastro, login convencional, login com Google, persistência de sessão e proteção das funcionalidades privadas do projeto.
+
+## Visão geral
+
+A aplicação agora possui autenticação própria no backend FastAPI. Depois de cadastrar ou autenticar um usuário, o backend emite dois tokens:
+
+- `access_token`: JWT de curta duração, enviado nas requisições autenticadas;
+- `refresh_token`: token de longa duração, utilizado para renovar a sessão sem solicitar novamente a senha.
+
+O Flutter armazena esses tokens no armazenamento seguro do dispositivo e restaura a sessão quando o aplicativo é aberto novamente.
+
+O feed e os detalhes de anúncios continuam públicos. Perfil, anúncios próprios, criação e edição de anúncios e a área de trocas exigem autenticação.
+
+## Mudanças no backend
+
+### Configuração por ambiente
+
+A conexão com o banco e as configurações de autenticação deixaram de ficar espalhadas pelo código. Elas são carregadas por `app/core/settings.py`.
+
+As variáveis disponíveis estão documentadas em `backend/.env.example`:
+
+```env
+DATABASE_URL=postgresql+psycopg://admin_books:password@localhost:5433/books_db
+JWT_SECRET=replace-with-a-long-random-secret
+ACCESS_TOKEN_MINUTES=15
+REFRESH_TOKEN_DAYS=30
+ONBOARDING_TOKEN_MINUTES=15
+GOOGLE_CLIENT_ID=your-google-server-client-id.apps.googleusercontent.com
+```
+
+Em produção, `JWT_SECRET` deve ser substituído por um valor longo, aleatório e privado. O arquivo `.env` real não deve ser versionado.
+
+### Modelo de usuário
+
+O modelo `User` foi ampliado com os seguintes dados:
+
+- `username_normalized`: nickname normalizado para comparação sem diferença entre maiúsculas e minúsculas;
+- `email_normalized`: e-mail normalizado para comparação e login;
+- `password_hash`: hash Argon2 da senha;
+- `birth_date`: data de nascimento;
+- `google_subject`: identificador único fornecido pelo Google;
+- `onboarding_complete`: informa se uma conta Google terminou o cadastro;
+- `created_at` e `updated_at`: datas de criação e atualização.
+
+Os campos antigos `username`, `email`, `full_name` e `cep` continuam existindo para preservar compatibilidade com o restante do projeto.
+
+As colunas novas que representam credenciais podem ser nulas para permitir a migração de usuários antigos. Um usuário legado sem `password_hash` não consegue fazer login por senha, mas seus anúncios e relacionamentos continuam válidos.
+
+### Normalização e unicidade
+
+E-mail e nickname são tratados sem diferença entre maiúsculas e minúsculas. Por exemplo, os seguintes valores são considerados duplicados:
+
+```text
+Maria@example.com
+maria@example.com
+```
+
+A mesma regra vale para `Maria` e `MARIA` como nickname. A verificação ocorre no serviço e também por constraints únicas no banco, protegendo inclusive contra dois cadastros concorrentes.
+
+### Senhas
+
+As senhas são processadas com Argon2. O banco armazena somente o hash, nunca a senha original.
+
+O cadastro exige senha com no mínimo oito caracteres. O login utiliza uma mensagem genérica para e-mail inexistente ou senha incorreta:
+
+```text
+E-mail ou senha inválidos
+```
+
+Isso evita revelar se determinado e-mail está cadastrado.
+
+### Validações de cadastro
+
+O backend valida:
+
+- nome e nickname obrigatórios e não compostos apenas por espaços;
+- e-mail por meio do tipo `EmailStr`;
+- senha entre 8 e 128 caracteres;
+- nascimento anterior à data atual;
+- CEP com oito dígitos, aceitando `00000000` ou `00000-000`;
+- unicidade de e-mail e nickname.
+
+O CEP é persistido somente com os oito dígitos. Assim, `13000-000` é armazenado como `13000000`.
+
+Os códigos HTTP principais são:
+
+- `201`: cadastro criado;
+- `401`: credencial ou sessão inválida;
+- `403`: usuário autenticado tentando acessar recurso de outra pessoa;
+- `409`: e-mail ou nickname já cadastrado;
+- `422`: dados ausentes ou em formato inválido;
+- `503`: login Google ainda não configurado no servidor.
+
+## Sessões e tokens
+
+### Access token
+
+O access token é um JWT assinado com `JWT_SECRET`. Ele contém o identificador do usuário, o tipo do token e suas datas de emissão e expiração.
+
+As rotas privadas esperam o token no cabeçalho:
+
+```http
+Authorization: Bearer ACCESS_TOKEN
+```
+
+Um token expirado, alterado ou com tipo incorreto é rejeitado com `401`.
+
+### Refresh token
+
+O refresh token é um valor aleatório e não é um JWT. O banco armazena apenas seu SHA-256 na tabela `auth_sessions`.
+
+Cada sessão registra:
+
+- usuário proprietário;
+- hash do refresh token;
+- expiração;
+- data de criação;
+- data de revogação, quando aplicável.
+
+Ao renovar uma sessão, o refresh token anterior é revogado e um novo par de tokens é emitido. Isso é chamado de rotação de refresh token e impede a reutilização do token antigo.
+
+No logout, o refresh token é revogado. Depois disso, ele não pode ser usado para gerar outra sessão.
+
+## Endpoints de autenticação
+
+### Cadastro
+
+```http
+POST /api/v1/auth/register
+```
+
+Exemplo:
+
+```json
+{
+  "full_name": "Maria Silva",
+  "nickname": "maria",
+  "email": "maria@example.com",
+  "password": "segredo123",
+  "birth_date": "2000-01-01",
+  "cep": "13000-000"
+}
+```
+
+O cadastro autentica o usuário imediatamente e devolve usuário, access token e refresh token.
+
+### Login convencional
+
+```http
+POST /api/v1/auth/login
+```
+
+```json
+{
+  "email": "maria@example.com",
+  "password": "segredo123"
+}
+```
+
+### Renovação da sessão
+
+```http
+POST /api/v1/auth/refresh
+```
+
+```json
+{
+  "refresh_token": "TOKEN_ATUAL"
+}
+```
+
+A resposta contém um novo access token e um novo refresh token. O token enviado deixa de ser válido.
+
+### Logout
+
+```http
+POST /api/v1/auth/logout
+```
+
+```json
+{
+  "refresh_token": "TOKEN_ATUAL"
+}
+```
+
+O endpoint responde com `204` e revoga a sessão.
+
+### Usuário atual
+
+```http
+GET /api/v1/users/me
+```
+
+Devolve somente os dados pessoais do usuário identificado pelo access token.
+
+### Anúncios próprios
+
+```http
+GET /api/v1/users/me/announcements
+```
+
+Esse endpoint substitui o comportamento antigo do Flutter, que consultava todos os usuários e escolhia o primeiro registro do banco.
+
+## Login com Google
+
+O Flutter utiliza `google_sign_in` para abrir o seletor de contas do Android e obter um Google ID token. Esse token é enviado para:
+
+```http
+POST /api/v1/auth/google
+```
+
+```json
+{
+  "id_token": "GOOGLE_ID_TOKEN"
+}
+```
+
+O backend, e não o aplicativo, valida:
+
+- assinatura do Google;
+- audience, usando `GOOGLE_CLIENT_ID`;
+- issuer;
+- expiração;
+- existência de `sub` e e-mail;
+- confirmação de que o e-mail foi verificado pelo Google.
+
+### Conta Google nova
+
+O Google normalmente fornece nome e e-mail, mas não fornece nickname, nascimento e CEP. Por isso, uma conta nova é criada com `onboarding_complete = false`.
+
+O backend devolve um token temporário de onboarding. Esse token não permite acessar perfil ou outras áreas privadas.
+
+O Flutter mostra a tela “Complete seu cadastro” e envia os dados restantes para:
+
+```http
+POST /api/v1/auth/google/complete
+```
+
+```json
+{
+  "onboarding_token": "TOKEN_TEMPORARIO",
+  "nickname": "maria",
+  "birth_date": "2000-01-01",
+  "cep": "13000-000"
+}
+```
+
+Depois da conclusão, o backend marca o onboarding como completo e emite a sessão definitiva.
+
+### E-mail já cadastrado
+
+Se o Google retornar um e-mail verificado que já pertence a uma conta local, a identidade Google é vinculada à conta existente. Os dados e anúncios permanecem na mesma conta.
+
+O sistema rejeita a operação caso o mesmo e-mail esteja associado a um `google_subject` diferente.
+
+## Proteção de anúncios e recursos privados
+
+A criação de anúncio mudou de:
+
+```http
+POST /api/v1/announcements/{user_id}
+```
+
+para:
+
+```http
+POST /api/v1/announcements
+```
+
+O backend ignora qualquer tentativa do cliente de escolher o proprietário. O `user_id` do anúncio é obtido diretamente do access token.
+
+Como o fluxo atual cria livro, edição e anúncio em requisições separadas, as três operações de escrita exigem autenticação.
+
+A edição verifica se o anúncio pertence ao usuário autenticado. Caso contrário, responde com `403`.
+
+Continuam públicos:
+
+- `GET /api/v1/announcements/feed`;
+- detalhes de um anúncio;
+- detalhes públicos de livro usados pelo feed.
+
+Exigem autenticação:
+
+- perfil;
+- anúncios próprios;
+- criação de livro, edição e anúncio;
+- edição de um anúncio próprio;
+- listagem geral de usuários;
+- área “Minhas trocas”.
+
+## Migrações com Alembic
+
+O projeto passou a usar Alembic. Os principais arquivos são:
+
+```text
+backend/alembic.ini
+backend/alembic/env.py
+backend/alembic/versions/20260711_01_auth.py
+```
+
+A primeira migração possui dois comportamentos:
+
+1. Em banco vazio, cria todas as tabelas usando o metadata atual do SQLAlchemy.
+2. Em banco antigo, adiciona os campos de autenticação, normaliza os usuários existentes e cria `auth_sessions`.
+
+Antes de iniciar a API, execute:
+
+```bash
+cd backend
+alembic upgrade head
+```
+
+As chamadas automáticas de `create_all` foram removidas de `main.py`. A evolução do schema agora deve acontecer por migrações.
+
+## Mudanças no Flutter
+
+### Estado global de autenticação
+
+Foram criados:
+
+```text
+frontend/lib/auth/auth_user.dart
+frontend/lib/auth/auth_repository.dart
+frontend/lib/auth/auth_controller.dart
+frontend/lib/auth/auth_screens.dart
+```
+
+`AuthRepository` é responsável por chamadas de autenticação e armazenamento dos tokens.
+
+`AuthController` representa o estado global da sessão e notifica a interface quando o usuário entra, sai, conclui o onboarding ou perde a sessão.
+
+`AuthScope` disponibiliza o controller para as telas sem adicionar uma biblioteca externa de gerenciamento de estado.
+
+### Gate de autenticação
+
+O aplicativo deixou de abrir diretamente a tela principal. `AuthGate` decide o destino:
+
+```text
+Inicializando sessão
+        |
+        +-- sessão válida ----------> aplicação principal
+        |
+        +-- onboarding pendente ----> completar cadastro Google
+        |
+        +-- sem sessão -------------> login
+```
+
+Depois de cadastro ou login bem-sucedido, a atualização do controller reconstrói o gate e libera a aplicação principal.
+
+### Armazenamento seguro
+
+Foi adicionada a dependência `flutter_secure_storage`.
+
+Access e refresh tokens são armazenados no mecanismo seguro da plataforma, em vez de memória simples ou preferências sem criptografia.
+
+Quando o aplicativo inicia, tenta usar o refresh token salvo para emitir uma nova sessão. Se ele estiver expirado ou revogado, os dados locais são apagados e a tela de login é exibida.
+
+### Cliente HTTP autenticado
+
+`ApiClient` centraliza requisições autenticadas:
+
+1. adiciona o access token ao cabeçalho;
+2. envia a requisição;
+3. se receber `401`, tenta renovar a sessão uma única vez;
+4. repete a requisição com o token novo;
+5. se a renovação falhar, limpa a sessão e retorna ao login.
+
+O limite de uma tentativa evita ciclos infinitos de renovação.
+
+### Telas
+
+Foram adicionadas:
+
+- tela de login;
+- tela de cadastro;
+- tela de conclusão do cadastro Google;
+- tela reservada “Minhas trocas”.
+
+O perfil deixou de exibir dados estáticos e agora usa nome e nickname do usuário autenticado. Também recebeu o botão “Sair”.
+
+“Meus Livros” e o carrossel do perfil usam `/users/me/announcements`, eliminando a seleção artificial do primeiro usuário do banco.
+
+A criação de anúncio também não recebe mais um `userId` do widget ou do ViewModel.
+
+## Configuração do Google no Android
+
+É necessário configurar o Google Cloud Console:
+
+1. Configure a tela de consentimento OAuth.
+2. Crie um cliente Android para o package `com.example.frontend`.
+3. Cadastre os fingerprints SHA-1 e SHA-256 das chaves de debug e release.
+4. Crie um cliente OAuth do tipo Web para funcionar como server client ID.
+5. Use o Web Client ID em `GOOGLE_CLIENT_ID` no backend.
+6. Passe o mesmo ID ao Flutter por `dart-define`.
+
+Para consultar os fingerprints:
+
+```bash
+cd frontend/android
+./gradlew signingReport
+```
+
+Para iniciar o aplicativo:
+
+```bash
+cd frontend
+flutter run \
+  --dart-define=GOOGLE_SERVER_CLIENT_ID=seu-id.apps.googleusercontent.com
+```
+
+Nenhum client ID ou segredo real foi incluído no repositório.
+
+## Dependências adicionadas
+
+Backend:
+
+- `alembic`: migrações de banco;
+- `argon2-cffi`: hash e verificação de senhas;
+- `PyJWT`: emissão e validação dos JWTs;
+- `google-auth`: validação de Google ID tokens.
+
+Flutter:
+
+- `flutter_secure_storage`: armazenamento seguro da sessão;
+- `google_sign_in`: autenticação Google no Android.
+
+## Testes e verificações
+
+Foram adicionados testes backend para:
+
+- cadastro e autenticação automática;
+- armazenamento da senha somente como hash;
+- CEP canônico;
+- duplicidade case-insensitive de e-mail e nickname;
+- CEP e nascimento inválidos;
+- credenciais incorretas;
+- rotação e revogação do refresh token;
+- acesso privado sem autenticação;
+- onboarding de uma conta Google nova;
+- vinculação de uma conta Google a um e-mail existente.
+
+Os testes antigos foram ajustados para o novo endpoint autenticado de criação de anúncios e para a remoção do `userId` do Flutter.
+
+Verificações executadas durante a implementação:
+
+- 19 testes Flutter aprovados;
+- APK Android de debug gerado com sucesso;
+- testes backend de domínio e persistência aprovados;
+- testes unitários do fluxo Google aprovados;
+- bytecode Python compilado sem erros;
+- migração Alembic validada em banco vazio;
+- análise Flutter sem erros de compilação.
+
+Na máquina de desenvolvimento, a suíte completa de testes HTTP fica bloqueada no `TestClient` com Python 3.13 e a versão atual do Starlette. O pipeline do projeto usa Python 3.11, que é o ambiente-alvo para esses testes.
+
+## Funcionalidade de trocas
+
+Ainda não foi criado o domínio completo de negociação de trocas. Foi adicionada uma área autenticada “Minhas trocas” como ponto de extensão.
+
+Ela confirma que usuários sem sessão não entram nessa área e permite que o futuro módulo seja implementado sem refazer a estrutura de autenticação.
+
+## Itens que não fazem parte desta entrega
+
+- recuperação de senha;
+- confirmação de e-mail;
+- autenticação multifator;
+- login Google para iOS ou Web;
+- gerenciamento completo das negociações de troca;
+- conversão automática das contas legadas para contas com senha.
+
+## Como executar
+
+### Backend
+
+```bash
+cd backend
+cp .env.example .env
+# Edite JWT_SECRET e GOOGLE_CLIENT_ID.
+docker compose up -d
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+### Flutter Android
+
+```bash
+cd frontend
+flutter pub get
+flutter run \
+  --dart-define=GOOGLE_SERVER_CLIENT_ID=seu-id.apps.googleusercontent.com
+```
+
+O cadastro e login por e-mail funcionam sem Google configurado. Somente o botão do Google depende das credenciais OAuth.

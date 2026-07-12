@@ -6,16 +6,15 @@ abstract class CreationServiceInterface {
   /// Submits a new announcement payload to the backend for a specific user.
   ///
   /// [body] is a map containing the parsed book and announcement data.
-  /// [userId] is the unique identifier of the user creating the announcement.
-  Future<bool> createAnnouncement({required Map<String, dynamic> body, required String userId,});
+  Future<bool> createAnnouncement({required Map<String, dynamic> body});
 }
 
 /// Concrete implementation of [CreationServiceInterface] that delegates
 /// the creation request to the [AnnouncementService].
 class CreationServiceAdapter implements CreationServiceInterface {
   @override
-  Future<bool> createAnnouncement({required Map<String, dynamic> body, required String userId,}) {
-    return AnnouncementService.createAnnouncement(body: body, userId: userId);
+  Future<bool> createAnnouncement({required Map<String, dynamic> body}) {
+    return AnnouncementService.createAnnouncement(body: body);
   }
 }
 
@@ -37,7 +36,8 @@ class BookCreationViewModel {
 
   final CreationServiceInterface service;
 
-  BookCreationViewModel({CreationServiceInterface? service}): service = service ?? CreationServiceAdapter();
+  BookCreationViewModel({CreationServiceInterface? service})
+    : service = service ?? CreationServiceAdapter();
 
   /// Updates the current status of the book announcement.
   ///
@@ -62,11 +62,10 @@ class BookCreationViewModel {
   /// 4. Delegates the network request to the injected service.
   ///
   /// [coverUrl] is the optional URL of the uploaded cover image.
-  /// [userId] is the unique identifier of the user creating the announcement.
   ///
   /// Returns a Future that resolves to `true` if the announcement was created
   /// successfully, or `false` if an error occurred.
-  Future<bool> submit(String? coverUrl, String userId) async {
+  Future<bool> submit(String? coverUrl) async {
     // 1. TRADUTORES: Convertem do português da tela para o inglês do Banco
     String mapLanguage() {
       if (language == "Inglês") return "En";
@@ -133,7 +132,7 @@ class BookCreationViewModel {
     };
 
     try {
-      final sucesso = await service.createAnnouncement(body: novoLivro, userId: userId,);
+      final sucesso = await service.createAnnouncement(body: novoLivro);
       return sucesso;
     } catch (e) {
       return false;

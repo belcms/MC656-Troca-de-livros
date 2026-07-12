@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'book_creation/book_creation_screen.dart';
 import 'feed/feed_view.dart';
 import 'user_profile/user_profile_screen.dart';
-
+import 'auth/auth_controller.dart';
+import 'auth/auth_screens.dart';
 
 void main() {
-  runApp(const MyApp());
+  final auth = AuthController();
+  runApp(AuthScope(controller: auth, child: const MyApp()));
+  auth.initialize();
 }
 
 class MyApp extends StatelessWidget {
@@ -58,8 +61,21 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const TelaPrincipal(),
+      home: const AuthGate(),
     );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final auth = AuthScope.of(context);
+    if (auth.initializing) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (auth.onboarding != null) return const GoogleOnboardingScreen();
+    return auth.authenticated ? const TelaPrincipal() : const LoginScreen();
   }
 }
 
@@ -77,7 +93,9 @@ class TelaPrincipal extends StatelessWidget {
           surfaceTintColor: Colors.transparent,
         ),
 
-        body: const TabBarView(children: [FeedView(), UserProfileScreen(), BookCreationPage()]),
+        body: const TabBarView(
+          children: [FeedView(), UserProfileScreen(), BookCreationPage()],
+        ),
 
         // BARRA NO RODAPÉ
         bottomNavigationBar: Container(
@@ -89,7 +107,7 @@ class TelaPrincipal extends StatelessWidget {
             tabs: [
               Tab(icon: Icon(Icons.home), text: 'Feed'),
               Tab(icon: Icon(Icons.person), text: 'Perfil'),
-              Tab(icon: Icon(Icons.create), text: "Criar Anúncio",)
+              Tab(icon: Icon(Icons.create), text: "Criar Anúncio"),
             ],
           ),
         ),

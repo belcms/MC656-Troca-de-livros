@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../my_books/my_books_model.dart';
 import 'api_client.dart';
 
@@ -10,13 +9,11 @@ import 'api_client.dart';
 class MyBooksService {
   /// Fetches announcements that belong to a user.
   ///
-  /// Endpoint: `GET /api/v1/users/{userId}/announcements`.
+  /// Endpoint: `GET /api/v1/users/me/announcements`.
   /// Returns `null` when request fails or backend does not return `200`.
-  static Future<List<MyBooksModel>?> fetchUserBooks(String userId) async {
-    final url = '${ApiClient.baseUrl}/api/v1/users/$userId/announcements';
-
+  static Future<List<MyBooksModel>?> fetchMyBooks() async {
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await ApiClient.get('/api/v1/users/me/announcements');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);

@@ -397,6 +397,7 @@ def update_book(
     id: str,
     body: dict = Body(...),
     db: Session = Depends(get_db),
+    owner_id: str | None = None,
 ):
     """
     Update the details of an existing book, edition, and announcement.
@@ -425,6 +426,8 @@ def update_book(
 
     if not announcement:
         raise HTTPException(status_code=404, detail="Announcement not found")
+    if owner_id is not None and announcement.user_id != owner_id:
+        raise HTTPException(status_code=403, detail="Acesso negado")
 
     edition = announcement.edition
     book = edition.book
@@ -569,6 +572,7 @@ def update_book(
     id: str,
     body: dict = Body(...),
     db: Session = Depends(get_db),
+    owner_id: str | None = None,
 ):
     announcement = (
         db.query(announcements_models.TradeAnnouncement)
@@ -578,6 +582,8 @@ def update_book(
 
     if not announcement:
         raise HTTPException(status_code=404, detail="Announcement not found")
+    if owner_id is not None and announcement.user_id != owner_id:
+        raise HTTPException(status_code=403, detail="Acesso negado")
 
     edition = announcement.edition
     book = edition.book

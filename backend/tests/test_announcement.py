@@ -4,7 +4,7 @@ class TestCreateAnnouncement:
         It tests the creation of an announcement
         """
         response = client.post(
-            "/api/v1/announcements/id123",
+            "/api/v1/announcements",
             json={
                 "editionId": "id456",
                 "coverUrl": "http://example.com/photo.jpg",
@@ -34,7 +34,7 @@ class TestCreateAnnouncement:
         }
 
         # Faz a requisição com o payload ruim
-        response = client.post("/api/v1/announcements/id123", json=payload_ruim)
+        response = client.post("/api/v1/announcements", json=payload_ruim)
 
         # tem que retornar o erro correto do FastAPI (422 Unprocessable Entity)
         assert response.status_code == 422

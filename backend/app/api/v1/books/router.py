@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Body, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.domain.auth.security import get_current_user
+from app.domain.users.models import User
 
 import app.domain.books.schemas as books_schemas
 from app.domain.announcements import services as books_services
@@ -8,7 +10,7 @@ from app.domain.announcements import services as books_services
 router = APIRouter(prefix='/api/v1', tags=['books'])
 
 @router.put("/books/{id}")
-def update_book(id: str,body: dict = Body(...),db: Session = Depends(get_db),):
+def update_book(id: str,body: dict = Body(...),db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Update an existing book's information.
 
     The endpoint delegates to the books service to update the properties
@@ -22,7 +24,7 @@ def update_book(id: str,body: dict = Body(...),db: Session = Depends(get_db),):
     Returns:
         The updated book payload.
     """
-    return books_services.update_book(id, body, db)
+    return books_services.update_book(id, body, db, owner_id=current_user.id)
 
 @router.get("/books/details/{id}")
 def get_book_details(id: str, db: Session = Depends(get_db)):
@@ -41,7 +43,7 @@ def get_book_details(id: str, db: Session = Depends(get_db)):
     return books_services.get_announcement_details(db, id)
 
 @router.post("/books", status_code=201)
-def create_book(body: books_schemas.BookPydantic, db: Session = Depends(get_db)):
+def create_book(body: books_schemas.BookPydantic, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     """Create a new book entry.
 
     The endpoint delegates to the books service to persist a new book
@@ -57,7 +59,7 @@ def create_book(body: books_schemas.BookPydantic, db: Session = Depends(get_db))
     return books_services.create_book(body, db)
 
 @router.post("/editions/{book_id}", status_code=201)
-def create_edition(book_id: str, body: books_schemas.EditionPydantic, db: Session = Depends(get_db)):
+def create_edition(book_id: str, body: books_schemas.EditionPydantic, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     """Create a new edition for a specific book.
 
     The endpoint delegates to the books service to persist a new edition
