@@ -21,59 +21,65 @@ class TradeRequestCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 8, 8),
-          child: SizedBox(
-            height: 92,
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 58,
-                  height: 80,
-                  child: NetworkImageWithFallback(
-                    imageUrl: request.requestedBook.coverUrl,
-                    fallbackIcon: Icons.menu_book_rounded,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+          padding: const EdgeInsets.fromLTRB(
+            20,
+            8,
+            8,
+            8,
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 58,
+                height: 88,
+                child: NetworkImageWithFallback(
+                  imageUrl: request.requestedBook.coverUrl,
+                  fallbackIcon: Icons.menu_book_rounded,
+                  borderRadius: BorderRadius.circular(6),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        request.requestedBook.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${request.requestedBook.publishYear}',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      Text(
-                        request.requestedBook.location,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const Spacer(),
-                      OfferStatusBadge(
-                        status: request.status,
-                        expand: true,
-                      ),
-                    ],
-                  ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      request.requestedBook.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${request.requestedBook.publishYear}',
+                      style:
+                          Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    Text(
+                      request.requestedBook.location,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 6),
+                    OfferStatusBadge(
+                      status: request.status,
+                      expand: true,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                const Icon(
-                  Icons.chevron_right,
-                  size: 34,
-                  color: Color(0xFF333333),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              const Icon(
+                Icons.chevron_right,
+                size: 34,
+                color: Color(0xFF333333),
+              ),
+            ],
           ),
         ),
       ),

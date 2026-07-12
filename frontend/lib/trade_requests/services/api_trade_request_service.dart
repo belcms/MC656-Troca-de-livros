@@ -122,38 +122,50 @@ class ApiTradeRequestService implements TradeRequestService {
     }
   }
 
-  Object? _decodeJson(http.Response response) {
-    if (response.body.trim().isEmpty) return null;
+Object? _decodeJson(http.Response response) {
+  final body = response.body.trim();
 
-    try {
-      return jsonDecode(utf8.decode(response.bodyBytes));
-    } on FormatException {
-      throw const TradeRequestServiceException(
-        'O servidor retornou uma resposta que não é JSON.',
-      );
-    }
+  if (body.isEmpty) {
+    return null;
   }
 
-  void _ensureSuccess(http.Response response) {
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return;
-    }
+  try {
+    return jsonDecode(body);
+  } on FormatException {
+    throw const TradeRequestServiceException(
+      'O servidor retornou uma resposta que não é JSON.',
+    );
+  }
+}
 
-    var message = 'Erro ${response.statusCode} ao acessar o servidor.';
+void _ensureSuccess(http.Response response) {
+  if (response.statusCode >= 200 &&
+      response.statusCode < 300) {
+    return;
+  }
 
+  var message =
+      'Erro ${response.statusCode} ao acessar o servidor.';
+
+  final body = response.body.trim();
+
+  if (body.isNotEmpty) {
     try {
-      final body = jsonDecode(utf8.decode(response.bodyBytes));
-      if (body is Map) {
-        message = body['detail']?.toString() ??
-            body['message']?.toString() ??
+      final decoded = jsonDecode(body);
+
+      if (decoded is Map) {
+        message =
+            decoded['detail']?.toString() ??
+            decoded['message']?.toString() ??
             message;
       }
-    } catch (_) {
-      // Usa a mensagem padrão.
+    } on FormatException {
+      // Mantém a mensagem padrão quando a resposta não é JSON.
     }
-
-    throw TradeRequestServiceException(message);
   }
+
+  throw TradeRequestServiceException(message);
+}
 
   void dispose() {
     _client.close();

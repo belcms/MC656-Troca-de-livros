@@ -35,16 +35,42 @@ class _TradeRequestDetailsScreenState
   }
 
   Future<TradeRequest> _loadRequest() async {
-    final request = await widget.service.getRequestById(widget.requestId);
-    _request = request;
+    final request = await widget.service.getRequestById(
+      widget.requestId,
+    );
+
+    if (mounted) {
+      _request = request;
+    }
+
     return request;
   }
 
-  Future<bool> _confirmAction({required bool accept}) async {
+  /// Recarrega os detalhes da solicitação.
+  ///
+  /// O callback do setState precisa ser síncrono e retornar void.
+  /// Por isso, usamos bloco com chaves em vez de:
+  ///
+  /// setState(() => _requestFuture = _loadRequest());
+  ///
+  /// A expressão acima retornaria um Future e causaria:
+  /// "setState() callback argument returned a Future".
+  void _retryLoad() {
+    setState(() {
+      _request = null;
+      _requestFuture = _loadRequest();
+    });
+  }
+
+  Future<bool> _confirmAction({
+    required bool accept,
+  }) async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(accept ? 'Aceitar proposta?' : 'Recusar proposta?'),
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          accept ? 'Aceitar proposta?' : 'Recusar proposta?',
+        ),
         content: Text(
           accept
               ? 'Os livros envolvidos serão reservados para a troca.'
@@ -52,16 +78,23 @@ class _TradeRequestDetailsScreenState
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () {
+              Navigator.of(dialogContext).pop(false);
+            },
             child: const Text('Cancelar'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor:
-                  accept ? const Color(0xFF416956) : const Color(0xFFB11217),
+              backgroundColor: accept
+                  ? const Color(0xFF416956)
+                  : const Color(0xFFB11217),
             ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(accept ? 'Aceitar' : 'Recusar'),
+            onPressed: () {
+              Navigator.of(dialogContext).pop(true);
+            },
+            child: Text(
+              accept ? 'Aceitar' : 'Recusar',
+            ),
           ),
         ],
       ),
@@ -70,24 +103,41 @@ class _TradeRequestDetailsScreenState
     return result ?? false;
   }
 
-  Future<void> _respond({required bool accept}) async {
+  Future<void> _respond({
+    required bool accept,
+  }) async {
     final request = _request;
-    if (request == null || _isSubmitting) return;
 
-    final confirmed = await _confirmAction(accept: accept);
-    if (!confirmed || !mounted) return;
+    if (request == null || _isSubmitting) {
+      return;
+    }
 
-    setState(() => _isSubmitting = true);
+    final confirmed = await _confirmAction(
+      accept: accept,
+    );
+
+    if (!confirmed || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
 
     try {
       final updated = accept
           ? await widget.service.acceptRequest(request.id)
           : await widget.service.rejectRequest(request.id);
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
+
       setState(() {
         _request = updated;
-        _requestFuture = Future<TradeRequest>.value(updated);
+        _requestFuture = Future<TradeRequest>.value(
+          updated,
+        );
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -100,21 +150,33 @@ class _TradeRequestDetailsScreenState
         ),
       );
     } on TradeRequestServiceException catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
+
       _showError(error.message);
     } catch (_) {
-      if (!mounted) return;
-      _showError('Não foi possível concluir a operação.');
+      if (!mounted) {
+        return;
+      }
+
+      _showError(
+        'Não foi possível concluir a operação.',
+      );
     } finally {
       if (mounted) {
-        setState(() => _isSubmitting = false);
+        setState(() {
+          _isSubmitting = false;
+        });
       }
     }
   }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+      ),
     );
   }
 
@@ -128,36 +190,50 @@ class _TradeRequestDetailsScreenState
         elevation: 0,
         leading: IconButton(
           tooltip: 'Voltar',
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
           icon: const Icon(Icons.arrow_back),
         ),
       ),
       body: FutureBuilder<TradeRequest>(
         future: _requestFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+          if (snapshot.connectionState ==
+              ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
           }
 
           if (snapshot.hasError || snapshot.data == null) {
             return _DetailsErrorState(
-              onRetry: () {
-                setState(() => _requestFuture = _loadRequest());
-              },
+              // Alteração principal:
+              // usa um método síncrono como callback do botão.
+              onRetry: _retryLoad,
             );
           }
 
           final request = _request ?? snapshot.data!;
+
           return Column(
             children: [
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
                     children: [
-                      RequestExchangeHeader(request: request),
+                      RequestExchangeHeader(
+                        request: request,
+                      ),
                       const Padding(
-                        padding: EdgeInsets.fromLTRB(18, 8, 18, 8),
+                        padding: EdgeInsets.fromLTRB(
+                          18,
+                          8,
+                          18,
+                          8,
+                        ),
                         child: Text(
                           'Livros disponíveis',
                           style: TextStyle(
@@ -166,18 +242,28 @@ class _TradeRequestDetailsScreenState
                           ),
                         ),
                       ),
-                      OfferedBooksCarousel(books: request.offeredBooks),
+                      OfferedBooksCarousel(
+                        books: request.offeredBooks,
+                      ),
                       if (!request.isPending)
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+                          padding:
+                              const EdgeInsets.fromLTRB(
+                            24,
+                            24,
+                            24,
+                            40,
+                          ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            crossAxisAlignment:
+                                CrossAxisAlignment.stretch,
                             children: [
                               const Text(
                                 'Status da solicitação',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight:
+                                      FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -195,8 +281,12 @@ class _TradeRequestDetailsScreenState
               if (request.isPending)
                 TradeRequestActionBar(
                   isLoading: _isSubmitting,
-                  onReject: () => _respond(accept: false),
-                  onAccept: () => _respond(accept: true),
+                  onReject: () {
+                    _respond(accept: false);
+                  },
+                  onAccept: () {
+                    _respond(accept: true);
+                  },
                 ),
             ],
           );
@@ -207,7 +297,9 @@ class _TradeRequestDetailsScreenState
 }
 
 class _DetailsErrorState extends StatelessWidget {
-  const _DetailsErrorState({required this.onRetry});
+  const _DetailsErrorState({
+    required this.onRetry,
+  });
 
   final VoidCallback onRetry;
 
@@ -219,7 +311,10 @@ class _DetailsErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 56),
+            const Icon(
+              Icons.error_outline,
+              size: 56,
+            ),
             const SizedBox(height: 14),
             const Text(
               'Não foi possível carregar esta solicitação.',
@@ -228,7 +323,9 @@ class _DetailsErrorState extends StatelessWidget {
             const SizedBox(height: 16),
             OutlinedButton(
               onPressed: onRetry,
-              child: const Text('Tentar novamente'),
+              child: const Text(
+                'Tentar novamente',
+              ),
             ),
           ],
         ),
