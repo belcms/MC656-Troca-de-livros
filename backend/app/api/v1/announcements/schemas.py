@@ -11,6 +11,7 @@ class TradeAnnouncementBase(BaseModel):
     a trade announcement, excluding database-generated fields.
     """
     edition_id: str
+    user_id: str
     real_photo_url: Optional[str] = None
     condition: Condition
     description: Optional[str] = None

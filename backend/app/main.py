@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 from app.domain.books import models as books_models
 from app.domain.users import models as users_models
@@ -16,15 +17,33 @@ from app.api.v1.books.router import router as books_router
 from app.api.v1.offer.router import router_offer as offer_router
 from app.api.v1.offer.router import router_offer_announcement as offer_announcement_router
 
-books_models.Base.metadata.create_all(bind=engine)
-users_models.Base.metadata.create_all(bind=engine)
-announcements_models.Base.metadata.create_all(bind=engine)
-offer_models.Base.metadata.create_all(bind=engine)
+# books_models.Base.metadata.create_all(bind=engine)
+# users_models.Base.metadata.create_all(bind=engine)
+# announcements_models.Base.metadata.create_all(bind=engine)
+# offer_models.Base.metadata.create_all(bind=engine)
 
 
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    books_models.Base.metadata.create_all(bind=engine)
+    users_models.Base.metadata.create_all(bind=engine)
+    announcements_models.Base.metadata.create_all(bind=engine)
+    offer_models.Base.metadata.create_all(bind=engine)
+
+
+    Base.metadata.create_all(bind=engine)
+
+    yield
+    # Tudo que está depois do yield roda quando o servidor desligar
+
+# 2. Passe a função para o app e remova a linha que estava solta no arquivo
+app = FastAPI(lifespan=lifespan)
+
+
+# app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,

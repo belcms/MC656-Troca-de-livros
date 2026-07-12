@@ -66,7 +66,10 @@ class _BookCreationPageState extends State<BookCreationPage> {
   void _mostrarRoletaDeAno(TextEditingController controller) {
     // Gera uma lista de anos: do ano atual descendo até 1900
     final int anoAtual = DateTime.now().year;
-    final List<int> anos = List.generate(anoAtual - 1900 + 1, (index) => anoAtual - index);
+    final List<int> anos = List.generate(
+      anoAtual - 1900 + 1,
+      (index) => anoAtual - index,
+    );
 
     // Tenta pegar o ano que já está no controller, ou usa o ano atual como padrão
     int anoSelecionado = int.tryParse(controller.text) ?? anoAtual;
@@ -87,15 +90,20 @@ class _BookCreationPageState extends State<BookCreationPage> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Concluído', style: TextStyle(color: Color(0xFF416956))),
-                  )
+                    child: const Text(
+                      'Concluído',
+                      style: TextStyle(color: Color(0xFF416956)),
+                    ),
+                  ),
                 ],
               ),
               // A Roleta em si
               Expanded(
                 child: CupertinoPicker(
                   itemExtent: 40.0, // Altura de cada item na roleta
-                  scrollController: FixedExtentScrollController(initialItem: indexInicial),
+                  scrollController: FixedExtentScrollController(
+                    initialItem: indexInicial,
+                  ),
                   onSelectedItemChanged: (int index) {
                     setState(() {
                       // Atualiza o TextField automaticamente enquanto gira a roleta
@@ -137,22 +145,22 @@ class _BookCreationPageState extends State<BookCreationPage> {
       ).showSnackBar(const SnackBar(content: Text('O autor é obrigatório.')));
       return;
     }
-    if(vm.publisherController.text.isEmpty) {
+    if (vm.publisherController.text.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('A editora é obrigatória.')));
       return;
     }
-    if(vm.yearController.text.isEmpty) {
+    if (vm.yearController.text.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('O ano é obrigatório.')));
       return;
     }
-    if(vm.pagesController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('O número de páginas é obrigatório.')));
+    if (vm.pagesController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('O número de páginas é obrigatório.')),
+      );
       return;
     }
 
@@ -166,15 +174,22 @@ class _BookCreationPageState extends State<BookCreationPage> {
       if (users != null && users.isNotEmpty) {
         currentUserId = users.first['id'];
       } else {
-        setState(() { isSaving = false; });
+        setState(() {
+          isSaving = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erro: Nenhum usuário encontrado no banco de dados.')),
+          const SnackBar(
+            content: Text('Erro: Nenhum usuário encontrado no banco de dados.'),
+          ),
         );
         return;
       }
     }
     // Sugestão: Passe o _imagemCapa como parâmetro para que o ViewModel faça o upload.
-    final success = await vm.submit(_imagemCapaUrl, currentUserId!); // Passa o userId para o ViewModel
+    final success = await vm.submit(
+      _imagemCapaUrl,
+      currentUserId!,
+    ); // Passa o userId para o ViewModel
 
     if (!mounted) return;
 
@@ -194,7 +209,9 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
     if (success) {
       // Volta para a tela anterior se salvou com sucesso
-      DefaultTabController.of(context).animateTo(0); // Volta para a primeira aba (home)
+      DefaultTabController.of(
+        context,
+      ).animateTo(0); // Volta para a primeira aba (home)
       // Limpa os campos do formulário para a próxima criação
       vm.titleController.clear();
       vm.authorController.clear();
@@ -208,7 +225,7 @@ class _BookCreationPageState extends State<BookCreationPage> {
       vm.language = "";
       vm.status = "Disponível";
       vm.condition = "Muito bom";
-      _imagemCapaUrl = null; 
+      _imagemCapaUrl = null;
     }
   }
 
@@ -383,10 +400,7 @@ class _BookCreationPageState extends State<BookCreationPage> {
                   children: [
                     Expanded(
                       // TODO: [ViewModel] Crie TextEditingController para o year
-                      child: _inputAnoSelecionavel(
-                        vm.yearController,
-                        "Ano",
-                      ),
+                      child: _inputAnoSelecionavel(vm.yearController, "Ano"),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -468,7 +482,9 @@ class _BookCreationPageState extends State<BookCreationPage> {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              onPressed: isSaving ? null : _saveBook, //o isSaving desabilita o botão e mostra o loading enquanto salva
+              onPressed: isSaving
+                  ? null
+                  : _saveBook, //o isSaving desabilita o botão e mostra o loading enquanto salva
               child: isSaving
                   ? const SizedBox(
                       width: 20,
@@ -499,21 +515,16 @@ class _BookCreationPageState extends State<BookCreationPage> {
         label: Text(value),
         selected: vm.status == value,
         selectedColor: vm.status == value ? color : null,
-        labelStyle: TextStyle(
-          color: vm.status == value ? Colors.white : color,
-        ),
+        labelStyle: TextStyle(color: vm.status == value ? Colors.white : color),
         onSelected: (_) {
           setState(() {
             vm.setStatus(value);
           });
         },
-                shape: StadiumBorder(
-          side: BorderSide(color: color),
-        ),
+        shape: StadiumBorder(side: BorderSide(color: color)),
       ),
     );
   }
-
 
   /// Builds a [RadioListTile] for selecting the physical condition of the book.
   ///
@@ -566,29 +577,33 @@ class _BookCreationPageState extends State<BookCreationPage> {
   /// [controller] manages the text representing the selected year.
   /// [hint] is the placeholder text displayed when the field is empty.
   Widget _inputAnoSelecionavel(TextEditingController controller, String hint) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: TextField(
-          controller: controller,
-          readOnly: true, // OBRIGATÓRIO: Impede que o teclado suba!
-          onTap: () {
-            // Quando o usuário tocar no campo, abre a nossa roleta
-            _mostrarRoletaDeAno(controller);
-          },
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: const Color(0xFFF5F5F5),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            // Um ícone de calendário ou seta indica pro usuário que é um menu
-            suffixIcon: const Icon(Icons.calendar_today, color: Colors.grey, size: 20), 
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextField(
+        controller: controller,
+        readOnly: true, // OBRIGATÓRIO: Impede que o teclado suba!
+        onTap: () {
+          // Quando o usuário tocar no campo, abre a nossa roleta
+          _mostrarRoletaDeAno(controller);
+        },
+        decoration: InputDecoration(
+          hintText: hint,
+          filled: true,
+          fillColor: const Color(0xFFF5F5F5),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          // Um ícone de calendário ou seta indica pro usuário que é um menu
+          suffixIcon: const Icon(
+            Icons.calendar_today,
+            color: Colors.grey,
+            size: 20,
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 
   /// Builds a multi-line [TextField] suitable for longer text like synopses or descriptions.
   ///
@@ -655,10 +670,7 @@ class _BookCreationPageState extends State<BookCreationPage> {
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: child,
-      ),
+      child: Material(color: Colors.transparent, child: child),
     );
   }
 
