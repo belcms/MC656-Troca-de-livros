@@ -63,33 +63,30 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
     _future = AnnouncementService.fetchAnnouncementDetails(
       widget.announcementId,
     );
-    _checkIfHasOffer();
     _loadData();
   }
 
   Future<void> _loadData() async {
-    // Busca os usuários
     final users = await UserService.fetchUsers();
 
-    // Atualiza a tela com o resultado
-    setState(() {
-      if (users != null && users.isNotEmpty) {
-        meuUsuarioLogadoId = users.first['id'];
-      } else {
-        meuUsuarioLogadoId = "f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4";
-      }
+    if (mounted) {
+      setState(() {
+        if (users != null && users.isNotEmpty) {
+          meuUsuarioLogadoId = users.first['id'];
+        } else {
+          meuUsuarioLogadoId = "f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4";
+        }
+        isLoading = false; // ID carregado!
+      });
 
-      // Quando terminar de pegar o ID, tiramos o loading
-      isLoading = false;
-    });
-
-    // Se precisar chamar o viewModel logo em seguida, pode fazer aqui:
-    // _viewModel.loadEligibleBooks(meuUsuarioLogadoId!);
+      // Agora SIM chamamos a verificação da oferta, pois temos certeza que o ID não é nulo.
+      await _checkIfHasOffer();
+    }
   }
 
   Future<void> _checkIfHasOffer() async {
     final hasOffer = await OfferService().checkPendingOffer(
-      "cd1be270-d415-4db5-9d6f-c7ca619e69ed", // O ID mockado do usuário logado
+      meuUsuarioLogadoId!, // O ID mockado do usuário logado
       widget.announcementId,
     );
 
@@ -112,7 +109,8 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
           /// Builds UI based on the current state of the async operation.
           builder: (context, snapshot) {
             /// Loading state
-            if (snapshot.connectionState == ConnectionState.waiting) {
+            if (snapshot.connectionState == ConnectionState.waiting ||
+                isLoading) {
               return const Center(child: CircularProgressIndicator());
             }
             /// Error state with retry option
@@ -158,9 +156,9 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
             final book = data.book;
             final edition = data.edition;
 
-            final String meuUsuarioLogadoId =
-                // "cd1be270-d415-4db5-9d6f-c7ca619e69ed";
-                "f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4";
+            // final String meuUsuarioLogadoId =
+            //     // "cd1be270-d415-4db5-9d6f-c7ca619e69ed";
+            //     "f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4";
 
             final bool isOwner = data.userId == meuUsuarioLogadoId;
 

@@ -30,6 +30,7 @@ class TradeProposalScreen extends StatefulWidget {
 class _TradeProposalScreenState extends State<TradeProposalScreen> {
   // Instanciando o ViewModel
   late final TradeProposalViewModel _viewModel;
+  String? _firstUserId;
   // final TradeProposalViewModel _viewModel = TradeProposalViewModel();
 
   @override
@@ -46,16 +47,15 @@ class _TradeProposalScreenState extends State<TradeProposalScreen> {
     final users = await UserService.fetchUsers();
 
     // Declara a variável fora do if/else para poder usar depois
-    String firstUserId;
 
     if (users != null && users.isNotEmpty) {
-      firstUserId = users.first['id'];
+      _firstUserId = users.first['id'];
     } else {
-      firstUserId =
+      _firstUserId =
           "f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4"; // <-- Faltava o ponto e vírgula aqui
     }
 
-    _viewModel.loadEligibleBooks(firstUserId);
+    _viewModel.loadEligibleBooks(_firstUserId!);
   }
 
   @override
@@ -309,7 +309,7 @@ class _TradeProposalScreenState extends State<TradeProposalScreen> {
             ? () async {
                 final success = await _viewModel.submitProposal(
                   widget.targetAnnouncementId,
-                  "cd1be270-d415-4db5-9d6f-c7ca619e69ed",
+                  _firstUserId!,
                 );
 
                 if (success && mounted) {
