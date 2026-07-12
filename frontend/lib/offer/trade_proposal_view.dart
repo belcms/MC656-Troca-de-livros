@@ -10,6 +10,8 @@ class TradeProposalScreen extends StatefulWidget {
   final String targetBookLocation;
   final String targetBookImageUrl;
 
+  final TradeProposalViewModel? viewModel;
+
   const TradeProposalScreen({
     super.key,
     required this.targetAnnouncementId,
@@ -17,6 +19,7 @@ class TradeProposalScreen extends StatefulWidget {
     required this.targetBookYear,
     required this.targetBookLocation,
     required this.targetBookImageUrl,
+    this.viewModel,
   });
 
   @override
@@ -25,12 +28,14 @@ class TradeProposalScreen extends StatefulWidget {
 
 class _TradeProposalScreenState extends State<TradeProposalScreen> {
   // Instanciando o ViewModel
-  final TradeProposalViewModel _viewModel = TradeProposalViewModel();
+  late final TradeProposalViewModel _viewModel;
+  // final TradeProposalViewModel _viewModel = TradeProposalViewModel();
 
   @override
   void initState() {
     super.initState();
     // Agora chamamos o novo nome do método da ViewModel
+    _viewModel = widget.viewModel ?? TradeProposalViewModel();
     _viewModel.loadEligibleBooks("cd1be270-d415-4db5-9d6f-c7ca619e69ed");
   }
 
