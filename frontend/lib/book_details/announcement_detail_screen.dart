@@ -65,10 +65,10 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
 
   Future<void> _checkIfHasOffer() async {
     final hasOffer = await OfferService().checkPendingOffer(
-       "cd1be270-d415-4db5-9d6f-c7ca619e69ed", // O ID mockado do usuário logado
-       widget.announcementId,
+      "cd1be270-d415-4db5-9d6f-c7ca619e69ed", // O ID mockado do usuário logado
+      widget.announcementId,
     );
-    
+
     if (mounted) {
       setState(() {
         _hasPendingOffer = hasOffer;
@@ -135,7 +135,8 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
             final edition = data.edition;
 
             final String meuUsuarioLogadoId =
-                "cd1be270-d415-4db5-9d6f-c7ca619e69ed";
+                // "cd1be270-d415-4db5-9d6f-c7ca619e69ed";
+                "f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4";
 
             final bool isOwner = data.userId == meuUsuarioLogadoId;
 

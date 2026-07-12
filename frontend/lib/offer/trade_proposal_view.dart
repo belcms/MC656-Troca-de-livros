@@ -36,7 +36,8 @@ class _TradeProposalScreenState extends State<TradeProposalScreen> {
     super.initState();
     // Agora chamamos o novo nome do método da ViewModel
     _viewModel = widget.viewModel ?? TradeProposalViewModel();
-    _viewModel.loadEligibleBooks("cd1be270-d415-4db5-9d6f-c7ca619e69ed");
+    _viewModel.loadEligibleBooks("f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4");
+    //   _viewModel.loadEligibleBooks("cd1be270-d415-4db5-9d6f-c7ca619e69ed");
   }
 
   @override
@@ -192,7 +193,7 @@ class _TradeProposalScreenState extends State<TradeProposalScreen> {
   Widget _buildBookCard(OfferBookModel book, bool isSelected) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFD3D3D3),
+        color: const Color.fromARGB(255, 248, 247, 247),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isSelected ? const Color(0xFF6B528B) : Colors.transparent,
