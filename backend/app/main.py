@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.domain.books import models as books_models
 from app.domain.users import models as users_models
 from app.domain.announcements import models as announcements_models
-
+from app.domain.offer import models as offer_models
 from app.domain.announcements import models as announcements_models
 from app.domain.announcements.services import create_dummy_data
 # from app.domain.announcements.router import router as announcements_router
@@ -13,10 +13,14 @@ from app.api.v1.announcements.router import router as announcements_router
 from app.core.database import engine, Base, get_db
 from app.api.v1.users.router import router as users_router
 from app.api.v1.books.router import router as books_router
+from app.api.v1.offer.router import router_offer as offer_router
+from app.api.v1.offer.router import router_offer_announcement as offer_announcement_router
 
 books_models.Base.metadata.create_all(bind=engine)
 users_models.Base.metadata.create_all(bind=engine)
 announcements_models.Base.metadata.create_all(bind=engine)
+offer_models.Base.metadata.create_all(bind=engine)
+
 
 Base.metadata.create_all(bind=engine)
 
@@ -33,6 +37,8 @@ app.add_middleware(
 app.include_router(announcements_router)
 app.include_router(users_router)
 app.include_router(books_router)
+app.include_router(offer_announcement_router)
+app.include_router(offer_router)
 
 @app.get("/")
 def read_root():
