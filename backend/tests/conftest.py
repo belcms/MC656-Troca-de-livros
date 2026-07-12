@@ -9,6 +9,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+pytest_plugins = ("tests.search_fixtures",)
+
 # Make tests independent from invocation directory (e.g., repo root vs backend root).
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
