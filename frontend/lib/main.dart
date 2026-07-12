@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'book_creation/book_creation_screen.dart';
 import 'feed/feed_view.dart';
 import 'user_profile/user_profile_screen.dart';
-
+import 'trade_requests/screens/trade_requests_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -69,7 +69,7 @@ class TelaPrincipal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.transparent,
@@ -77,7 +77,7 @@ class TelaPrincipal extends StatelessWidget {
           surfaceTintColor: Colors.transparent,
         ),
 
-        body: const TabBarView(children: [FeedView(), UserProfileScreen(), BookCreationPage()]),
+        body: const TabBarView(children: [FeedView(), UserProfileScreen(), BookCreationPage(), TradeRequestsScreen()]),
 
         // BARRA NO RODAPÉ
         bottomNavigationBar: Container(
@@ -89,7 +89,8 @@ class TelaPrincipal extends StatelessWidget {
             tabs: [
               Tab(icon: Icon(Icons.home), text: 'Feed'),
               Tab(icon: Icon(Icons.person), text: 'Perfil'),
-              Tab(icon: Icon(Icons.create), text: "Criar Anúncio",)
+              Tab(icon: Icon(Icons.create), text: "Criar Anúncio",),
+              Tab(icon: Icon(Icons.swap_horiz), text: "Solicitações",)
             ],
           ),
         ),
