@@ -215,6 +215,16 @@ def search_catalog(db_session: Session) -> Dict[str, Any]:
             "publisher": "Companhia Editora Nacional",
             "publish_year": 1870,
         },
+        {
+            "username": "orwell_2",
+            "email": "orwell_2@example.com",
+            "full_name": "George Orwell",
+            "cep": "13001015",
+            "title": "1984",
+            "author": "George Orwell",
+            "publisher": "Companhia das Letras",
+            "publish_year": 1949,
+        },
     ]
 
     for spec in dataset:
@@ -242,7 +252,7 @@ def search_catalog(db_session: Session) -> Dict[str, Any]:
             "Daniel Keyes": [records[4]],
             "Jorge Amado": [records[5]],
             "Gabriel García Márquez": [records[6]],
-            "George Orwell": [records[7]],
+            "George Orwell": [records[7], records[14]],
             "Robert C. Martin": [records[8]],
             "Martin Fowler": [records[9]],
             "Andrew Hunt": [records[10]],

@@ -44,9 +44,8 @@ def test_search_by_author_exact_and_partial_returns_all_matches(db_session, sear
         assert returned_titles == {"Senhor dos Anéis", "O Hobbit"}
 
 
-def test_search_by_publisher_and_year_return_matching_announcements(db_session, search_catalog):
+def test_search_by_publisher_returns_matching_announcements(db_session, search_catalog):
     publisher_results, publisher_total = _run_search(db_session, "Addison-Wesley")
-    year_results, year_total = _run_search(db_session, "1999")
 
     assert publisher_total == 2
     assert {_dump_result(item)["title"] for item in publisher_results} == {
@@ -54,11 +53,14 @@ def test_search_by_publisher_and_year_return_matching_announcements(db_session, 
         "The Pragmatic Programmer",
     }
 
-    assert year_total == 2
-    assert {_dump_result(item)["title"] for item in year_results} == {
-        "Refactoring",
-        "The Pragmatic Programmer",
-    }
+
+def test_search_numeric_title_like_1984_matches(db_session, search_catalog):
+    results, total = _run_search(db_session, "1984")
+
+    assert total == 1
+    assert len(results) == 1
+    assert _dump_result(results[0])["title"] == "1984"
+
 
 
 def test_search_finds_missing_letters_typos_and_inverted_characters(db_session, search_catalog):

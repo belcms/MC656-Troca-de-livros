@@ -56,15 +56,12 @@ def _score_query(query: str, announcement: TradeAnnouncement) -> int:
     edition = cast(Edition | None, getattr(announcement, "edition", None))
     book = getattr(edition, "book", None)
 
-    if query.replace(" ", "").isdigit():
-        year_value = _normalize_text(str(getattr(edition, "publish_year", "")))
-        return 100 if query in year_value else 0
-
     title_score = _field_score(query, getattr(book, "title", None))
     author_score = _field_score(query, getattr(book, "author", None))
     publisher_score = _field_score(query, getattr(edition, "publisher", None))
 
     return max(title_score, author_score, publisher_score)
+
 
 
 class AnnouncementSearchService:
