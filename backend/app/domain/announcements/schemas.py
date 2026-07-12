@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field 
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from app.domain.announcements.models import Condition, Status
 from datetime import datetime
@@ -20,3 +20,13 @@ class TradeAnnouncementPydantic(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+
+class PhotoResponse(BaseModel):
+    id: str
+    trade_announcement_id: str
+    photo_url: str
+
+    # Configuração para o Pydantic V2 conseguir ler direto do SQLAlchemy
+    model_config = ConfigDict(from_attributes=True)

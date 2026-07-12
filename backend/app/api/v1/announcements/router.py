@@ -1,14 +1,15 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, UploadFile, File, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 
 from app.api.v1.announcements.schemas import FeedAnnouncementResponse
 import app.domain.announcements.schemas as announcements_schemas
-
+from app.domain.announcements.schemas import PhotoResponse
+from app.services.photo_service import add_photo_to_announcement
 from app.domain.announcements.services import (
     get_announcement_details,
     get_feed_announcements,
-    create_announcement as service_create_announcement
+    create_announcement as service_create_announcement,
 )
 
 router = APIRouter(prefix="/api/v1/announcements", tags=["announcements"])
@@ -66,3 +67,25 @@ def create_announcement_route(user_id: str, body: announcements_schemas.TradeAnn
         The created announcement payload with HTTP 201 status.
     """
     return service_create_announcement(user_id, body, db)
+
+@router.post("/{announcement_id}/photos", response_model=PhotoResponse, status_code=status.HTTP_201_CREATED)
+def upload_announcement_photo_endpoint(
+    announcement_id: str, 
+    file: UploadFile = File(...), 
+    db: Session = Depends(get_db)
+):
+    """
+    Faz o upload de uma foto para um anúncio específico.
+    """
+    # Você pode colocar uma validação aqui para checar se o file.content_type é 'image/jpeg' ou 'image/png'
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="O arquivo deve ser uma imagem.")
+
+    try:
+        saved_photo = add_photo_to_announcement(db=db, announcement_id=announcement_id, file=file)
+        return saved_photo
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Erro ao salvar foto: {str(e)}"
+        )

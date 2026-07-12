@@ -41,3 +41,17 @@ class TradeAnnouncement(Base):
     # ORM relationships for navigation between entities.
     user = relationship("User", back_populates="announcements")
     edition = relationship("Edition", back_populates="announcements")
+
+    photos = relationship("PhotoTradeAnnouncement", back_populates="announcement", cascade="all, delete-orphan")
+
+
+
+class PhotoTradeAnnouncement(Base):
+    __tablename__ = "photo_trade_announcements"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    trade_announcement_id = Column(String(36), ForeignKey("trade_announcements.id"), nullable=False)
+    photo_url = Column(String, nullable=False)
+
+    # Cria o vínculo com o anúncio
+    announcement = relationship("TradeAnnouncement", back_populates="photos")
