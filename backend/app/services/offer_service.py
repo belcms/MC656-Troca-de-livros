@@ -8,7 +8,10 @@ from app.domain.offer.models import Offer, OfferedAnnouncements
 
 def create_new_offer(db: Session, offer_data: OfferCreate):
     try:
-        # 1. Cria a oferta principal (A "capa" da proposta)
+        
+        if has_pending_offer(db, offer_data.userId, offer_data.targetAnnouncementId):
+            raise ValueError("Você já enviou uma proposta para este anúncio. Aguarde a resposta do dono.")
+
         new_offer = Offer(
             user_id=offer_data.userId,
             target_announcement_id=offer_data.targetAnnouncementId,
