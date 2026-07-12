@@ -124,7 +124,7 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
           color: const Color(0xFF727272),
         ),
         filled: true,
-        fillColor: const Color(0xFFD9D9D9),
+        fillColor: const Color(0xFFE9E0D5),
         prefixIcon: const Icon(Icons.search, color: Colors.black),
         suffixIcon: _controller.text.isEmpty
             ? null
