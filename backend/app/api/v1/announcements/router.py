@@ -12,9 +12,11 @@ from app.domain.announcements.services import (
     create_announcement as service_create_announcement,
 )
 from app.domain.announcements.search import AnnouncementSearchService
+from app.api.v1.announcements.schemas import DeletePhotoRequest
+from app.services.storage_service import delete_image_from_supabase
+from app.services.photo_service import remove_photo_from_announcement
 
 router = APIRouter(prefix="/api/v1/announcements", tags=["announcements"])
-
 
 @router.get("/search", response_model=SearchAnnouncementsResponse, summary="Search announcements")
 def search_announcements_route(
@@ -108,3 +110,24 @@ def upload_announcement_photo_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"Erro ao salvar foto: {str(e)}"
         )
+    
+
+
+@router.delete("/api/v1/announcements/{announcement_id}/photos")
+def delete_announcement_photo(
+    announcement_id: str, 
+    request: DeletePhotoRequest, 
+    db: Session = Depends(get_db) # <-- Injeta a sessão do banco
+):
+    try:
+        # 1. Apaga o arquivo físico do Supabase
+        delete_image_from_supabase(request.photo_url)
+        
+        # 2. Apaga o registro da tabela PhotoTradeAnnouncement
+        remove_photo_from_announcement(db, announcement_id, request.photo_url)
+        
+        return {"message": "Foto deletada com sucesso!"}
+        
+    except Exception as e:
+        # Vai estourar erro 500 se qualquer um dos dois falhar
+        raise HTTPException(status_code=500, detail=f"Erro ao deletar foto: {str(e)}")

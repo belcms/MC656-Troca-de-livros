@@ -3,6 +3,7 @@ import uuid
 import boto3
 from fastapi import UploadFile
 from dotenv import load_dotenv
+import urllib.parse
 
 load_dotenv()
 
@@ -47,3 +48,31 @@ def upload_image_to_supabase(file: UploadFile) -> str:
 
     except Exception as e:
         raise Exception(f"Erro ao fazer upload da imagem: {str(e)}")
+    
+    
+    
+def delete_image_from_supabase(photo_url: str) -> bool:
+    """
+    Recebe a URL pública da foto, extrai a chave (path) e deleta do Supabase S3.
+    """
+    try:
+        if BUCKET_NAME in photo_url:
+            # 1. Corta a URL
+            object_key_encoded = photo_url.split(f"{BUCKET_NAME}/")[-1]
+            
+            # 2. Transforma "%20" de volta em espaço (Proteção essencial para S3!)
+            object_key = urllib.parse.unquote(object_key_encoded)
+            
+            print(f"Deletando do S3 -> Bucket: {BUCKET_NAME} | Key: {object_key}")
+            
+            # 3. Chama o boto3
+            s3_client.delete_object(
+                Bucket=BUCKET_NAME,
+                Key=object_key
+            )
+            return True
+        else:
+            raise Exception("URL inválida ou bucket incorreto.")
+
+    except Exception as e:
+        raise Exception(f"Erro ao deletar a imagem no Supabase: {str(e)}")

@@ -92,3 +92,6 @@ class SearchAnnouncementsResponse(BaseModel):
     total: int
 
     model_config = ConfigDict(from_attributes=True)
+
+class DeletePhotoRequest(BaseModel):
+    photo_url: str
