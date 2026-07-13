@@ -13,6 +13,7 @@ from app.domain.auth.security import (
     token_hash,
     verify_password,
 )
+from app.domain.locations import services as locations_services
 from app.domain.users.models import AuthSession, User
 
 
@@ -61,13 +62,14 @@ def issue_session(db: Session, user: User) -> dict:
 
 def register(db: Session, body: RegisterRequest) -> dict:
     _conflict(db, str(body.email), body.nickname)
+    location = locations_services.get_or_create_location_by_cep(body.cep, db)
     user = User(
         username=body.nickname,
         username_normalized=normalized(body.nickname),
         email=str(body.email).lower(),
         email_normalized=normalized(str(body.email)),
         full_name=body.full_name,
-        cep=body.cep,
+        cep_id=location.cep,
         birth_date=body.birth_date,
         password_hash=hash_password(body.password),
     )

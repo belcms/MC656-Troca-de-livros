@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'book_creation_viewmodel.dart';
 import 'package:flutter/cupertino.dart';
+import '../auth/auth_repository.dart';
 import '../services/location_service.dart';
 
 class BookCreationPage extends StatefulWidget {
@@ -30,10 +31,9 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
     // Pega o CEP do usuário atual e faz a busca inicial
     Future<void> _carregarUsuarioLogado() async {
-      final users = await UserService.fetchUsers();
-      if (users != null && users.isNotEmpty) {
-        final user = users.first; 
-        final cepUser = user['cep_id'];
+      final user = AuthRepository.instance.user;
+      if (user != null) {
+        final cepUser = user.cep;
         if (cepUser != null && cepUser.toString().isNotEmpty) {
           vm.cepController.text = cepUser.toString();
           await _buscarLocalizacao(cepUser.toString());

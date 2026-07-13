@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:frontend/auth/auth_controller.dart';
+import 'package:frontend/auth/auth_user.dart';
 import 'package:frontend/main.dart';
+
+AuthController authenticatedController() {
+  final controller = AuthController();
+  controller.initializing = false;
+  controller.repository.user = const AuthUser(
+    id: 'user-test',
+    fullName: 'Usuário Teste',
+    nickname: 'usuario_teste',
+    email: 'usuario@example.com',
+  );
+  return controller;
+}
 
 void main() {
   testWidgets('barra inferior possui acesso a Solicitações', (tester) async {
-    await tester.pumpWidget(const MyApp());
+    final controller = authenticatedController();
+    addTearDown(() => controller.repository.user = null);
+
+    await tester.pumpWidget(
+      AuthScope(controller: controller, child: const MyApp()),
+    );
     await tester.pump();
 
     expect(find.text('Feed'), findsOneWidget);
@@ -15,7 +34,12 @@ void main() {
   });
 
   testWidgets('tocar em Solicitações abre a tela da feature', (tester) async {
-    await tester.pumpWidget(const MyApp());
+    final controller = authenticatedController();
+    addTearDown(() => controller.repository.user = null);
+
+    await tester.pumpWidget(
+      AuthScope(controller: controller, child: const MyApp()),
+    );
     await tester.pump();
 
     await tester.tap(find.text('Solicitações'));

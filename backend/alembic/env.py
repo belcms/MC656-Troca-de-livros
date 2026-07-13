@@ -4,6 +4,7 @@ from sqlalchemy import engine_from_config, pool
 from app.core.database import Base
 from app.core.settings import settings
 from app.domain.books import models as _books
+from app.domain.locations import models as _locations
 from app.domain.announcements import models as _announcements
 from app.domain.users import models as _users
 

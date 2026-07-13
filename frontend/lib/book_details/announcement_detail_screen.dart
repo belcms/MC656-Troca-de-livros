@@ -4,7 +4,7 @@ import 'announcement_detail_model.dart';
 import 'interest_bottom_bar.dart';
 import 'package:frontend/offer/trade_proposal_view.dart';
 import 'package:frontend/services/offer_service.dart';
-import 'package:frontend/services/user_service.dart';
+import 'package:frontend/auth/auth_repository.dart';
 
 /// Screen responsible for displaying detailed information about a trade announcement.
 ///
@@ -67,26 +67,27 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   }
 
   Future<void> _loadData() async {
-    final users = await UserService.fetchUsers();
+    final user = AuthRepository.instance.user;
 
     if (mounted) {
       setState(() {
-        if (users != null && users.isNotEmpty) {
-          meuUsuarioLogadoId = users.first['id'];
-        } else {
-          meuUsuarioLogadoId = "f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4";
-        }
-        isLoading = false; // ID carregado!
+        meuUsuarioLogadoId = user?.id;
+        isLoading = false;
       });
 
-      // Agora SIM chamamos a verificação da oferta, pois temos certeza que o ID não é nulo.
-      await _checkIfHasOffer();
+      if (meuUsuarioLogadoId != null) {
+        await _checkIfHasOffer();
+      } else {
+        setState(() {
+          _isLoadingOfferStatus = false;
+        });
+      }
     }
   }
 
   Future<void> _checkIfHasOffer() async {
     final hasOffer = await OfferService().checkPendingOffer(
-      meuUsuarioLogadoId!, // O ID mockado do usuário logado
+      meuUsuarioLogadoId!,
       widget.announcementId,
     );
 
@@ -155,10 +156,6 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
             final data = snapshot.data!;
             final book = data.book;
             final edition = data.edition;
-
-            // final String meuUsuarioLogadoId =
-            //     // "cd1be270-d415-4db5-9d6f-c7ca619e69ed";
-            //     "f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4";
 
             final bool isOwner = data.userId == meuUsuarioLogadoId;
 

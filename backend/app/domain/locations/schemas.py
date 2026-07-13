@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field 
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from app.domain.announcements.models import Condition, Status
 from datetime import datetime
@@ -13,8 +13,7 @@ class LocationPydantic(BaseModel):
     lat: float
     long: float
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SortPostsByDistanceRequest(BaseModel):

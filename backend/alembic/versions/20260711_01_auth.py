@@ -13,6 +13,7 @@ def upgrade():
     if "users" not in sa.inspect(op.get_bind()).get_table_names():
         from app.core.database import Base
         from app.domain.books import models as _books
+        from app.domain.locations import models as _locations
         from app.domain.announcements import models as _announcements
         from app.domain.users import models as _users
         Base.metadata.create_all(bind=op.get_bind())

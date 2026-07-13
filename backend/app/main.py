@@ -26,7 +26,7 @@ from app.api.v1.locations.router import router as locations_router
 # announcements_models.Base.metadata.create_all(bind=engine)
 # offer_models.Base.metadata.create_all(bind=engine)
 
-#location_model.Base.metadata.create_all(bind=engine)
+#
 
 # Base.metadata.create_all(bind=engine)
 
@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
     users_models.Base.metadata.create_all(bind=engine)
     announcements_models.Base.metadata.create_all(bind=engine)
     offer_models.Base.metadata.create_all(bind=engine)
-
+    location_model.Base.metadata.create_all(bind=engine)
 
     Base.metadata.create_all(bind=engine)
 
