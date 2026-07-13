@@ -113,7 +113,7 @@ def upload_announcement_photo_endpoint(
     
 
 
-@router.delete("/api/v1/announcements/{announcement_id}/photos")
+@router.delete("/{announcement_id}/photos")
 def delete_announcement_photo(
     announcement_id: str, 
     request: DeletePhotoRequest, 
