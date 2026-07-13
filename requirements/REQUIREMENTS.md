@@ -114,11 +114,11 @@ Entretanto, vale analisar se o site possui algumas ideias boas.
 
 #### Feed
 
-![Feed](assets/escamBook/feed-escam-book.png)
+![Feed](assets/escamBook/feed-escambo.png)
 
 #### Post
 
-![Post](assets/escamBook/post-escam-book.png)
+![Post](assets/escamBook/posts-escam-book.png)
 
 #### Busca
 
