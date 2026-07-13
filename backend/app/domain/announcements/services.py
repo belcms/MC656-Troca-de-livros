@@ -100,7 +100,8 @@ def get_announcement_details(db: Session, id: str):
             "id": edition.id,
             "book_id": edition.book_id,
             "publisher": edition.publisher,
-            "publish_year": edition.publish_year
+            "publish_year": edition.publish_year,
+            "pages": edition.number_of_pages,
         },
         "book": {
             "id": book.id,
