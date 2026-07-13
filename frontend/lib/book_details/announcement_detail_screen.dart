@@ -5,6 +5,7 @@ import 'interest_bottom_bar.dart';
 import 'package:frontend/offer/trade_proposal_view.dart';
 import 'package:frontend/services/offer_service.dart';
 import 'package:frontend/services/user_service.dart';
+import 'package:frontend/components/badge_component.dart';
 
 /// Screen responsible for displaying detailed information about a trade announcement.
 ///
@@ -403,7 +404,7 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
         if (condition != null)
           Align(
             alignment: Alignment.centerRight,
-            child: _buildBadge(condition),
+            child: buildBadge(condition, context),
           ),
       ],
     );
@@ -499,44 +500,44 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
     );
   }
 
-  /// Builds a visual badge to represent the item's condition/status.
-  Widget _buildBadge(String status) {
-    Color bgColor;
-    String label;
+  // /// Builds a visual badge to represent the item's condition/status.
+  // Widget _buildBadge(String status) {
+  //   Color bgColor;
+  //   String label;
 
-    switch (status.toLowerCase()) {
-      case 'new':
-        // case 'novo':
-        bgColor = const Color(0xFF24523C);
-        label = 'Novo';
-      case 'used':
-        // case 'muito bom':
-        bgColor = const Color(0xFF416956);
-        label = 'Muito bom';
-      case 'good':
-        // case 'bom':
-        bgColor = const Color(0xFFDB8F44);
-        label = 'Bom';
-      case 'worn':
-        // case 'desgastado':
-        bgColor = const Color(0xFF7B2518);
-        label = 'Desgastado';
-      default:
-        bgColor = Theme.of(context).colorScheme.primary;
-        label = status.isNotEmpty ? status : 'Novo';
-    }
+  //   switch (status.toLowerCase()) {
+  //     case 'new':
+  //       // case 'novo':
+  //       bgColor = const Color(0xFF24523C);
+  //       label = 'Novo';
+  //     case 'used':
+  //       // case 'muito bom':
+  //       bgColor = const Color(0xFF416956);
+  //       label = 'Muito bom';
+  //     case 'good':
+  //       // case 'bom':
+  //       bgColor = const Color(0xFFDB8F44);
+  //       label = 'Bom';
+  //     case 'worn':
+  //       // case 'desgastado':
+  //       bgColor = const Color(0xFF7B2518);
+  //       label = 'Desgastado';
+  //     default:
+  //       bgColor = Theme.of(context).colorScheme.primary;
+  //       label = status.isNotEmpty ? status : 'Novo';
+  //   }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        // color: Colors.green[700],
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(color: Colors.white, fontSize: 12),
-      ),
-    );
-  }
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+  //     decoration: BoxDecoration(
+  //       // color: Colors.green[700],
+  //       color: bgColor,
+  //       borderRadius: BorderRadius.circular(12),
+  //     ),
+  //     child: Text(
+  //       label,
+  //       style: const TextStyle(color: Colors.white, fontSize: 12),
+  //     ),
+  //   );
+  // }
 }

@@ -290,8 +290,10 @@ class _FinalSearchResultsScreenState extends State<FinalSearchResultsScreen> {
                           child: AnnouncementCard(
                             title: result.title,
                             publishYear: result.publishYear,
-                            photo: result.realPhotoUrl ?? '',
-                            cep: result.cep,
+                            photo: result.coverPhoto ?? '',
+                            // photo: result.realPhotoUrl ?? '',
+                            location: result.cep,
+                            condition: result.condition,
                           ),
                         );
                       },

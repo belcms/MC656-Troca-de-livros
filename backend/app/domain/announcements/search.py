@@ -87,6 +87,9 @@ class AnnouncementSearchService:
             .options(
                 joinedload(TradeAnnouncement.edition).joinedload(Edition.book),
                 joinedload(TradeAnnouncement.user),
+                joinedload(TradeAnnouncement.photos),
+                joinedload(TradeAnnouncement.location),
+
             )
             .order_by(TradeAnnouncement.create_date.desc())
         )
@@ -115,14 +118,35 @@ class AnnouncementSearchService:
                 continue
 
             publish_year = getattr(edition, "publish_year", 0)
+
+            cep=(
+                f'{announcement.location.city} - {announcement.location.state}' if getattr(
+                    announcement, "location", None) 
+                    else (
+                        getattr(announcement, "cep_id", None) or getattr(announcement.user, "cep_id", None) or getattr(announcement.user, "cep", None) or "Localização não informada"
+                    )
+                )
+
+            first_photo = (
+                announcement.photos[0].photo_url 
+                if getattr(announcement, "photos", None) and len(announcement.photos) > 0 
+                else ""
+            )
+            
             results.append(
                 FeedAnnouncementResponse(
                     id=str(getattr(announcement, "id", "")),
                     title=str(getattr(book, "title", "")),
                     publishYear=int(publish_year),
-                    cep=str(getattr(user, "cep", "")),
+                    cep = cep,
+                    # cep=str(getattr(user, "cep", "")),
                     real_photo_url=cast(str | None, getattr(announcement, "real_photo_url", None)),
+                    condition=announcement.condition,
+                    cover_photo=first_photo
                 )
             )
 
         return results, total
+    
+
+
