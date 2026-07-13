@@ -1,5 +1,6 @@
 from datetime import datetime
 from uuid import uuid4
+from app.domain.locations import models as location_models
 
 from app.core.database import Base, SessionLocal, engine
 from app.domain.announcements.models import (
@@ -86,7 +87,7 @@ def main() -> None:
             username=f"victor_owner_{suffix}",
             email=f"victor_owner_{suffix}@example.com",
             full_name="Victor Dono dos Anúncios",
-            cep="13083-852",
+            cep="13083852",
         )
 
         requester_one = User(
@@ -94,7 +95,7 @@ def main() -> None:
             username=f"interessado_um_{suffix}",
             email=f"interessado_um_{suffix}@example.com",
             full_name="Usuário Interessado Um",
-            cep="11010-000",
+            cep="11010000",
         )
 
         requester_two = User(
@@ -102,7 +103,7 @@ def main() -> None:
             username=f"interessado_dois_{suffix}",
             email=f"interessado_dois_{suffix}@example.com",
             full_name="Usuário Interessado Dois",
-            cep="01001-000",
+            cep="01001000",
         )
 
         db.add_all([owner, requester_one, requester_two])

@@ -246,9 +246,9 @@ def get_feed_announcements(
         )
 
         current_location = (
-            db.query(location_models.location)
+            db.query(location_models.Location)
             .filter(
-                location_models.location.cep
+                location_models.Location.cep
                 == current_user_cep
             )
             .first()
@@ -275,9 +275,9 @@ def get_feed_announcements(
         }
 
         stored_locations = (
-            db.query(location_models.location)
+            db.query(location_models.Location)
             .filter(
-                location_models.location.cep.in_(
+                location_models.Location.cep.in_(
                     owner_ceps
                 )
             )
@@ -330,13 +330,12 @@ def get_feed_announcements(
 
     return [
         FeedAnnouncementResponse(
-
             id=ann.id,
             title=ann.edition.book.title,
             real_photo_url=ann.real_photo_url,
             publishYear=ann.edition.publish_year,
             cep=(
-                f'{ann.location.city} - {ann.location.state}'
+                f"{ann.location.city} - {ann.location.state}"
                 if getattr(ann, "location", None)
                 else (
                     getattr(ann, "cep_id", None)
@@ -346,7 +345,7 @@ def get_feed_announcements(
                 )
             ),
         )
-        for announcement in announcements
+        for ann in announcements
     ]
     
 def map_genre(value: str):
