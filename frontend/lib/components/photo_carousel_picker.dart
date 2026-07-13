@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; // Necessário para o XFile
 
 class PhotoCarouselPicker extends StatelessWidget {
-  final List<XFile> images;
+  // final List<XFile> images;
+  final List<dynamic> images;
   final VoidCallback onAddImage;
   final Function(int index) onRemoveImage;
 
@@ -35,6 +36,7 @@ class PhotoCarouselPicker extends StatelessWidget {
                 children: [
                   // Renderiza as fotos usando a lista recebida por parâmetro
                   ...List.generate(images.length, (index) {
+                    final item = images[index];
                     return Padding(
                       padding: const EdgeInsets.only(right: 12.0),
                       child: Stack(
@@ -48,10 +50,13 @@ class PhotoCarouselPicker extends StatelessWidget {
                               border: Border.all(color: Colors.grey.shade300),
                             ),
                             clipBehavior: Clip.antiAlias,
-                            child: Image.file(
-                              File(images[index].path),
-                              fit: BoxFit.cover,
-                            ),
+                            // child: Image.file(
+                            //   File(images[index].path),
+                            //   fit: BoxFit.cover,
+                            // ),
+                            child: item is String
+                                ? Image.network(item, fit: BoxFit.cover)
+                                : Image.file(File((item as XFile).path), fit: BoxFit.cover),
                           ),
                           Positioned(
                             right: -10,
