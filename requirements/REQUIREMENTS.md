@@ -242,6 +242,7 @@ O sistema de pesquisa pode ser feito por texto (em vermelho) ou código de barra
 * 
 
 ## Brainstorm
+O processo de brainstorming ocorreu em duas etapas: primeiro, fizemos uma dinâmica livre de 10 minutos para que todos pudessem expor suas ideias. Em seguida, organizamos os resultados fazendo a clusterização dos post-its parecidos, o que nos ajudou a agrupar e definir os temas principais.
 
 ##### [Título do Brainstorming]
 ![[Descrição da Imagem]]([Caminho da Imagem])
