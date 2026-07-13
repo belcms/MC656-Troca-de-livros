@@ -282,8 +282,6 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
     );
   }
 
-  /// Builds a swipeable photo carousel if multiple photos exist,
-  /// or a single image/fallback if there's only one or none.
   Widget _buildCarousel(List<String>? photos, String? fallbackPhoto) {
     const String defaultPlaceholder =
         'https://axiomprint.com/icons/default-squre.jpg';
@@ -306,19 +304,38 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
       validPhotos = [defaultPlaceholder];
     }
 
-    const double carouselHeight = 350.0;
+    final Color backgroundColor = Colors.grey.shade100;
+
+    // Define o tamanho exato da caixa baseada na proporção 3x4
+    const double photoHeight = 350.0;
+    const double photoWidth =
+        photoHeight * (3 / 4); // Calcula a largura exata para 3x4
+
     // Se tiver só 1 foto, não precisamos do carrossel, apenas da imagem
     if (validPhotos.length == 1) {
       return Center(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Image.network(
-            validPhotos.first,
-            height: carouselHeight,
-            width: double.infinity,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) =>
-                Image.network(defaultPlaceholder, height: 260),
+        child: Container(
+          width: photoWidth,
+          height: photoHeight,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              validPhotos.first,
+              fit: BoxFit.cover, // Preenche a caixinha 3x4 sem distorcer
+              errorBuilder: (context, error, stackTrace) =>
+                  Image.network(defaultPlaceholder, fit: BoxFit.cover),
+            ),
           ),
         ),
       );
@@ -327,36 +344,47 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
     // Se tiver mais de 1 foto, constrói o Carrossel (PageView)
     return Column(
       children: [
-        SizedBox(
-          height: carouselHeight,
-          child: PageView.builder(
-            itemCount: validPhotos.length,
-            onPageChanged: (index) {
-              // Quando o usuário arrastar pro lado, atualizamos a bolinha acesa
-              setState(() {
-                _currentImageIndex = index;
-              });
-            },
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 4.0,
-                ), // Espaçinho entre as fotos
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    validPhotos[index],
-                    fit: BoxFit.contain,
-                    width: double.infinity,
-                    errorBuilder: (context, error, stackTrace) =>
-                        Image.network(defaultPlaceholder, fit: BoxFit.contain),
+        Center(
+          child: SizedBox(
+            width: photoWidth,
+            height: photoHeight,
+            child: PageView.builder(
+              itemCount: validPhotos.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentImageIndex = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ),
-              );
-            },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      validPhotos[index],
+                      fit:
+                          BoxFit.cover, // Preenche a caixinha 3x4 perfeitamente
+                      errorBuilder: (context, error, stackTrace) =>
+                          Image.network(defaultPlaceholder, fit: BoxFit.cover),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(validPhotos.length, (index) {
@@ -367,8 +395,8 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
               height: 8,
               decoration: BoxDecoration(
                 color: _currentImageIndex == index
-                    ? const Color(0xFF416956) // Cor ativa (verde do seu app)
-                    : Colors.grey.shade300, // Cor inativa
+                    ? const Color(0xFF416956)
+                    : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(4),
               ),
             );
