@@ -105,19 +105,28 @@ Isso aqui não é um site funcional. Consegui entrar com um email, nome e númer
 Entretanto, vale analisar se o site possui algumas ideias boas.
 
 #### Adicionar livro
-![[Descrição da Imagem]]([MC656-Troca-de-livros/requirements/assets/escamBook/add-livro2-escamb.png])
+
+![Adicionar livro](assets/escamBook/add-livro2-escamb.png)
 
 #### Adicionar novo livro
-![[Descrição da Imagem]]([MC656-Troca-de-livros/requirements/assets/escamBook/add-novo-livro-escamb.png])
+
+![Adicionar novo livro](assets/escamBook/add-novo-livro-escamb.png)
 
 #### Feed
-![[Descrição da Imagem]]([MC656-Troca-de-livros/requirements/assets/escamBook/feed-escam-book.png])
+
+![Feed](assets/escamBook/feed-escam-book.png)
+
 #### Post
-![[Descrição da Imagem]]([MC656-Troca-de-livros/requirements/assets/escamBook/post-escam-book.png])
+
+![Post](assets/escamBook/post-escam-book.png)
+
 #### Busca
-![[Descrição da Imagem]]([MC656-Troca-de-livros/requirements/assets/escamBook/busca-escambo.png])
-#### Como funcionaa
-![[Descrição da Imagem]]([MC656-Troca-de-livros/requirements/assets/escamBook/como-funciona-escambo.png])
+
+![Busca](assets/escamBook/busca-escambo.png)
+
+#### Como funciona
+
+![Como funciona](assets/escamBook/como-funciona-escambo.png)
 
 #### Pontos positivos
 * Permite adicionar e procurar livros para trocar.
