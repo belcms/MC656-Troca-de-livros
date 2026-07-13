@@ -142,27 +142,39 @@ ortografia.
 
 #### Cadastro
 ![[Descrição da Imagem]]([Caminho da Imagem])
+O cadastro pede cpf, data de aniversário, número de celular e preenche automaticamente os dados de nome e sobrenome. O número de celular é usado para fazer uma verificação do cadastro. Gostamos do campo de apelido pois como o sistema puxa o nome automaticamente, dá a opção do usuário escolher um nome que prefira, gerando maior respeito e identificação.
 
 #### Favoritos
 ![[Descrição da Imagem]]([Caminho da Imagem])
+A aba de favoritos possui 3 opções de lista: minhas listas, comprar mais tarde e minhas listas antigas. O usuário ainda pode criar uma nova lista e preencher campo de nome, descricao e seleção de privacidade, caso selecione como lista pública, a mesma pode ser usada para recomendação no feed. As listas podem ser editadas, deletadas ou compartilhadas e sua visualização na tela é dada com nome da lista, cadeado de privacidade e quantidade de livros que ela contém.
 
 #### Feed
+O feed possui carroseis com diferentes tópicos: o que os outros clientes estão comprando, livros mais vendidos, clássicos, universos literários, editoras, entre outros. Isso é muito legal para que o usuário conheça novos livros sem ser os que ele está buscando. O feed também possui alguns filtros de frete grátis, ofertas entre outros.
 
 #### Filtro e Busca
+O filtro possui alguns campos: Autor e Título, título, autor, editorae e isbn. A pesquisa funciona muito bem, mesmo tendo colocado um nome bem errado na procura de um livro, ele achou o livro que estava procurando. A única ressalva é que a pesquisa precisa estar de acordo com o filtro (e não há um default), entao se eu estiver em um filtro de editora, nao ira aparecer nada se um buscar pelo título de um livro - o usuário tem que ficar sempre atento a isso, oque pode não ser bem visto.
 
 #### Post
+O post no feed contem foto, título, nome do autor, ano de publicação, menor oferta e botão que vai para a tela em que mostra tods as ofertas daquela edição. Ao clicar nesse botão, vemos novas informações além das citadas, como por exemplo sinopse, avaliação do vendedor, compartilhamento, e as ofertas. As ofertas posseum filtro de localização e ordenação por preço, facilitando o usuário entender qual oferta mais o agrada. Gostamos da opção de compartilhamento, pois permite ao usuário compartilhar algo que ele gostou ou que sabe que outros vão gostar.
+Ao selecionar uma oferta também é possível colocar na lista de comprar mais tarde, ver detalhes e falar com o vendedor
+A página de ver detalhes informa mais sobre o estado de conservação do livro, além das informações de edição (e o botão de comprar)
+Não chegamos a falar com o vendedor, mas a tela é um campo em que voce digita o texto (que não pode ter alguns caracters).
 
 #### Página vendedor
-
+Não conseguimos acessar pois não possuímos cnpj
 
 
 #### Pontos positivos
-* 
-* 
+* Várias sessões no feed que permite o usuário descobrir novos livros
+* Bem organizado e as informações são evidentes
+* Sistema de busca funciona bem
+* Compartilhento de anúncio
+* Busca por cep e isbn
 
 #### Pontos negativos
-* 
-* 
+* Verificação de usuário parece um pouco demais, assusta um pouco ver seu nome preenchido automaticamente
+* Apenas pessoas com cnpj podem vender seus livros
+* Muitos tipos de listas
 
 ---
 
