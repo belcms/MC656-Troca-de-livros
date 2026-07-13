@@ -17,10 +17,6 @@ class BookCreationPage extends StatefulWidget {
 }
 
 class _BookCreationPageState extends State<BookCreationPage> {
-
-
-
-
   final vm = BookCreationViewModel();
   String _locationInfo = "Digite seu CEP...";
   bool isSaving = false;
@@ -42,7 +38,9 @@ class _BookCreationPageState extends State<BookCreationPage> {
   Future<void> _pickImages() async {
     if (_selectedImages.length >= 5) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Você já adicionou o limite máximo de 5 fotos.')),
+        const SnackBar(
+          content: Text('Você já adicionou o limite máximo de 5 fotos.'),
+        ),
       );
       return;
     }
@@ -106,9 +104,6 @@ class _BookCreationPageState extends State<BookCreationPage> {
         _locationInfo = "CEP não encontrado ou inválido.";
       }
     });
-
-  
-
   }
 
   /// Displays an alert dialog prompting the user to paste a URL for the book cover image.
@@ -220,14 +215,16 @@ class _BookCreationPageState extends State<BookCreationPage> {
   /// Displays snackbars for validation errors or the final success/failure result.
   /// If successful, it clears the form and resets the UI state.
   Future<void> _saveBook() async {
-
     if (_selectedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('É obrigatório adicionar pelo menos uma foto do livro.')),
+        const SnackBar(
+          content: Text(
+            'É obrigatório adicionar pelo menos uma foto do livro.',
+          ),
+        ),
       );
       return;
     }
-
 
     // Validações básicas (exemplo: título e autor não podem ser vazios)
     if (vm.titleController.text.isEmpty) {
@@ -301,25 +298,23 @@ class _BookCreationPageState extends State<BookCreationPage> {
       }
     }
 
-   final String? announcementId = await vm.submit(
+    final String? announcementId = await vm.submit(
       _imagemCapaUrl,
       currentUserId!,
     );
-
-    // // Sugestão: Passe o _imagemCapa como parâmetro para que o ViewModel faça o upload.
-    // final success = await vm.submit(
-    //   _imagemCapaUrl,
-    //   currentUserId!,
-    // ); // Passa o userId para o ViewModel
 
     bool uploadSuccess = true;
 
     // 3. UPLOAD DAS FOTOS (Se o anúncio foi criado com sucesso)
     if (announcementId != null && announcementId.isNotEmpty) {
-      final uploadService = UploadService(); // Instancia o serviço se não estiver no topo da classe
-      
+      final uploadService =
+          UploadService(); // Instancia o serviço se não estiver no topo da classe
+
       for (var image in _selectedImages) {
-        bool result = await uploadService.uploadBookPhoto(announcementId, image);
+        bool result = await uploadService.uploadBookPhoto(
+          announcementId,
+          image,
+        );
         if (!result) {
           uploadSuccess = false;
           // Aqui você poderia colocar uma lógica de retry ou avisar qual foto falhou
@@ -333,26 +328,17 @@ class _BookCreationPageState extends State<BookCreationPage> {
       isSaving = false;
     });
 
-    // ScaffoldMessenger.of(context).showSnackBar(
-    //   SnackBar(
-    //     content: Text(
-    //       success
-    //           ? 'Anúncio criado com sucesso.'
-    //           : 'Não foi possível criar o anúncio.',
-    //     ),
-    //   ),
-    // );
-
-    final bool isCompletelySuccessful = (announcementId != null) && uploadSuccess;
+    final bool isCompletelySuccessful =
+        (announcementId != null) && uploadSuccess;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           isCompletelySuccessful
               ? 'Anúncio e fotos salvos com sucesso!'
-              : (announcementId != null 
-                  ? 'Anúncio criado, mas houve falha ao enviar algumas fotos.' 
-                  : 'Não foi possível criar o anúncio.'),
+              : (announcementId != null
+                    ? 'Anúncio criado, mas houve falha ao enviar algumas fotos.'
+                    : 'Não foi possível criar o anúncio.'),
         ),
       ),
     );
@@ -407,7 +393,7 @@ class _BookCreationPageState extends State<BookCreationPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildPhotoGallery(),
-
+          const SizedBox(height: 24),
           /// STATUS
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -650,7 +636,8 @@ class _BookCreationPageState extends State<BookCreationPage> {
             ]),
             builder: (context, child) {
               // 1. Define a regra: só é válido se todos os campos tiverem texto e tiver foto
-              final bool isFormValid = _selectedImages.isNotEmpty &&
+              final bool isFormValid =
+                  _selectedImages.isNotEmpty &&
                   vm.titleController.text.trim().isNotEmpty &&
                   vm.authorController.text.trim().isNotEmpty &&
                   vm.publisherController.text.trim().isNotEmpty &&
@@ -666,11 +653,12 @@ class _BookCreationPageState extends State<BookCreationPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF416956),
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: Colors.grey[400], // Cor do botão desabilitado
+                    disabledBackgroundColor:
+                        Colors.grey[400], // Cor do botão desabilitado
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   // 3. Aplica a condição aqui:
-                  onPressed: canSubmit ? _saveBook : null, 
+                  onPressed: canSubmit ? _saveBook : null,
                   child: isSaving
                       ? const SizedBox(
                           width: 20,
@@ -905,79 +893,191 @@ class _BookCreationPageState extends State<BookCreationPage> {
     }
   }
 
+  // Widget _buildPhotoGallery() {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       const Text(
+  //         'Fotos do Livro (Mínimo 1, Máximo 5)',
+  //         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+  //       ),
+  //       const SizedBox(height: 12),
+  //       Center(
 
+  //         child: Wrap(
+  //         spacing: 12.0, // Espaçamento horizontal entre as fotos
+  //         runSpacing: 12.0, // Espaçamento vertical se pular de linha
+  //         children: [
+  //           // Renderiza as fotos selecionadas
+  //           ...List.generate(_selectedImages.length, (index) {
+  //             return Stack(
+  //               clipBehavior: Clip.none,
+  //               children: [
+  //                 Container(
+  //                   width: 120, // Força a dimensão quadrada
+  //                   height: 160, // Força a dimensão quadrada
+  //                   decoration: BoxDecoration(
+  //                     borderRadius: BorderRadius.circular(8),
+  //                     border: Border.all(color: Colors.grey.shade300),
+  //                   ),
+  //                   clipBehavior: Clip.antiAlias,
+  //                   child: Image.file(
+  //                     File(_selectedImages[index].path),
+  //                     fit: BoxFit
+  //                         .cover, // Preenche todo o quadrado cortando as sobras
+  //                   ),
+  //                 ),
+  //                 // Botãozinho vermelho para excluir a foto
+  //                 Positioned(
+  //                   right: -10,
+  //                   top: -10,
+  //                   child: GestureDetector(
+  //                     onTap: () => _removeImage(index),
+  //                     child: Container(
+  //                       decoration: const BoxDecoration(
+  //                         shape: BoxShape.circle,
+  //                         color: Colors.white,
+  //                       ),
+  //                       child: const Icon(
+  //                         Icons.remove_circle,
+  //                         color: Colors.red,
+  //                         size: 28,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ],
+  //             );
+  //           }),
+
+  //           // Renderiza o botão de "Adicionar" apenas se tiver menos de 5 fotos
+  //           if (_selectedImages.length < 5)
+  //             GestureDetector(
+  //               onTap: _pickImages,
+  //               child: Container(
+  //                 width:
+  //                     120, // O slot de adição mantém as exatas proporções quadradas
+  //                 height: 160,
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.grey.shade100,
+  //                   borderRadius: BorderRadius.circular(8),
+  //                   border: Border.all(color: Colors.grey.shade400),
+  //                 ),
+  //                 child: const Center(
+  //                   child: Icon(
+  //                     Icons.add_a_photo,
+  //                     color: Colors.grey,
+  //                     size: 32,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //         ],
+  //       ),
+  //       )
+  //     ],
+  //   );
+  // }
 Widget _buildPhotoGallery() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Fotos do Livro (Mínimo 1, Máximo 5)',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 12.0, // Espaçamento horizontal entre as fotos
-          runSpacing: 12.0, // Espaçamento vertical se pular de linha
-          children: [
-            // Renderiza as fotos selecionadas
-            ...List.generate(_selectedImages.length, (index) {
-              return Stack(
-                clipBehavior: Clip.none,
+    return SizedBox(
+      width: double.infinity, // 1. Força a ocupar a tela toda para o centro funcionar
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center, // 2. Centraliza o texto e o carrossel
+        children: [
+          const Text(
+            'Fotos do Livro',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          
+          // Carrossel Horizontal
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal, 
+            clipBehavior: Clip.none, 
+            child: Padding(
+              padding: const EdgeInsets.only(top: 12, bottom: 8), 
+              child: Row(
                 children: [
-                  Container(
-                    width: 100, // Força a dimensão quadrada
-                    height: 100, // Força a dimensão quadrada
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Image.file(
-                      File(_selectedImages[index].path),
-                      fit: BoxFit.cover, // Preenche todo o quadrado cortando as sobras
-                    ),
-                  ),
-                  // Botãozinho vermelho para excluir a foto
-                  Positioned(
-                    right: -10,
-                    top: -10,
-                    child: GestureDetector(
-                      onTap: () => _removeImage(index),
+                  // Renderiza as fotos selecionadas
+                  ...List.generate(_selectedImages.length, (index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 12.0), // Espaço entre as fotos
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 120, 
+                            height: 160, 
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Image.file(
+                              File(_selectedImages[index].path),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          // Botãozinho vermelho para excluir a foto
+                          Positioned(
+                            right: -10,
+                            top: -10,
+                            child: GestureDetector(
+                              onTap: () => _removeImage(index),
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                ),
+                                child: const Icon(
+                                  Icons.remove_circle,
+                                  color: Colors.red,
+                                  size: 28,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+
+                  // Renderiza o botão de "Adicionar" apenas se tiver menos de 5 fotos
+                  if (_selectedImages.length < 5)
+                    GestureDetector(
+                      onTap: _pickImages,
                       child: Container(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
+                        width: 120, 
+                        height: 160,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade400),
                         ),
-                        child: const Icon(Icons.remove_circle, color: Colors.red, size: 28),
+                        child: const Center(
+                          child: Icon(
+                            Icons.add_a_photo,
+                            color: Colors.grey,
+                            size: 32,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
                 ],
-              );
-            }),
-
-            // Renderiza o botão de "Adicionar" apenas se tiver menos de 5 fotos
-            if (_selectedImages.length < 5)
-              GestureDetector(
-                onTap: _pickImages,
-                child: Container(
-                  width: 100, // O slot de adição mantém as exatas proporções quadradas
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade400),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.add_a_photo, color: Colors.grey, size: 32),
-                  ),
-                ),
               ),
-          ],
-        ),
-      ],
+            ),
+          ),
+
+          // Contador "pítico" centralizado embaixo
+          Text(
+            '${_selectedImages.length}/5',
+            style: TextStyle(
+              fontSize: 12, 
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
     );
   }
-
 }
-
