@@ -17,9 +17,18 @@ class MyBooksService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => MyBooksModel.fromJson(json)).toList();
+        final List<MyBooksModel> books = [];
+        for (final item in data) {
+          try {
+            books.add(MyBooksModel.fromJson(item));
+          } catch (e) {
+            print('Erro ao parsear anúncio do usuário: $e — item: $item');
+          }
+        }
+        return books;
       } else {
         print('Erro ao carregar anúncios: ${response.statusCode}');
+        print('Resposta: ${response.body}');
         return null;
       }
     } catch (e) {

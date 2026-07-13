@@ -11,6 +11,7 @@ class TradeAnnouncementBase(BaseModel):
     a trade announcement, excluding database-generated fields.
     """
     edition_id: str
+    user_id: str
     real_photo_url: Optional[str] = None
     condition: Condition
     description: Optional[str] = None
@@ -41,6 +42,7 @@ class MyBooksCardResponse(BaseModel):
         publish_year: Publication year from the selected edition.
         real_photo_url: Optional URL of the real book photo uploaded by user.
         status: Current trade lifecycle state.
+        location: Location string built from CEP-linked city and state.
     """
 
     id: str
@@ -48,6 +50,7 @@ class MyBooksCardResponse(BaseModel):
     publish_year: int
     real_photo_url: Optional[str]
     status: Status
+    location: str = "Localização não informada"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -70,5 +73,18 @@ class FeedAnnouncementResponse(BaseModel):
     publish_year: int = Field(alias='publishYear')
     cep: str
     real_photo_url: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SearchAnnouncementsResponse(BaseModel):
+    """Envelope returned by the announcement search endpoint.
+
+    The frontend needs both the matched cards and the total number of
+    matches for pagination and the result counter.
+    """
+
+    results: list[FeedAnnouncementResponse]
+    total: int
 
     model_config = ConfigDict(from_attributes=True)

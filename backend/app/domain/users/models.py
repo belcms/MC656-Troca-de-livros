@@ -1,5 +1,6 @@
 from datetime import datetime
-from sqlalchemy import Column, Date, DateTime, ForeignKey, String
+from sqlalchemy import Column, Date, DateTime, ForeignKey, String, Integer
+
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 import uuid
@@ -18,6 +19,23 @@ class User(Base):
     birth_date = Column(Date, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    cep_id = Column(String(8), ForeignKey("locations.cep"))
+
+    def __init__(self, **kwargs):
+        cep = kwargs.pop("cep", None)
+        super().__init__(**kwargs)
+        if cep is not None and self.cep_id is None:
+            self.cep_id = cep
+
+    @property
+    def cep(self):
+        return self.cep_id
+
+    @cep.setter
+    def cep(self, value):
+        self.cep_id = value
+
 
     announcements = relationship("TradeAnnouncement", back_populates="user")
     sessions = relationship("AuthSession", back_populates="user", cascade="all, delete-orphan")

@@ -9,6 +9,7 @@ class AnnouncementDetail {
 
   final String id;
   final String? description;
+  final String? userId;
   final String? realPhotoUrl;
   final String? condition;
   final String? status;
@@ -20,6 +21,7 @@ class AnnouncementDetail {
   AnnouncementDetail({
     required this.id,
     this.description,
+    this.userId,
     this.realPhotoUrl,
     this.condition,
     this.status,
@@ -50,6 +52,7 @@ class AnnouncementDetail {
     return AnnouncementDetail(
       id: json['id'] as String,
       description: json['description'] as String?,
+      userId: json['user_id'],
       realPhotoUrl: json['real_photo_url'] as String?,
       condition: json['condition'] as String?,
       status: json['status'] as String?,

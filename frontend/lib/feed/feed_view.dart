@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/book_details/announcement_detail_screen.dart';
+import 'package:frontend/search/intermediate_search_screen.dart';
+import 'package:frontend/search/widgets/custom_search_bar.dart';
 import 'announcement_card.dart';
 import '../services/announcement_service.dart';
 
-
 /// The main screen of the application that displays the feed of book announcements.
 ///
-/// This widget handles its own state to fetch data asynchronously via 
-/// [AnnouncementService.fetchFeedAnnouncements] when it initializes. 
-/// Depending on the data state, it will render a loading indicator, 
+/// This widget handles its own state to fetch data asynchronously via
+/// [AnnouncementService.fetchFeedAnnouncements] when it initializes.
+/// Depending on the data state, it will render a loading indicator,
 /// an [EmptyFeedState] if no books are found, or a grid of [AnnouncementCard]s.
 class FeedView extends StatefulWidget {
   const FeedView({super.key});
@@ -50,6 +51,24 @@ class _FeedViewState extends State<FeedView> {
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: CustomSearchBar(
+                readOnly: true,
+                hintText: 'Buscar livros, autores ou editoras',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const IntermediateSearchScreen(),
+                    ),
+                  );
+                },
+                onChanged: (_) {},
+                onSubmitted: (_) {},
+                onClear: () {},
               ),
             ),
             Expanded(
@@ -101,10 +120,9 @@ class _FeedViewState extends State<FeedView> {
   }
 }
 
-
 /// A visual placeholder displayed when the feed has no announcements.
 ///
-/// This widget shows a book icon and a friendly message encouraging the 
+/// This widget shows a book icon and a friendly message encouraging the
 /// user to take the first step and create a book trade announcement.
 class EmptyFeedState extends StatelessWidget {
   const EmptyFeedState({super.key});

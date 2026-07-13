@@ -28,6 +28,8 @@ class BookCreationViewModel {
   final pagesController = TextEditingController();
   final synopsisController = TextEditingController();
   final descriptionController = TextEditingController();
+  final cepController = TextEditingController();
+
 
   String genre = "Romance";
   String language = "Português";
@@ -129,6 +131,7 @@ class BookCreationViewModel {
       "status": mapStatus(), // <--- Usando o tradutor de Status
       "condition": mapCondition(), // <--- Usando o tradutor de Condição
       "coverUrl": coverUrl ?? "",
+      "cep": cepController.text.trim().isNotEmpty ? cepController.text.trim() : null,
     };
 
     try {
@@ -149,5 +152,6 @@ class BookCreationViewModel {
     pagesController.dispose();
     synopsisController.dispose();
     descriptionController.dispose();
+    cepController.dispose();
   }
 }

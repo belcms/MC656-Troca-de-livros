@@ -17,7 +17,12 @@ def test_get_user_announcements_returns_only_user_data(db_session, seed_announce
         owner_data_1["announcement"].id,
         owner_data_2["announcement"].id,
     }
-    assert all(set(item.keys()) == {"id", "title", "publish_year", "real_photo_url", "status"} for item in result)
+    assert all(
+        set(item.keys())
+        == {"id", "title", "publish_year", "real_photo_url", "status", "location"}
+        for item in result
+    )
+    assert all(item["location"] == "Campinas - SP" for item in result)
 
 
 def test_get_user_announcements_orders_by_status_priority(db_session, seed_announcement):

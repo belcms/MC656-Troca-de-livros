@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
 
 from app.api.v1.announcements.schemas import MyBooksCardResponse
-# Importamos o nosso "cozinheiro"
+
 from app.domain.users import services 
 from app.domain.users.models import User
 from app.domain.auth.security import get_current_user

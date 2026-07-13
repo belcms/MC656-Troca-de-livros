@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/announcement_service.dart';
 import 'announcement_detail_model.dart';
+import 'interest_bottom_bar.dart';
+import 'package:frontend/offer/trade_proposal_view.dart';
+import 'package:frontend/services/offer_service.dart';
+import 'package:frontend/services/user_service.dart';
 
 /// Screen responsible for displaying detailed information about a trade announcement.
 ///
@@ -46,6 +50,10 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   /// This is initialized in `initState` and reused by the `FutureBuilder`
   /// to manage UI updates.
   late Future<AnnouncementDetail?> _future;
+  bool _hasPendingOffer = false;
+  bool _isLoadingOfferStatus = true;
+  String? meuUsuarioLogadoId;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -55,6 +63,39 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
     _future = AnnouncementService.fetchAnnouncementDetails(
       widget.announcementId,
     );
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final users = await UserService.fetchUsers();
+
+    if (mounted) {
+      setState(() {
+        if (users != null && users.isNotEmpty) {
+          meuUsuarioLogadoId = users.first['id'];
+        } else {
+          meuUsuarioLogadoId = "f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4";
+        }
+        isLoading = false; // ID carregado!
+      });
+
+      // Agora SIM chamamos a verificação da oferta, pois temos certeza que o ID não é nulo.
+      await _checkIfHasOffer();
+    }
+  }
+
+  Future<void> _checkIfHasOffer() async {
+    final hasOffer = await OfferService().checkPendingOffer(
+      meuUsuarioLogadoId!, // O ID mockado do usuário logado
+      widget.announcementId,
+    );
+
+    if (mounted) {
+      setState(() {
+        _hasPendingOffer = hasOffer;
+        _isLoadingOfferStatus = false;
+      });
+    }
   }
 
   @override
@@ -68,7 +109,8 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
           /// Builds UI based on the current state of the async operation.
           builder: (context, snapshot) {
             /// Loading state
-            if (snapshot.connectionState == ConnectionState.waiting) {
+            if (snapshot.connectionState == ConnectionState.waiting ||
+                isLoading) {
               return const Center(child: CircularProgressIndicator());
             }
             /// Error state with retry option
@@ -114,48 +156,88 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
             final book = data.book;
             final edition = data.edition;
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+            // final String meuUsuarioLogadoId =
+            //     // "cd1be270-d415-4db5-9d6f-c7ca619e69ed";
+            //     "f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4";
 
-              /// Main layout structure
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// Back navigation button
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
-                    tooltip: 'Back',
+            final bool isOwner = data.userId == meuUsuarioLogadoId;
+
+            // Trocamos o retorno direto do ScrollView por uma Column
+            return Column(
+              children: [
+                /// 1. A área rolável do anúncio, envolvida em um Expanded
+                /// para ocupar todo o espaço disponível
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+
+                    /// Main layout structure
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        /// Back navigation button
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: () => Navigator.pop(context),
+                          tooltip: 'Back',
+                        ),
+
+                        /// Book cover / announcement image
+                        _buildCover(data.realPhotoUrl),
+                        const SizedBox(height: 16),
+
+                        /// Title, author, and condition badge
+                        _buildHeader(
+                          title: book?.title,
+                          author: book?.author,
+                          condition: data.condition,
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        /// User + edition info
+                        _buildInfoSection(
+                          tradedWith: data.userName,
+                          cep: data.userCep,
+                          description: data.description,
+                          year: edition?.publishYear,
+                          publisher: edition?.publisher,
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        /// Book synopsis
+                        _buildDescription(synopsis: book?.synopsis),
+                      ],
+                    ),
                   ),
+                ),
 
-                  /// Book cover / announcement image
-                  _buildCover(data.realPhotoUrl),
-                  const SizedBox(height: 16),
-
-                  /// Title, author, and condition badge
-                  _buildHeader(
-                    title: book?.title,
-                    author: book?.author,
-                    condition: data.condition,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  /// User + edition info
-                  _buildInfoSection(
-                    tradedWith: data.userName,
-                    cep: data.userCep,
-                    description: data.description,
-                    year: edition?.publishYear,
-                    publisher: edition?.publisher,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  /// Book synopsis
-                  _buildDescription(synopsis: book?.synopsis),
-                ],
-              ),
+                /// 2. O seu componente fixado no final da tela
+                InterestBottomBar(
+                  isOwner: isOwner,
+                  isPending: _isLoadingOfferStatus ? false : _hasPendingOffer,
+                  onInterestPressed: () {
+                    // Passando os dados reais do anúncio para a próxima tela
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TradeProposalScreen(
+                          targetAnnouncementId: widget.announcementId,
+                          targetBookTitle: book?.title ?? 'Título desconhecido',
+                          targetBookYear:
+                              edition?.publishYear?.toString() ??
+                              'Ano não informado',
+                          targetBookLocation:
+                              data.userCep ?? 'Localização não informada',
+                          targetBookImageUrl:
+                              data.realPhotoUrl ?? 'URL_DA_IMAGEM_PADRAO_AQUI',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             );
           },
         ),
@@ -174,9 +256,10 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   Widget _buildCover(String? url) {
     // Define a URL padrão caso a fornecida seja inválida
     const String fallbackUrl = 'https://axiomprint.com/icons/default-squre.jpg';
-    
+
     // Verifica se a URL é nula, vazia ou apenas espaços
-    final bool isValidUrl = url != null && url.trim().isNotEmpty && url.startsWith('http');
+    final bool isValidUrl =
+        url != null && url.trim().isNotEmpty && url.startsWith('http');
 
     return Center(
       child: ClipRRect(

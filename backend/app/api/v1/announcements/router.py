@@ -4,7 +4,7 @@ from app.core.database import get_db
 from app.domain.auth.security import get_current_user
 from app.domain.users.models import User
 
-from app.api.v1.announcements.schemas import FeedAnnouncementResponse
+from app.api.v1.announcements.schemas import FeedAnnouncementResponse, SearchAnnouncementsResponse
 import app.domain.announcements.schemas as announcements_schemas
 
 from app.domain.announcements.services import (
@@ -12,8 +12,27 @@ from app.domain.announcements.services import (
     get_feed_announcements,
     create_announcement as service_create_announcement
 )
+from app.domain.announcements.search import AnnouncementSearchService
 
 router = APIRouter(prefix="/api/v1/announcements", tags=["announcements"])
+
+
+@router.get("/search", response_model=SearchAnnouncementsResponse, summary="Search announcements")
+def search_announcements_route(
+    query: str = Query(..., min_length=1, description="Search term used to match announcements"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+):
+    """Search announcements by book title, author, publisher, or year.
+
+    Returns a lightweight envelope with the matched cards and the total
+    number of hits, which the frontend can use for pagination and counters.
+    """
+
+    service = AnnouncementSearchService()
+    results, total = service.search_announcements(db=db, query=query, limit=limit, offset=offset)
+    return {"results": results, "total": total}
 
 @router.get("/details/{id}")
 def get_book_details_route(id: str, db: Session = Depends(get_db)):

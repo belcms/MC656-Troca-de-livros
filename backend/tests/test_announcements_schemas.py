@@ -14,6 +14,7 @@ from app.domain.announcements.models import Condition, Status
 def test_trade_announcement_base_valid():
     data = TradeAnnouncementBase(
         edition_id="ed-1",
+        user_id="user-123",
         real_photo_url=None,
         condition=Condition.New,
         description="desc",

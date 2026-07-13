@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'api_client.dart';
 import '../book_details/announcement_detail_model.dart';
+import '../search/announcement_search_models.dart';
 
 /// A service class responsible for handling HTTP requests related to book announcements.
 ///
@@ -127,6 +128,40 @@ class AnnouncementService {
       return null;
     } catch (e) {
       return null;
+    }
+  }
+
+  /// Searches announcements by a text query.
+  ///
+  /// Makes a GET request to `/api/v1/announcements/search` with `query`,
+  /// `limit`, and `offset` query parameters.
+  static Future<AnnouncementSearchResponse> fetchSearchAnnouncements({
+    required String query,
+    int limit = 4,
+    int offset = 0,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiClient.baseUrl}/api/v1/announcements/search')
+          .replace(
+            queryParameters: {
+              'query': query,
+              'limit': limit.toString(),
+              'offset': offset.toString(),
+            },
+          );
+
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return AnnouncementSearchResponse.fromJson(data);
+      }
+
+      throw Exception(
+        'Falha ao buscar anúncios (Erro ${response.statusCode}).',
+      );
+    } catch (e) {
+      throw Exception('Erro de conexão: Não foi possível acessar a busca.');
     }
   }
 
