@@ -1,6 +1,6 @@
 from fastapi.params import Body, Depends
 from sqlalchemy.orm import Session, joinedload
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from app.domain.announcements import models
 from app.domain.announcements.models import Status
 from app.api.v1.announcements.schemas import FeedAnnouncementResponse
@@ -12,6 +12,11 @@ from app.domain.users import models as users_models
 from app.core.database import get_db
 import app.domain.books.schemas as books_schemas
 import app.domain.announcements.schemas as announcements_schemas
+
+import math
+
+
+
 
 #excluir, não ideal (apenas para create_dummy_data/teste)
 import app.domain.locations.services as locations_services
@@ -111,7 +116,11 @@ def get_announcement_details(db: Session, id: str):
     
     return text
 
-def get_feed_announcements(db: Session, limit: int = 20, offset: int = 0):
+def get_feed_announcements(db: Session,
+    limit: int = 20,
+    offset: int = 0,
+    current_user_id: str | None = None,
+    sort_by_distance: bool = False,):
     """
     Retrieves a paginated list of available trade announcements for the feed.
 
@@ -124,7 +133,7 @@ def get_feed_announcements(db: Session, limit: int = 20, offset: int = 0):
         db (Session): The active SQLAlchemy database session.
         limit (int, optional): The maximum number of records to return. Defaults to 20.
         offset (int, optional): The number of records to skip for pagination. Defaults to 0.
-
+        current_user_id (str | None, optional): The ID of the currently authenticated user. Defaults to None.
     Returns:
         list[FeedAnnouncementResponse]: A list of mapped announcement objects 
         containing the necessary data for the feed UI.
