@@ -9,6 +9,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+pytest_plugins = ("tests.search_fixtures",)
+
 # Make tests independent from invocation directory (e.g., repo root vs backend root).
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
@@ -22,6 +24,7 @@ from app.api.v1.books.router import router as books_router
 from app.core.database import Base, get_db
 from app.domain.announcements.models import Condition, Status, TradeAnnouncement
 from app.domain.books.models import Book, Edition, Genre, Language
+from app.domain.locations.models import location as Location
 from app.domain.users.models import User
 
 @pytest.fixture
@@ -106,6 +109,18 @@ def seed_announcement(db_session: Session) -> Callable[..., Dict[str, object]]:
     ) -> Dict[str, object]:
         if user is None:
             counters["user"] += 1
+            location = db_session.get(Location, "13000000")
+            if location is None:
+                location = Location(
+                    cep="13000000",
+                    city="Campinas",
+                    state="SP",
+                    country="Brasil",
+                    lat=-22.9056,
+                    long=-47.0608,
+                )
+                db_session.add(location)
+                db_session.flush()
             user = User(
                 username=f"user_{counters['user']}",
                 email=f"user_{counters['user']}@example.com",
@@ -138,6 +153,7 @@ def seed_announcement(db_session: Session) -> Callable[..., Dict[str, object]]:
         announcement = TradeAnnouncement(
             user_id=user.id,
             edition_id=edition.id,
+            cep_id=user.cep_id,
             real_photo_url=photo_url,
             condition=condition,
             description="Descricao de teste",

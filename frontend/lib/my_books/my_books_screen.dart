@@ -149,8 +149,9 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
                         book.realPhotoUrl ??
                         'https://via.placeholder.com/300x400',
                     status: book.status,
+                    location: book.location,
                     onEdit: () async {
-                      await Navigator.push(
+                      final updated = await Navigator.push<bool>(
                         context,
                         MaterialPageRoute(
                           builder: (_) => BookEditionPage(
@@ -158,6 +159,12 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
                           ),
                         ),
                       );
+
+                      if (updated == true && mounted) {
+                        setState(() {
+                          _booksFuture = _loadInitialBooks();
+                        });
+                      }
                     },
                   ),
                 ),

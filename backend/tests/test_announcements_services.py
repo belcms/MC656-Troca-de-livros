@@ -167,6 +167,26 @@ def test_get_feed_announcements_empty_list(mocker):
     assert result == []
 
 
+def test_get_feed_announcements_without_location_uses_fallback(mocker):
+    db = mocker.Mock()
+    announcement = _obj(
+        id="ann-without-location",
+        real_photo_url=None,
+        edition=_obj(
+            publish_year=2000,
+            book=_obj(title="Book without location"),
+        ),
+        user=_obj(cep=None, cep_id=None),
+        cep_id=None,
+        location=None,
+    )
+    _mock_feed_chain_all(db, [announcement])
+
+    result = get_feed_announcements(db, limit=20, offset=0)
+
+    assert result[0].cep == "Localização não informada"
+
+
 def test_get_feed_announcements_db_failure_propagates(mocker):
     db = mocker.Mock()
     db.query.side_effect = RuntimeError("database read failed")

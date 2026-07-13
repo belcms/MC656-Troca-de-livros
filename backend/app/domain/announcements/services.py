@@ -17,6 +17,9 @@ from app.api.v1.announcements.schemas import FeedAnnouncementResponse
 from app.domain.locations import models as location_models
 from app.domain.locations.services import _calculate_distance
 
+#excluir, não ideal (apenas para create_dummy_data/teste)
+import app.domain.locations.services as locations_services
+
 def get_announcement_details(db: Session, id: str):
     """
     Retrieve complete details of a trade announcement by its ID.
@@ -89,7 +92,7 @@ def get_announcement_details(db: Session, id: str):
         "id": announcements.id,
         "user_id": announcements.user_id,
         "user_name": user.username,
-        "user_cep": user.cep,
+        "cep_id": getattr(announcements, "cep_id", None),
         "edition_id": announcements.edition_id,
         "real_photo_url": announcements.real_photo_url,
         "condition": announcements.condition.value,
@@ -170,6 +173,16 @@ def get_feed_announcements(
             map_genre(genre)
             for genre in genres
         ]
+    # Returns:
+    #     list[FeedAnnouncementResponse]: A list of mapped announcement objects 
+    #     containing the necessary data for the feed UI.
+    # """
+    
+    # announcements = db.query(models.TradeAnnouncement).options(
+    #     joinedload(models.TradeAnnouncement.edition).joinedload(Edition.book),
+    #     joinedload(models.TradeAnnouncement.user),
+    #     joinedload(models.TradeAnnouncement.location)
+    # ).filter(models.TradeAnnouncement.status == Status.Available).order_by(models.TradeAnnouncement.create_date.desc()).limit(limit).offset(offset).all()
 
         query = query.filter(
             Book.genre.in_(mapped_genres)
@@ -317,11 +330,21 @@ def get_feed_announcements(
 
     return [
         FeedAnnouncementResponse(
-            id=announcement.id,
-            title=announcement.edition.book.title,
-            real_photo_url=announcement.real_photo_url,
-            publishYear=announcement.edition.publish_year,
-            cep=announcement.user.cep,
+
+            id=ann.id,
+            title=ann.edition.book.title,
+            real_photo_url=ann.real_photo_url,
+            publishYear=ann.edition.publish_year,
+            cep=(
+                f'{ann.location.city} - {ann.location.state}'
+                if getattr(ann, "location", None)
+                else (
+                    getattr(ann, "cep_id", None)
+                    or getattr(ann.user, "cep_id", None)
+                    or getattr(ann.user, "cep", None)
+                    or "Localização não informada"
+                )
+            ),
         )
         for announcement in announcements
     ]
@@ -422,7 +445,7 @@ def map_condition(value: str):
     return mapping.get(value, announcements_models.Condition.New)
 
 
-def create_dummy_data(db: Session = Depends(get_db)):
+async def create_dummy_data(db: Session = Depends(get_db)):
     """
     Populate the database with initial dummy data for testing purposes.
 
@@ -445,18 +468,22 @@ def create_dummy_data(db: Session = Depends(get_db)):
             "message": "Dummy data already exists!",
             "announcement_ids": [a.id for a in announcements]
         }
+    loc1 = await locations_services.get_location_by_cep("07115000", db)
+    loc2 = await locations_services.get_location_by_cep("07115000", db)
 
     user1 = users_models.User(
         username="rafael",
         email="rafael@example.com",
         full_name="Rafael Feltrin",
-        cep="13083852" #Just for now while we don't integrate with a Sedex API
+
+        cep_id= loc1.cep #Just for now while we don't integrate with a Sedex API
     )
     user2 = users_models.User(
         username="Neymar",
         email="neymar@example.com",
         full_name="Neymar Jr.",
-        cep="11060002" #Just for now while we don't integrate with a Sedex API
+
+        cep_id= loc2.cep #Just for now while we don't integrate with a Sedex API
     )
     db.add_all([user1, user2])
     db.commit()
@@ -502,6 +529,7 @@ def create_dummy_data(db: Session = Depends(get_db)):
     announcement1 = announcements_models.TradeAnnouncement(
         user_id=user1.id,
         edition_id=edition1.id,
+        cep_id = loc1.cep,
         real_photo_url="https://m.media-amazon.com/images/I/91g5gcjTxsL._SY522_.jpg",
         condition=announcements_models.Condition.Good,
         description="Muito muito bom, cuido muito bem",
@@ -510,6 +538,7 @@ def create_dummy_data(db: Session = Depends(get_db)):
     announcement2 = announcements_models.TradeAnnouncement(
         user_id=user2.id,
         edition_id=edition2.id,
+        cep_id = loc1.cep,
         real_photo_url="https://m.media-amazon.com/images/I/81zN7udGRUL._SL1500_.jpg",
         condition=announcements_models.Condition.New,
         description="Nunca nem abri essa bomba",
@@ -624,6 +653,14 @@ def update_book(
 
     announcement.description = body.get("description", announcement.description)
     announcement.real_photo_url = body.get("real_photo_url", announcement.real_photo_url)
+ # Rratar o CEP antes de salvar para evitar erro de Chave Estrangeira
+    if "cep_id" in body:
+        clean_cep = locations_services.normalize_cep(body.get("cep_id"))
+        if clean_cep is None:
+            announcement.cep_id = None
+        else:
+            loc = locations_services.get_or_create_location_by_cep(clean_cep, db)
+            announcement.cep_id = loc.cep
     announcement.status = map_status(body.get("status", announcement.status.value))
     announcement.condition = map_condition(body.get("condition", announcement.condition.value))
 
@@ -706,80 +743,13 @@ def create_announcement(user_id: str, body: announcements_schemas.TradeAnnouncem
         a success message.
     """
     #transforma o body que está em um obj pydantic em um modelo do SQLAlchemy para persistir no banco
-    announcement = announcements_models.TradeAnnouncement(**body.model_dump(exclude={"id", "user_id"}), user_id=user_id) #vantagem, se mudarmos o modelo, não quebra
-
+    body_data = body.model_dump(exclude={"id", "user_id"})
+    if body.cep_id:
+        loc = locations_services.get_or_create_location_by_cep(body.cep_id, db)
+        body_data["cep_id"] = loc.cep
+    #transforma o body que est  em um obj pydantic em um modelo do SQLAlchemy para persistir no banco
+    announcement = announcements_models.TradeAnnouncement(**body_data, user_id=user_id) #vantagem, se mudarmos o modelo, n o quebra
     db.add(announcement)
     db.commit()
     db.refresh(announcement)
-
     return {"data": announcement, "message": "Announcement created successfully"}
-
-def get_book_details(id: str, db: Session = Depends(get_db)):
-    announcement = (
-        db.query(announcements_models.TradeAnnouncement)
-        .filter(announcements_models.TradeAnnouncement.id == id)
-        .first()
-    )
-
-    if not announcement:
-        raise HTTPException(status_code=404, detail="Announcement not found")
-
-    edition = announcement.edition
-    book = edition.book
-
-    return {
-        "id": announcement.id,
-        "title": book.title,
-        "author": book.author,
-        "publisher": edition.publisher,
-        "genre": book.genre.value,
-        "language": edition.language.value,
-        "publishYear": edition.publish_year,
-        "pages": edition.number_of_pages,
-        "synopsis": book.synopsis,
-        "description": announcement.description,
-        "status": announcement.status.value,
-        "condition": announcement.condition.value,
-        "real_photo_url": announcement.real_photo_url,
-    }
-
-
-def update_book(
-    id: str,
-    body: dict = Body(...),
-    db: Session = Depends(get_db),
-):
-    announcement = (
-        db.query(announcements_models.TradeAnnouncement)
-        .filter(announcements_models.TradeAnnouncement.id == id)
-        .first()
-    )
-
-    if not announcement:
-        raise HTTPException(status_code=404, detail="Announcement not found")
-
-    edition = announcement.edition
-    book = edition.book
-
-    book.title = body.get("title", book.title)
-    book.author = body.get("author", book.author)
-    book.synopsis = body.get("synopsis", book.synopsis)
-    book.genre = map_genre(body.get("genre", book.genre.value))
-
-    edition.publisher = body.get("publisher", edition.publisher)
-    edition.language = map_language(body.get("language", edition.language.value))
-
-    if body.get("publishYear"):
-        edition.publish_year = int(body["publishYear"])
-
-    if body.get("pages"):
-        edition.number_of_pages = int(body["pages"])
-
-    announcement.description = body.get("description", announcement.description)
-    announcement.real_photo_url = body.get("real_photo_url", announcement.real_photo_url)
-    announcement.status = map_status(body.get("status", announcement.status.value))
-    announcement.condition = map_condition(body.get("condition", announcement.condition.value))
-
-    db.commit()
-
-    return {"message": "Book updated successfully"}

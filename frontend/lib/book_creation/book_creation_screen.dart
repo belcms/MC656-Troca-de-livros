@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'book_creation_viewmodel.dart';
 import '../services/user_service.dart';
 import 'package:flutter/cupertino.dart';
+import '../services/location_service.dart';
 
 class BookCreationPage extends StatefulWidget {
   final String? userId; // A página será carrega com o ID do usuário logado
@@ -14,7 +15,7 @@ class BookCreationPage extends StatefulWidget {
 
 class _BookCreationPageState extends State<BookCreationPage> {
   final vm = BookCreationViewModel();
-
+  String _locationInfo = "Digite seu CEP...";
   bool isSaving = false;
 
   // Variável para guardar a URL que o usuário digitar
@@ -22,6 +23,50 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
   // Controller temporário só para o pop-up de colar o link
   final _urlCapaController = TextEditingController();
+
+
+  @override
+    void initState() {
+      super.initState();
+      _carregarUsuarioLogado();
+    }
+
+    // Pega o CEP do usuário atual e faz a busca inicial
+    Future<void> _carregarUsuarioLogado() async {
+      final users = await UserService.fetchUsers();
+      if (users != null && users.isNotEmpty) {
+        final user = users.first; 
+        final cepUser = user['cep_id'];
+        if (cepUser != null && cepUser.toString().isNotEmpty) {
+          vm.cepController.text = cepUser.toString();
+          await _buscarLocalizacao(cepUser.toString());
+        }
+      }
+    }
+
+    // Faz a requisição ao backend quando o usuário digita 8 números
+    Future<void> _buscarLocalizacao(String cep) async {
+      final cleanCep = cep.replaceAll(RegExp(r'[^0-9]'), '');
+      if (cleanCep.length != 8) return;
+
+      setState(() {
+        _locationInfo = "Buscando localização...";
+      });
+
+      final loc = await LocationService.fetchLocation(cleanCep);
+      if (!mounted) return;
+
+      setState(() {
+        if (loc != null) {
+          final district = loc['district'] ?? "";
+          _locationInfo = "${loc['city']} - ${loc['state']}" + (district.isNotEmpty ? ", $district" : "");
+        } else {
+          _locationInfo = "CEP não encontrado ou inválido.";
+        }
+      });
+    }
+
+
 
   /// Displays an alert dialog prompting the user to paste a URL for the book cover image.
   /// Updates the state with the provided URL upon confirmation.
@@ -66,7 +111,10 @@ class _BookCreationPageState extends State<BookCreationPage> {
   void _mostrarRoletaDeAno(TextEditingController controller) {
     // Gera uma lista de anos: do ano atual descendo até 1900
     final int anoAtual = DateTime.now().year;
-    final List<int> anos = List.generate(anoAtual - 1900 + 1, (index) => anoAtual - index);
+    final List<int> anos = List.generate(
+      anoAtual - 1900 + 1,
+      (index) => anoAtual - index,
+    );
 
     // Tenta pegar o ano que já está no controller, ou usa o ano atual como padrão
     int anoSelecionado = int.tryParse(controller.text) ?? anoAtual;
@@ -87,15 +135,20 @@ class _BookCreationPageState extends State<BookCreationPage> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Concluído', style: TextStyle(color: Color(0xFF416956))),
-                  )
+                    child: const Text(
+                      'Concluído',
+                      style: TextStyle(color: Color(0xFF416956)),
+                    ),
+                  ),
                 ],
               ),
               // A Roleta em si
               Expanded(
                 child: CupertinoPicker(
                   itemExtent: 40.0, // Altura de cada item na roleta
-                  scrollController: FixedExtentScrollController(initialItem: indexInicial),
+                  scrollController: FixedExtentScrollController(
+                    initialItem: indexInicial,
+                  ),
                   onSelectedItemChanged: (int index) {
                     setState(() {
                       // Atualiza o TextField automaticamente enquanto gira a roleta
@@ -137,23 +190,41 @@ class _BookCreationPageState extends State<BookCreationPage> {
       ).showSnackBar(const SnackBar(content: Text('O autor é obrigatório.')));
       return;
     }
-    if(vm.publisherController.text.isEmpty) {
+    if (vm.publisherController.text.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('A editora é obrigatória.')));
       return;
     }
-    if(vm.yearController.text.isEmpty) {
+    if (vm.yearController.text.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('O ano é obrigatório.')));
       return;
     }
-    if(vm.pagesController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('O número de páginas é obrigatório.')));
+    if (vm.pagesController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('O número de páginas é obrigatório.')),
+      );
       return;
+    }
+
+    final cleanCep = vm.cepController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (vm.cepController.text.trim().isNotEmpty) {
+      if (cleanCep.length != 8) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Informe um CEP com 8 dígitos.')),
+        );
+        return;
+      }
+
+      final loc = await LocationService.fetchLocation(cleanCep);
+      if (loc == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('CEP não encontrado ou inválido.')),
+        );
+        return;
+      }
     }
 
     setState(() {
@@ -166,15 +237,22 @@ class _BookCreationPageState extends State<BookCreationPage> {
       if (users != null && users.isNotEmpty) {
         currentUserId = users.first['id'];
       } else {
-        setState(() { isSaving = false; });
+        setState(() {
+          isSaving = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erro: Nenhum usuário encontrado no banco de dados.')),
+          const SnackBar(
+            content: Text('Erro: Nenhum usuário encontrado no banco de dados.'),
+          ),
         );
         return;
       }
     }
     // Sugestão: Passe o _imagemCapa como parâmetro para que o ViewModel faça o upload.
-    final success = await vm.submit(_imagemCapaUrl, currentUserId!); // Passa o userId para o ViewModel
+    final success = await vm.submit(
+      _imagemCapaUrl,
+      currentUserId!,
+    ); // Passa o userId para o ViewModel
 
     if (!mounted) return;
 
@@ -194,7 +272,9 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
     if (success) {
       // Volta para a tela anterior se salvou com sucesso
-      DefaultTabController.of(context).animateTo(0); // Volta para a primeira aba (home)
+      DefaultTabController.of(
+        context,
+      ).animateTo(0); // Volta para a primeira aba (home)
       // Limpa os campos do formulário para a próxima criação
       vm.titleController.clear();
       vm.authorController.clear();
@@ -208,7 +288,7 @@ class _BookCreationPageState extends State<BookCreationPage> {
       vm.language = "";
       vm.status = "Disponível";
       vm.condition = "Muito bom";
-      _imagemCapaUrl = null; 
+      _imagemCapaUrl = null;
     }
   }
 
@@ -314,9 +394,58 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
           const SizedBox(height: 20),
 
+
+          /// LOCALIZAÇÃO
+          const Text(
+            "Localização",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          _card(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: vm.cepController,
+                  keyboardType: TextInputType.number,
+                  maxLength: 8, // Limita o tamanho do CEP
+                  decoration: InputDecoration(
+                    hintText: "CEP",
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    counterText: "", // Esconde o contador 0/8
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (value) {
+                    if (value.length == 8) {
+                      _buscarLocalizacao(value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        _locationInfo,
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+                  
           /// SOBRE
           const Text(
-            "Sobre o livro",
+            "Sobre os livros",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
@@ -383,10 +512,7 @@ class _BookCreationPageState extends State<BookCreationPage> {
                   children: [
                     Expanded(
                       // TODO: [ViewModel] Crie TextEditingController para o year
-                      child: _inputAnoSelecionavel(
-                        vm.yearController,
-                        "Ano",
-                      ),
+                      child: _inputAnoSelecionavel(vm.yearController, "Ano"),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -468,7 +594,9 @@ class _BookCreationPageState extends State<BookCreationPage> {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              onPressed: isSaving ? null : _saveBook, //o isSaving desabilita o botão e mostra o loading enquanto salva
+              onPressed: isSaving
+                  ? null
+                  : _saveBook, //o isSaving desabilita o botão e mostra o loading enquanto salva
               child: isSaving
                   ? const SizedBox(
                       width: 20,
@@ -499,21 +627,16 @@ class _BookCreationPageState extends State<BookCreationPage> {
         label: Text(value),
         selected: vm.status == value,
         selectedColor: vm.status == value ? color : null,
-        labelStyle: TextStyle(
-          color: vm.status == value ? Colors.white : color,
-        ),
+        labelStyle: TextStyle(color: vm.status == value ? Colors.white : color),
         onSelected: (_) {
           setState(() {
             vm.setStatus(value);
           });
         },
-                shape: StadiumBorder(
-          side: BorderSide(color: color),
-        ),
+        shape: StadiumBorder(side: BorderSide(color: color)),
       ),
     );
   }
-
 
   /// Builds a [RadioListTile] for selecting the physical condition of the book.
   ///
@@ -566,29 +689,33 @@ class _BookCreationPageState extends State<BookCreationPage> {
   /// [controller] manages the text representing the selected year.
   /// [hint] is the placeholder text displayed when the field is empty.
   Widget _inputAnoSelecionavel(TextEditingController controller, String hint) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: TextField(
-          controller: controller,
-          readOnly: true, // OBRIGATÓRIO: Impede que o teclado suba!
-          onTap: () {
-            // Quando o usuário tocar no campo, abre a nossa roleta
-            _mostrarRoletaDeAno(controller);
-          },
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: const Color(0xFFF5F5F5),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            // Um ícone de calendário ou seta indica pro usuário que é um menu
-            suffixIcon: const Icon(Icons.calendar_today, color: Colors.grey, size: 20), 
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextField(
+        controller: controller,
+        readOnly: true, // OBRIGATÓRIO: Impede que o teclado suba!
+        onTap: () {
+          // Quando o usuário tocar no campo, abre a nossa roleta
+          _mostrarRoletaDeAno(controller);
+        },
+        decoration: InputDecoration(
+          hintText: hint,
+          filled: true,
+          fillColor: const Color(0xFFF5F5F5),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          // Um ícone de calendário ou seta indica pro usuário que é um menu
+          suffixIcon: const Icon(
+            Icons.calendar_today,
+            color: Colors.grey,
+            size: 20,
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 
   /// Builds a multi-line [TextField] suitable for longer text like synopses or descriptions.
   ///
@@ -655,7 +782,7 @@ class _BookCreationPageState extends State<BookCreationPage> {
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
         ],
       ),
-      child: child,
+      child: Material(color: Colors.transparent, child: child),
     );
   }
 
