@@ -7,11 +7,7 @@ class BookEditionPage extends StatefulWidget {
   final String id;
   final BookEditionViewModel? viewModel;
 
-  const BookEditionPage({
-    super.key,
-    required this.id,
-    this.viewModel,
-  });
+  const BookEditionPage({super.key, required this.id, this.viewModel});
 
   @override
   State<BookEditionPage> createState() => _BookEditionPageState();
@@ -34,7 +30,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
     _loadBook();
   }
 
-// change the color of book status
+  // change the color of book status
   Color _statusColor(String value) {
     switch (value) {
       case "Disponível":
@@ -92,7 +88,10 @@ class _BookEditionPageState extends State<BookEditionPage> {
   void _mostrarRoletaDeAno(TextEditingController controller) {
     // Gera uma lista de anos: do ano atual descendo até 1900
     final int anoAtual = DateTime.now().year;
-    final List<int> anos = List.generate(anoAtual - 1900 + 1, (index) => anoAtual - index);
+    final List<int> anos = List.generate(
+      anoAtual - 1900 + 1,
+      (index) => anoAtual - index,
+    );
 
     // Tenta pegar o ano que já está no controller, ou usa o ano atual como padrão
     int anoSelecionado = int.tryParse(controller.text) ?? anoAtual;
@@ -113,15 +112,20 @@ class _BookEditionPageState extends State<BookEditionPage> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Concluído', style: TextStyle(color: Color(0xFF416956))),
-                  )
+                    child: const Text(
+                      'Concluído',
+                      style: TextStyle(color: Color(0xFF416956)),
+                    ),
+                  ),
                 ],
               ),
               // A Roleta em si
               Expanded(
                 child: CupertinoPicker(
                   itemExtent: 40.0, // Altura de cada item na roleta
-                  scrollController: FixedExtentScrollController(initialItem: indexInicial),
+                  scrollController: FixedExtentScrollController(
+                    initialItem: indexInicial,
+                  ),
                   onSelectedItemChanged: (int index) {
                     setState(() {
                       // Atualiza o TextField automaticamente enquanto gira a roleta
@@ -145,11 +149,10 @@ class _BookEditionPageState extends State<BookEditionPage> {
     );
   }
 
-
   /// sends updated book information to backend
   /// shows feedback message to the user
   Future<void> _saveBook() async {
-        // Validações básicas (exemplo: título e autor não podem ser vazios)
+    // Validações básicas (exemplo: título e autor não podem ser vazios)
     if (vm.titleController.text.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -162,22 +165,22 @@ class _BookEditionPageState extends State<BookEditionPage> {
       ).showSnackBar(const SnackBar(content: Text('O autor é obrigatório.')));
       return;
     }
-    if(vm.publisherController.text.isEmpty) {
+    if (vm.publisherController.text.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('A editora é obrigatória.')));
       return;
     }
-    if(vm.yearController.text.isEmpty) {
+    if (vm.yearController.text.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('O ano é obrigatório.')));
       return;
     }
-    if(vm.pagesController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('O número de páginas é obrigatório.')));
+    if (vm.pagesController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('O número de páginas é obrigatório.')),
+      );
       return;
     }
     
@@ -203,26 +206,22 @@ class _BookEditionPageState extends State<BookEditionPage> {
       isSaving = true;
     });
 
-      final success = await vm.submit(widget.id);
+    final success = await vm.submit(widget.id);
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      setState(() {
-        isSaving = false;
-      });
+    setState(() {
+      isSaving = false;
+    });
 
-      if (success) {
-        Navigator.pop(context, true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Não foi possível atualizar o livro.'),
-          ),
-        );
-      }
+    if (success) {
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível atualizar o livro.')),
+      );
+    }
   }
-
-  
 
   /// disposes viewmodel to avoid memory leak
   @override
@@ -250,9 +249,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
   /// loading spinner, error state or form
   Widget _buildBody() {
     if (isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (hasError) {
@@ -288,7 +285,6 @@ class _BookEditionPageState extends State<BookEditionPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           /// book cover preview and edit button
           Center(
             child: Column(
@@ -405,7 +401,6 @@ class _BookEditionPageState extends State<BookEditionPage> {
           _card(
             Column(
               children: [
-
                 /// basic metadata inputs
                 _input(vm.titleController, "Título"),
                 _input(vm.authorController, "Autor"),
@@ -413,7 +408,6 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
                 Row(
                   children: [
-
                     /// dropdown for genre selection
                     Expanded(
                       child: _dropdown(
@@ -467,7 +461,6 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
                 Row(
                   children: [
-
                     /// publication year input
                     Expanded(
                       child: _inputAnoSelecionavel(vm.yearController, "Ano"),
@@ -477,7 +470,11 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
                     /// number of pages input
                     Expanded(
-                      child: _input(vm.pagesController, "Páginas", keyboardType: TextInputType.number),
+                      child: _input(
+                        vm.pagesController,
+                        "Páginas",
+                        keyboardType: TextInputType.number,
+                      ),
                     ),
                   ],
                 ),
@@ -504,7 +501,6 @@ class _BookEditionPageState extends State<BookEditionPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 /// selectable radio options
                 _condition("Novo"),
                 _condition("Muito bom"),
@@ -547,9 +543,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
           const SizedBox(height: 10),
 
-          _card(
-            _multiline(vm.descriptionController, "Descrição"),
-          ),
+          _card(_multiline(vm.descriptionController, "Descrição")),
 
           const SizedBox(height: 30),
 
@@ -563,7 +557,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
 
-              onPressed: isSaving ? null : _saveBook, 
+              onPressed: isSaving ? null : _saveBook,
 
               child: isSaving
                   ? const SizedBox(
@@ -577,20 +571,17 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
           const SizedBox(height: 12),
 
-          // cancel button 
+          // cancel button
           SizedBox(
             width: double.infinity,
             child: TextButton(
-              onPressed: () { 
+              onPressed: () {
                 Navigator.pop(context, false);
               },
 
               child: const Text(
                 "Cancelar",
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
               ),
             ),
           ),
@@ -601,8 +592,8 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
   /// chip used to select announcement status
   Widget _statusChip(String value) {
-  final color = _statusColor(value);
-  final isSelected = vm.status == value;
+    final color = _statusColor(value);
+    final isSelected = vm.status == value;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -612,8 +603,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
         label: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (isSelected)
-              const SizedBox(width: 4),
+            if (isSelected) const SizedBox(width: 4),
 
             Text(
               value,
@@ -631,9 +621,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
         backgroundColor: Colors.transparent,
 
-        shape: StadiumBorder(
-          side: BorderSide(color: color),
-        ),
+        shape: StadiumBorder(side: BorderSide(color: color)),
 
         onSelected: (_) {
           setState(() {
@@ -643,7 +631,6 @@ class _BookEditionPageState extends State<BookEditionPage> {
       ),
     );
   }
-
 
   /// radio option for book condition
   Widget _condition(String value) {
@@ -688,30 +675,33 @@ class _BookEditionPageState extends State<BookEditionPage> {
   }
 
   Widget _inputAnoSelecionavel(TextEditingController controller, String hint) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: TextField(
-          controller: controller,
-          readOnly: true, // OBRIGATÓRIO: Impede que o teclado suba!
-          onTap: () {
-            // Quando o usuário tocar no campo, abre a nossa roleta
-            _mostrarRoletaDeAno(controller);
-          },
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: const Color(0xFFF5F5F5),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            // Um ícone de calendário ou seta indica pro usuário que é um menu
-            suffixIcon: const Icon(Icons.calendar_today, color: Colors.grey, size: 20), 
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextField(
+        controller: controller,
+        readOnly: true, // OBRIGATÓRIO: Impede que o teclado suba!
+        onTap: () {
+          // Quando o usuário tocar no campo, abre a nossa roleta
+          _mostrarRoletaDeAno(controller);
+        },
+        decoration: InputDecoration(
+          hintText: hint,
+          filled: true,
+          fillColor: const Color(0xFFF5F5F5),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          // Um ícone de calendário ou seta indica pro usuário que é um menu
+          suffixIcon: const Icon(
+            Icons.calendar_today,
+            color: Colors.grey,
+            size: 20,
           ),
         ),
-      );
-    }
-
+      ),
+    );
+  }
 
   /// multiline text field for longer content
   Widget _multiline(TextEditingController controller, String hint) {
@@ -739,7 +729,6 @@ class _BookEditionPageState extends State<BookEditionPage> {
     required List<String> items,
     required Function(String?) onChanged,
   }) {
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
 
@@ -750,7 +739,6 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-
           /// ensures value is always valid
           value: items.contains(value) ? value : items.first,
 
@@ -758,12 +746,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
           isExpanded: true,
 
           items: items
-              .map(
-                (e) => DropdownMenuItem<String>(
-                  value: e,
-                  child: Text(e),
-                ),
-              )
+              .map((e) => DropdownMenuItem<String>(value: e, child: Text(e)))
               .toList(),
 
           onChanged: onChanged,
@@ -782,17 +765,11 @@ class _BookEditionPageState extends State<BookEditionPage> {
         borderRadius: BorderRadius.circular(16),
 
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
         ],
       ),
 
-      child: Material(
-        color: Colors.transparent,
-        child: child
-      ),
+      child: Material(color: Colors.transparent, child: child),
     );
   }
 
@@ -804,23 +781,16 @@ class _BookEditionPageState extends State<BookEditionPage> {
       child: Text.rich(
         TextSpan(
           children: [
-
             TextSpan(
               text: "$title: ",
 
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
             ),
 
             TextSpan(
               text: description,
 
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w300,
-              ),
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w300),
             ),
           ],
         ),
