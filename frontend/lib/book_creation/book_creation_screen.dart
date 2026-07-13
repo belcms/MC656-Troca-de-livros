@@ -17,6 +17,10 @@ class BookCreationPage extends StatefulWidget {
 }
 
 class _BookCreationPageState extends State<BookCreationPage> {
+
+
+
+
   final vm = BookCreationViewModel();
   String _locationInfo = "Digite seu CEP...";
   bool isSaving = false;
@@ -402,68 +406,6 @@ class _BookCreationPageState extends State<BookCreationPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // /// CAPA
-          // Center(
-          //   child: Column(
-          //     children: [
-          //       Container(
-          //         width: 120,
-          //         height: 170,
-          //         decoration: BoxDecoration(
-          //           color: const Color(0xFFF5F5F5),
-          //           borderRadius: BorderRadius.circular(12),
-          //           border: Border.all(color: Colors.black12),
-          //         ),
-          //         clipBehavior: Clip.antiAlias,
-          //         child: _imagemCapaUrl != null && _imagemCapaUrl!.isNotEmpty
-          //             ? Image.network(
-          //                 _imagemCapaUrl!,
-          //                 fit: BoxFit.cover,
-          //                 errorBuilder: (context, error, stackTrace) {
-          //                   return const Center(
-          //                     child: Column(
-          //                       mainAxisAlignment: MainAxisAlignment.center,
-          //                       children: [
-          //                         Icon(Icons.broken_image, color: Colors.red),
-          //                         Text(
-          //                           "Link inválido",
-          //                           style: TextStyle(fontSize: 10),
-          //                         ),
-          //                       ],
-          //                     ),
-          //                   );
-          //                 },
-          //               )
-          //             : const Column(
-          //                 mainAxisAlignment: MainAxisAlignment.center,
-          //                 children: [
-          //                   Icon(Icons.link, size: 42, color: Colors.grey),
-          //                   SizedBox(height: 8),
-          //                   Text(
-          //                     "Colar Link",
-          //                     style: TextStyle(
-          //                       fontSize: 10,
-          //                       color: Colors.grey,
-          //                     ),
-          //                   ),
-          //                 ],
-          //               ),
-          //       ),
-          //       const SizedBox(height: 12),
-          //       OutlinedButton(
-          //         onPressed: _pedirUrlDaImagem, // Chama o pop-up aqui!
-          //         child: Text(
-          //           _imagemCapaUrl == null
-          //               ? 'Adicionar foto da capa'
-          //               : 'Trocar link',
-          //         ),
-          //       ),
-          //       const SizedBox(height: 12),
-          //     ],
-          //   ),
-          // ),
-
-          // const SizedBox(height: 20),
           _buildPhotoGallery(),
 
           /// STATUS
@@ -671,29 +613,77 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
           const SizedBox(height: 30),
 
+          // /// BOTÃO SALVAR
+          // SizedBox(
+          //   width: double.infinity,
+          //   child: ElevatedButton(
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: const Color(0xFF416956),
+          //       foregroundColor: Colors.white,
+          //       padding: const EdgeInsets.symmetric(vertical: 16),
+          //     ),
+          //     onPressed: isSaving
+          //         ? null
+          //         : _saveBook, //o isSaving desabilita o botão e mostra o loading enquanto salva
+          //     child: isSaving
+          //         ? const SizedBox(
+          //             width: 20,
+          //             height: 20,
+          //             child: CircularProgressIndicator(
+          //               strokeWidth: 2,
+          //               color: Colors.white,
+          //             ),
+          //           )
+          //         : const Text("Criar anúncio"),
+          //   ),
+          // ),
+
           /// BOTÃO SALVAR
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF416956),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              onPressed: isSaving
-                  ? null
-                  : _saveBook, //o isSaving desabilita o botão e mostra o loading enquanto salva
-              child: isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text("Criar anúncio"),
-            ),
+          ListenableBuilder(
+            // Escuta as mudanças de todos os campos obrigatórios simultaneamente
+            listenable: Listenable.merge([
+              vm.titleController,
+              vm.authorController,
+              vm.publisherController,
+              vm.yearController,
+              vm.pagesController,
+            ]),
+            builder: (context, child) {
+              // 1. Define a regra: só é válido se todos os campos tiverem texto e tiver foto
+              final bool isFormValid = _selectedImages.isNotEmpty &&
+                  vm.titleController.text.trim().isNotEmpty &&
+                  vm.authorController.text.trim().isNotEmpty &&
+                  vm.publisherController.text.trim().isNotEmpty &&
+                  vm.yearController.text.trim().isNotEmpty &&
+                  vm.pagesController.text.trim().isNotEmpty;
+
+              // 2. O botão pode ser clicado se o form for válido E não estiver salvando
+              final bool canSubmit = isFormValid && !isSaving;
+
+              return SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF416956),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey[400], // Cor do botão desabilitado
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  // 3. Aplica a condição aqui:
+                  onPressed: canSubmit ? _saveBook : null, 
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text("Criar anúncio"),
+                ),
+              );
+            },
           ),
         ],
       ),
