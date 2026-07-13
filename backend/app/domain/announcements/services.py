@@ -91,6 +91,7 @@ def get_announcement_details(db: Session, id: str):
         "cep_id": getattr(announcements, "cep_id", None),
         "edition_id": announcements.edition_id,
         "real_photo_url": announcements.real_photo_url,
+        "photos": [p.photo_url for p in announcements.photos] if announcements.photos else [],
         "condition": announcements.condition.value,
         "description": announcements.description,
         "create_date": announcements.create_date.isoformat(),

@@ -55,6 +55,8 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   String? meuUsuarioLogadoId;
   bool isLoading = true;
 
+  int _currentImageIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -183,7 +185,11 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                         ),
 
                         /// Book cover / announcement image
-                        _buildCover(data.realPhotoUrl),
+                        _buildCarousel(
+                          data.photos,
+                          'https://axiomprint.com/icons/default-squre.jpg',
+                        ),
+                        // _buildCover(data.realPhotoUrl),
                         const SizedBox(height: 16),
 
                         /// Title, author, and condition badge
@@ -275,6 +281,102 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
     );
   }
 
+  /// Builds a swipeable photo carousel if multiple photos exist,
+  /// or a single image/fallback if there's only one or none.
+  Widget _buildCarousel(List<String>? photos, String? fallbackPhoto) {
+    const String defaultPlaceholder =
+        'https://axiomprint.com/icons/default-squre.jpg';
+
+    // 1. Monta uma lista segura de fotos válidas
+    List<String> validPhotos = [];
+    if (photos != null && photos.isNotEmpty) {
+      validPhotos = photos.where((url) => url.trim().isNotEmpty).toList();
+    }
+
+    // 2. Se a lista de fotos veio vazia, tenta usar a foto antiga de fallback
+    if (validPhotos.isEmpty &&
+        fallbackPhoto != null &&
+        fallbackPhoto.trim().isNotEmpty) {
+      validPhotos = [fallbackPhoto];
+    }
+
+    // 3. Se tudo falhar, usa a imagem cinza de placeholder
+    if (validPhotos.isEmpty) {
+      validPhotos = [defaultPlaceholder];
+    }
+
+    const double carouselHeight = 350.0;
+    // Se tiver só 1 foto, não precisamos do carrossel, apenas da imagem
+    if (validPhotos.length == 1) {
+      return Center(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.network(
+            validPhotos.first,
+            height: carouselHeight,
+            width: double.infinity,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) =>
+                Image.network(defaultPlaceholder, height: 260),
+          ),
+        ),
+      );
+    }
+
+    // Se tiver mais de 1 foto, constrói o Carrossel (PageView)
+    return Column(
+      children: [
+        SizedBox(
+          height: carouselHeight,
+          child: PageView.builder(
+            itemCount: validPhotos.length,
+            onPageChanged: (index) {
+              // Quando o usuário arrastar pro lado, atualizamos a bolinha acesa
+              setState(() {
+                _currentImageIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4.0,
+                ), // Espaçinho entre as fotos
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    validPhotos[index],
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    errorBuilder: (context, error, stackTrace) =>
+                        Image.network(defaultPlaceholder, fit: BoxFit.contain),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(validPhotos.length, (index) {
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: _currentImageIndex == index ? 12 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: _currentImageIndex == index
+                    ? const Color(0xFF416956) // Cor ativa (verde do seu app)
+                    : Colors.grey.shade300, // Cor inativa
+                borderRadius: BorderRadius.circular(4),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
   /// Builds the header section containing:
   /// - Book title
   /// - Author
@@ -325,14 +427,14 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _infoRow("Traded with", tradedWith),
+        _infoRow("Anunciado por", tradedWith),
         _infoRow("CEP", cep),
-        _infoRow("Description", description),
+        _infoRow("Descrição", description),
 
         const Divider(height: 24),
 
-        _infoRow("Publication year", year?.toString()),
-        _infoRow("Publisher", publisher),
+        _infoRow("Ano de publicação", year?.toString()),
+        _infoRow("Editora", publisher),
       ],
     );
   }
@@ -341,7 +443,7 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   Widget _buildDescription({String? synopsis}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [if (synopsis != null) _textBlock("Synopsis", synopsis)],
+      children: [if (synopsis != null) _textBlock("Sinopse", synopsis)],
     );
   }
 
@@ -399,14 +501,40 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
 
   /// Builds a visual badge to represent the item's condition/status.
   Widget _buildBadge(String status) {
+    Color bgColor;
+    String label;
+
+    switch (status.toLowerCase()) {
+      case 'new':
+        // case 'novo':
+        bgColor = const Color(0xFF24523C);
+        label = 'Novo';
+      case 'used':
+        // case 'muito bom':
+        bgColor = const Color(0xFF416956);
+        label = 'Muito bom';
+      case 'good':
+        // case 'bom':
+        bgColor = const Color(0xFFDB8F44);
+        label = 'Bom';
+      case 'worn':
+        // case 'desgastado':
+        bgColor = const Color(0xFF7B2518);
+        label = 'Desgastado';
+      default:
+        bgColor = Theme.of(context).colorScheme.primary;
+        label = status.isNotEmpty ? status : 'Novo';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.green[700],
+        // color: Colors.green[700],
+        color: bgColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        status,
+        label,
         style: const TextStyle(color: Colors.white, fontSize: 12),
       ),
     );

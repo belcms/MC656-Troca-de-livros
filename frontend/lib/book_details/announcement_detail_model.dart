@@ -17,6 +17,7 @@ class AnnouncementDetail {
   final BookInfo? book;
   final String? userName;
   final String? userCep;
+  final List<String> photos;
 
   AnnouncementDetail({
     required this.id,
@@ -29,7 +30,9 @@ class AnnouncementDetail {
     this.book,
     this.userName,
     this.userCep,
+    required this.photos,
   });
+
   /// Creates an `AnnouncementDetail` instance from a JSON map.
   ///
   /// This factory handles both:
@@ -62,6 +65,7 @@ class AnnouncementDetail {
           : null,
       userName: json['user_name'] as String?,
       userCep: json['user_cep'] as String?,
+      photos: json['photos'] != null ? List<String>.from(json['photos']) : [],
     );
   }
 }
@@ -74,11 +78,8 @@ class EditionDetail {
   final String? publisher;
   final int? publishYear;
 
-  EditionDetail({
-    required this.id,
-    this.publisher,
-    this.publishYear,
-  });
+  EditionDetail({required this.id, this.publisher, this.publishYear});
+
   /// Creates an `EditionDetail` instance from a JSON map.
   ///
   /// Args:
@@ -106,12 +107,7 @@ class BookInfo {
   final String? author;
   final String? synopsis;
 
-  BookInfo({
-    required this.id,
-    this.title,
-    this.author,
-    this.synopsis,
-  });
+  BookInfo({required this.id, this.title, this.author, this.synopsis});
 
   /// Creates a `BookInfo` instance from a JSON map.
   ///
@@ -122,7 +118,7 @@ class BookInfo {
   /// Returns:
   ///     BookInfo:
   ///         Parsed book information.
-  
+
   factory BookInfo.fromJson(Map<String, dynamic> json) {
     return BookInfo(
       id: json['id'] as String,
