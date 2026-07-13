@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'book_creation_viewmodel.dart';
 import '../services/user_service.dart';
 import 'package:flutter/cupertino.dart';
 import '../services/location_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:frontend/services/upload_service.dart';
 
 class BookCreationPage extends StatefulWidget {
   final String? userId; // A página será carrega com o ID do usuário logado
@@ -20,53 +23,89 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
   // Variável para guardar a URL que o usuário digitar
   String? _imagemCapaUrl;
-
+  final ImagePicker _picker = ImagePicker();
+  List<XFile> _selectedImages = [];
   // Controller temporário só para o pop-up de colar o link
   final _urlCapaController = TextEditingController();
 
-
   @override
-    void initState() {
-      super.initState();
-      _carregarUsuarioLogado();
+  void initState() {
+    super.initState();
+    _carregarUsuarioLogado();
+  }
+
+  // Função para abrir a galeria e escolher as fotos
+  Future<void> _pickImages() async {
+    if (_selectedImages.length >= 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Você já adicionou o limite máximo de 5 fotos.')),
+      );
+      return;
     }
 
-    // Pega o CEP do usuário atual e faz a busca inicial
-    Future<void> _carregarUsuarioLogado() async {
-      final users = await UserService.fetchUsers();
-      if (users != null && users.isNotEmpty) {
-        final user = users.first; 
-        final cepUser = user['cep_id'];
-        if (cepUser != null && cepUser.toString().isNotEmpty) {
-          vm.cepController.text = cepUser.toString();
-          await _buscarLocalizacao(cepUser.toString());
+    // Permite que o usuário selecione várias imagens de uma vez na galeria
+    final List<XFile> images = await _picker.pickMultiImage(
+      imageQuality: 80, // Comprime levemente para o upload ser mais rápido
+    );
+
+    if (images.isNotEmpty) {
+      setState(() {
+        // Adiciona as fotos escolhidas, garantindo que não passe de 5 no total
+        for (var img in images) {
+          if (_selectedImages.length < 5) {
+            _selectedImages.add(img);
+          }
         }
+      });
+    }
+  }
+
+  // Função para remover uma foto da lista se o usuário desistir dela
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
+  // Pega o CEP do usuário atual e faz a busca inicial
+  Future<void> _carregarUsuarioLogado() async {
+    final users = await UserService.fetchUsers();
+    if (users != null && users.isNotEmpty) {
+      final user = users.first;
+      final cepUser = user['cep_id'];
+      if (cepUser != null && cepUser.toString().isNotEmpty) {
+        vm.cepController.text = cepUser.toString();
+        await _buscarLocalizacao(cepUser.toString());
       }
     }
+  }
 
-    // Faz a requisição ao backend quando o usuário digita 8 números
-    Future<void> _buscarLocalizacao(String cep) async {
-      final cleanCep = cep.replaceAll(RegExp(r'[^0-9]'), '');
-      if (cleanCep.length != 8) return;
+  // Faz a requisição ao backend quando o usuário digita 8 números
+  Future<void> _buscarLocalizacao(String cep) async {
+    final cleanCep = cep.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanCep.length != 8) return;
 
-      setState(() {
-        _locationInfo = "Buscando localização...";
-      });
+    setState(() {
+      _locationInfo = "Buscando localização...";
+    });
 
-      final loc = await LocationService.fetchLocation(cleanCep);
-      if (!mounted) return;
+    final loc = await LocationService.fetchLocation(cleanCep);
+    if (!mounted) return;
 
-      setState(() {
-        if (loc != null) {
-          final district = loc['district'] ?? "";
-          _locationInfo = "${loc['city']} - ${loc['state']}" + (district.isNotEmpty ? ", $district" : "");
-        } else {
-          _locationInfo = "CEP não encontrado ou inválido.";
-        }
-      });
-    }
+    setState(() {
+      if (loc != null) {
+        final district = loc['district'] ?? "";
+        _locationInfo =
+            "${loc['city']} - ${loc['state']}" +
+            (district.isNotEmpty ? ", $district" : "");
+      } else {
+        _locationInfo = "CEP não encontrado ou inválido.";
+      }
+    });
 
+  
 
+  }
 
   /// Displays an alert dialog prompting the user to paste a URL for the book cover image.
   /// Updates the state with the provided URL upon confirmation.
@@ -319,68 +358,69 @@ class _BookCreationPageState extends State<BookCreationPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// CAPA
-          Center(
-            child: Column(
-              children: [
-                Container(
-                  width: 120,
-                  height: 170,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black12),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: _imagemCapaUrl != null && _imagemCapaUrl!.isNotEmpty
-                      ? Image.network(
-                          _imagemCapaUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.broken_image, color: Colors.red),
-                                  Text(
-                                    "Link inválido",
-                                    style: TextStyle(fontSize: 10),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        )
-                      : const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.link, size: 42, color: Colors.grey),
-                            SizedBox(height: 8),
-                            Text(
-                              "Colar Link",
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: _pedirUrlDaImagem, // Chama o pop-up aqui!
-                  child: Text(
-                    _imagemCapaUrl == null
-                        ? 'Adicionar foto da capa'
-                        : 'Trocar link',
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-            ),
-          ),
+          // /// CAPA
+          // Center(
+          //   child: Column(
+          //     children: [
+          //       Container(
+          //         width: 120,
+          //         height: 170,
+          //         decoration: BoxDecoration(
+          //           color: const Color(0xFFF5F5F5),
+          //           borderRadius: BorderRadius.circular(12),
+          //           border: Border.all(color: Colors.black12),
+          //         ),
+          //         clipBehavior: Clip.antiAlias,
+          //         child: _imagemCapaUrl != null && _imagemCapaUrl!.isNotEmpty
+          //             ? Image.network(
+          //                 _imagemCapaUrl!,
+          //                 fit: BoxFit.cover,
+          //                 errorBuilder: (context, error, stackTrace) {
+          //                   return const Center(
+          //                     child: Column(
+          //                       mainAxisAlignment: MainAxisAlignment.center,
+          //                       children: [
+          //                         Icon(Icons.broken_image, color: Colors.red),
+          //                         Text(
+          //                           "Link inválido",
+          //                           style: TextStyle(fontSize: 10),
+          //                         ),
+          //                       ],
+          //                     ),
+          //                   );
+          //                 },
+          //               )
+          //             : const Column(
+          //                 mainAxisAlignment: MainAxisAlignment.center,
+          //                 children: [
+          //                   Icon(Icons.link, size: 42, color: Colors.grey),
+          //                   SizedBox(height: 8),
+          //                   Text(
+          //                     "Colar Link",
+          //                     style: TextStyle(
+          //                       fontSize: 10,
+          //                       color: Colors.grey,
+          //                     ),
+          //                   ),
+          //                 ],
+          //               ),
+          //       ),
+          //       const SizedBox(height: 12),
+          //       OutlinedButton(
+          //         onPressed: _pedirUrlDaImagem, // Chama o pop-up aqui!
+          //         child: Text(
+          //           _imagemCapaUrl == null
+          //               ? 'Adicionar foto da capa'
+          //               : 'Trocar link',
+          //         ),
+          //       ),
+          //       const SizedBox(height: 12),
+          //     ],
+          //   ),
+          // ),
 
-          const SizedBox(height: 20),
+          // const SizedBox(height: 20),
+          _buildPhotoGallery(),
 
           /// STATUS
           Row(
@@ -393,7 +433,6 @@ class _BookCreationPageState extends State<BookCreationPage> {
           ),
 
           const SizedBox(height: 20),
-
 
           /// LOCALIZAÇÃO
           const Text(
@@ -433,7 +472,10 @@ class _BookCreationPageState extends State<BookCreationPage> {
                     Expanded(
                       child: Text(
                         _locationInfo,
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   ],
@@ -442,7 +484,7 @@ class _BookCreationPageState extends State<BookCreationPage> {
             ),
           ),
           const SizedBox(height: 20),
-                  
+
           /// SOBRE
           const Text(
             "Sobre os livros",
@@ -828,4 +870,80 @@ class _BookCreationPageState extends State<BookCreationPage> {
         return const Color(0xFF24523C);
     }
   }
+
+
+Widget _buildPhotoGallery() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Fotos do Livro (Mínimo 1, Máximo 5)',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 12.0, // Espaçamento horizontal entre as fotos
+          runSpacing: 12.0, // Espaçamento vertical se pular de linha
+          children: [
+            // Renderiza as fotos selecionadas
+            ...List.generate(_selectedImages.length, (index) {
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 100, // Força a dimensão quadrada
+                    height: 100, // Força a dimensão quadrada
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Image.file(
+                      File(_selectedImages[index].path),
+                      fit: BoxFit.cover, // Preenche todo o quadrado cortando as sobras
+                    ),
+                  ),
+                  // Botãozinho vermelho para excluir a foto
+                  Positioned(
+                    right: -10,
+                    top: -10,
+                    child: GestureDetector(
+                      onTap: () => _removeImage(index),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                        child: const Icon(Icons.remove_circle, color: Colors.red, size: 28),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }),
+
+            // Renderiza o botão de "Adicionar" apenas se tiver menos de 5 fotos
+            if (_selectedImages.length < 5)
+              GestureDetector(
+                onTap: _pickImages,
+                child: Container(
+                  width: 100, // O slot de adição mantém as exatas proporções quadradas
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade400),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.add_a_photo, color: Colors.grey, size: 32),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
 }
+
