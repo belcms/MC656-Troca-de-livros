@@ -49,7 +49,7 @@ class MyBooksCardResponse(BaseModel):
     publish_year: int
     real_photo_url: Optional[str]
     status: Status
-    location: str
+    location: str = "Localização não informada"
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -88,7 +88,7 @@ def get_announcement_details(db: Session, id: str):
         "id": announcements.id,
         "user_id": announcements.user_id,
         "user_name": user.username,
-        "cep_id": announcements.cep_id,
+        "cep_id": getattr(announcements, "cep_id", None),
         "edition_id": announcements.edition_id,
         "real_photo_url": announcements.real_photo_url,
         "condition": announcements.condition.value,
@@ -143,7 +143,16 @@ def get_feed_announcements(db: Session, limit: int = 20, offset: int = 0):
             title=ann.edition.book.title,
             real_photo_url=ann.real_photo_url,
             publishYear=ann.edition.publish_year,
-            cep=f'{ann.location.city} - {ann.location.state}' if ann.location else (ann.cep_id or ann.user.cep_id),
+            cep=(
+                f'{ann.location.city} - {ann.location.state}'
+                if getattr(ann, "location", None)
+                else (
+                    getattr(ann, "cep_id", None)
+                    or getattr(ann.user, "cep_id", None)
+                    or getattr(ann.user, "cep", None)
+                    or "Localização não informada"
+                )
+            ),
         )
         for ann in announcements
     ]

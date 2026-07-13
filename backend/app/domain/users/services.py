@@ -2,7 +2,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy import case
 from . import models
 from app.domain.locations.models import location as LocationModel
-import app.domain.locations.services as locations_services
 from app.domain.announcements.models import TradeAnnouncement, Status
 from app.domain.books.models import Edition, Book
 from app.domain.users.models import User
@@ -60,24 +59,9 @@ def get_user_announcements(db: Session, user_id: str):
     )
     
     cards = []
-    # Helper: ensure location exists in DB for a cep; if absent, fetch and persist synchronously
-    def _ensure_location_for_cep(cep_value: str):
-        if not cep_value:
-            return None
-        try:
-            return locations_services.get_or_create_location_by_cep(cep_value, db)
-        except Exception:
-            return None
     for row in results:
         city = getattr(row, 'city', None)
         state = getattr(row, 'state', None)
-
-        # If location fields are missing but cep_id exists, try to ensure location is persisted
-        if (not city or not state) and getattr(row, 'cep_id', None):
-            loc = _ensure_location_for_cep(getattr(row, 'cep_id'))
-            if loc:
-                city = loc.city
-                state = loc.state
 
         if city and state:
             location = f"{city} - {state}"

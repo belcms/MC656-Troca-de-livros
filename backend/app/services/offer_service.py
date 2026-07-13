@@ -17,6 +17,12 @@ from app.domain.offer.schemas import (
 )
 
 
+def _user_location_value(user) -> str:
+    if user is None:
+        return ""
+    return getattr(user, "cep", None) or getattr(user, "cep_id", None) or ""
+
+
 def list_received_offers(
     db: Session,
     owner_user_id: str,
@@ -346,7 +352,7 @@ def _offer_to_response(
         requester=TradeRequestUserResponse(
             id=requester.id,
             name=requester_name,
-            city=requester.cep or "",
+            city=_user_location_value(requester),
             state="",
             photoUrl=getattr(requester, "photo", None),
         ),
@@ -386,11 +392,7 @@ def _announcement_to_book(
         else 0
     )
 
-    owner_location = (
-        owner.cep
-        if owner is not None and owner.cep
-        else ""
-    )
+    owner_location = _user_location_value(owner)
 
     condition = (
         announcement.condition.value
