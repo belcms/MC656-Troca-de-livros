@@ -1,6 +1,5 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
-from app.domain.locations import models as location_models
 
 from app.core.database import Base, SessionLocal, engine
 from app.domain.announcements.models import (
@@ -14,6 +13,7 @@ from app.domain.books.models import (
     Genre,
     Language,
 )
+from app.domain.locations.models import Location
 from app.domain.offer.models import (
     Offer,
     OfferedAnnouncements,
@@ -64,7 +64,7 @@ def create_announcement(
         real_photo_url=None,
         condition=condition,
         description=description,
-        create_date=datetime.utcnow(),
+        create_date=datetime.now(UTC),
         status=Status.Available,
     )
 
@@ -77,6 +77,47 @@ def main() -> None:
 
     try:
         suffix = uuid4().hex[:8]
+
+        # ---------------------------------------------------------
+        # LOCALIZAÇÕES
+        # ---------------------------------------------------------
+
+        locations = [
+            Location(
+                cep="13083852",
+                city="Campinas",
+                state="SP",
+                country="Brasil",
+                district="Barão Geraldo",
+                lat=-22.8173,
+                long=-47.0691,
+            ),
+            Location(
+                cep="11010000",
+                city="Santos",
+                state="SP",
+                country="Brasil",
+                district="Centro",
+                lat=-23.9338,
+                long=-46.3280,
+            ),
+            Location(
+                cep="01001000",
+                city="São Paulo",
+                state="SP",
+                country="Brasil",
+                district="Sé",
+                lat=-23.5505,
+                long=-46.6333,
+            ),
+        ]
+
+        for location in locations:
+            if db.get(Location, location.cep) is None:
+                db.add(location)
+
+        # Os CEPs precisam existir antes de serem referenciados pelos usuários.
+        db.flush()
 
         # ---------------------------------------------------------
         # USUÁRIOS
