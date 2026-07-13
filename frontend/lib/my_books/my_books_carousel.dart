@@ -46,7 +46,9 @@ class MyBooksCarousel extends StatelessWidget {
             child: MyBookCard(
               title: book.title,
               publishYear: book.publishYear,
-              photo: book.realPhotoUrl ?? 'https://via.placeholder.com/300x400',
+              photo:
+                        book.coverPhoto ??
+                        'https://via.placeholder.com/300x400',
               status: book.status,
               location: book.location,
               onEdit: () async {
@@ -66,3 +68,4 @@ class MyBooksCarousel extends StatelessWidget {
     );
   }
 }
+

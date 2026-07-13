@@ -53,6 +53,7 @@ class MyBooksCardResponse(BaseModel):
     real_photo_url: Optional[str]
     status: Status
     location: str = "Localização não informada"
+    cover_photo: str = ""
 
     model_config = ConfigDict(from_attributes=True)
 

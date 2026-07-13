@@ -9,6 +9,7 @@ class MyBooksModel {
   final String? realPhotoUrl;
   final String status;
   final String location;
+  final String? coverPhoto;
 
   MyBooksModel({
     required this.id,
@@ -17,6 +18,7 @@ class MyBooksModel {
     this.realPhotoUrl,
     required this.status,
     required this.location,
+    this.coverPhoto,
   });
 
   /// Builds a model instance from backend JSON.
@@ -30,6 +32,7 @@ class MyBooksModel {
       realPhotoUrl: json['real_photo_url'] as String?,
       status: json['status'] as String,
       location: (json['location'] as String?) ?? "Localização não informada",
+      coverPhoto: json['cover_photo'] as String,
     );
   }
 }
