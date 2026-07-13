@@ -697,7 +697,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
         ],
       ),
 
-      child: child,
+      child: Material(type: MaterialType.transparency, child: child),
     );
   }
 

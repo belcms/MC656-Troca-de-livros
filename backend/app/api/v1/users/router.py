@@ -41,7 +41,6 @@ def get_me(current_user: User = Depends(get_current_user)):
         "id": current_user.id, "full_name": current_user.full_name,
         "nickname": current_user.username, "email": current_user.email,
         "birth_date": current_user.birth_date, "cep": current_user.cep,
-        "onboarding_complete": current_user.onboarding_complete,
     }
 
 @router.get("/me/announcements", response_model=List[MyBooksCardResponse])

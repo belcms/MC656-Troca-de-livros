@@ -74,7 +74,6 @@ class AuthGate extends StatelessWidget {
     if (auth.initializing) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    if (auth.onboarding != null) return const GoogleOnboardingScreen();
     return auth.authenticated ? const TelaPrincipal() : const LoginScreen();
   }
 }

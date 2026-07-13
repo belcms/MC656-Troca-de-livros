@@ -646,7 +646,7 @@ class _BookCreationPageState extends State<BookCreationPage> {
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
         ],
       ),
-      child: child,
+      child: Material(type: MaterialType.transparency, child: child),
     );
   }
 

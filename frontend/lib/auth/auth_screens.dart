@@ -18,10 +18,11 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await action();
     } on AuthException catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(e.message)));
+      }
     }
   }
 
@@ -73,14 +74,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                     child: const Text('Criar conta'),
                   ),
-                  const Divider(),
-                  OutlinedButton.icon(
-                    onPressed: auth.loading
-                        ? null
-                        : () => _submit(auth.googleLogin),
-                    icon: const Icon(Icons.login),
-                    label: const Text('Continuar com Google'),
-                  ),
                   if (auth.loading)
                     const Padding(
                       padding: EdgeInsets.all(16),
@@ -131,12 +124,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'birth_date': birth.text.trim(),
         'cep': cep.text.trim(),
       });
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context);
+      }
     } on AuthException catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(e.message)));
+      }
     }
   }
 
@@ -170,61 +166,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ],
       ),
-    ),
-  );
-}
-
-class GoogleOnboardingScreen extends StatefulWidget {
-  const GoogleOnboardingScreen({super.key});
-  @override
-  State<GoogleOnboardingScreen> createState() => _GoogleOnboardingScreenState();
-}
-
-class _GoogleOnboardingScreenState extends State<GoogleOnboardingScreen> {
-  final nick = TextEditingController(),
-      birth = TextEditingController(),
-      cep = TextEditingController();
-  Future<void> submit() async {
-    try {
-      await AuthScope.of(
-        context,
-      ).completeGoogle(nick.text.trim(), birth.text.trim(), cep.text.trim());
-    } on AuthException catch (e) {
-      if (mounted)
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.message)));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Complete seu cadastro')),
-    body: ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        const Text(
-          'Precisamos de mais alguns dados antes de liberar sua conta.',
-        ),
-        const SizedBox(height: 20),
-        TextField(controller: nick, decoration: _decoration('Nickname')),
-        const SizedBox(height: 12),
-        TextField(
-          controller: birth,
-          decoration: _decoration('Nascimento (AAAA-MM-DD)'),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: cep,
-          keyboardType: TextInputType.number,
-          decoration: _decoration('CEP'),
-        ),
-        const SizedBox(height: 20),
-        FilledButton(
-          onPressed: AuthScope.of(context).loading ? null : submit,
-          child: const Text('Concluir cadastro'),
-        ),
-      ],
     ),
   );
 }

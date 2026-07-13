@@ -16,16 +16,6 @@ def login(body: schemas.LoginRequest, db: Session = Depends(get_db)):
     return services.login(db, str(body.email), body.password)
 
 
-@router.post("/google", response_model=schemas.TokenResponse | schemas.GoogleOnboardingResponse)
-def google(body: schemas.GoogleRequest, db: Session = Depends(get_db)):
-    return services.google_login(db, body.id_token)
-
-
-@router.post("/google/complete", response_model=schemas.TokenResponse)
-def google_complete(body: schemas.GoogleCompleteRequest, db: Session = Depends(get_db)):
-    return services.complete_google(db, body.onboarding_token, body.nickname, body.birth_date, body.cep)
-
-
 @router.post("/refresh", response_model=schemas.TokenResponse)
 def refresh(body: schemas.RefreshRequest, db: Session = Depends(get_db)):
     return services.refresh(db, body.refresh_token)

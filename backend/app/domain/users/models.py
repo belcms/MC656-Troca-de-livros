@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, String
+from sqlalchemy import Column, Date, DateTime, ForeignKey, String
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 import uuid
@@ -16,8 +16,6 @@ class User(Base):
     cep = Column(String, index=True)
     password_hash = Column(String, nullable=True)
     birth_date = Column(Date, nullable=True)
-    google_subject = Column(String, unique=True, index=True, nullable=True)
-    onboarding_complete = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 

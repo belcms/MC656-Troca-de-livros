@@ -22,15 +22,12 @@ def upgrade():
         ("email_normalized", sa.Column("email_normalized", sa.String(), nullable=True)),
         ("password_hash", sa.Column("password_hash", sa.String(), nullable=True)),
         ("birth_date", sa.Column("birth_date", sa.Date(), nullable=True)),
-        ("google_subject", sa.Column("google_subject", sa.String(), nullable=True)),
-        ("onboarding_complete", sa.Column("onboarding_complete", sa.Boolean(), server_default=sa.true(), nullable=False)),
         ("created_at", sa.Column("created_at", sa.DateTime(), server_default=sa.func.now(), nullable=False)),
         ("updated_at", sa.Column("updated_at", sa.DateTime(), server_default=sa.func.now(), nullable=False)),
     ]: op.add_column("users", column)
     op.execute("UPDATE users SET email_normalized = LOWER(email), username_normalized = LOWER(username)")
     op.create_unique_constraint("uq_users_email_normalized", "users", ["email_normalized"])
     op.create_unique_constraint("uq_users_username_normalized", "users", ["username_normalized"])
-    op.create_unique_constraint("uq_users_google_subject", "users", ["google_subject"])
     op.create_table("auth_sessions",
         sa.Column("id", sa.String(36), primary_key=True),
         sa.Column("user_id", sa.String(36), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
@@ -41,7 +38,7 @@ def upgrade():
 
 def downgrade():
     op.drop_table("auth_sessions")
-    for constraint in ["uq_users_google_subject", "uq_users_username_normalized", "uq_users_email_normalized"]:
+    for constraint in ["uq_users_username_normalized", "uq_users_email_normalized"]:
         op.drop_constraint(constraint, "users", type_="unique")
-    for name in ["updated_at", "created_at", "onboarding_complete", "google_subject", "birth_date", "password_hash", "email_normalized", "username_normalized"]:
+    for name in ["updated_at", "created_at", "birth_date", "password_hash", "email_normalized", "username_normalized"]:
         op.drop_column("users", name)

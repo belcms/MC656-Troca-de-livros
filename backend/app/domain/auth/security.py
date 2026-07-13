@@ -57,6 +57,6 @@ def get_current_user(credentials: HTTPAuthorizationCredentials | None = Depends(
         raise HTTPException(status_code=401, detail="Autenticação necessária")
     payload = decode_token(credentials.credentials, "access")
     user = db.get(User, payload["sub"])
-    if not user or not user.onboarding_complete:
-        raise HTTPException(status_code=401, detail="Sessão inválida ou onboarding incompleto")
+    if not user:
+        raise HTTPException(status_code=401, detail="Sessão inválida ou expirada")
     return user

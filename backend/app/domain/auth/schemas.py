@@ -43,21 +43,6 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class GoogleRequest(BaseModel):
-    id_token: str = Field(min_length=1)
-
-
-class GoogleCompleteRequest(BaseModel):
-    onboarding_token: str
-    nickname: str = Field(min_length=1, max_length=50)
-    birth_date: date
-    cep: str
-
-    _nickname = field_validator("nickname")(RegisterRequest.non_blank.__func__)
-    _birth = field_validator("birth_date")(RegisterRequest.past_birth_date.__func__)
-    _cep = field_validator("cep")(RegisterRequest.valid_cep.__func__)
-
-
 class RefreshRequest(BaseModel):
     refresh_token: str
 
@@ -73,7 +58,6 @@ class UserResponse(BaseModel):
     email: EmailStr
     birth_date: date | None
     cep: str | None
-    onboarding_complete: bool
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -82,10 +66,3 @@ class TokenResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     user: UserResponse
-
-
-class GoogleOnboardingResponse(BaseModel):
-    requires_onboarding: bool = True
-    onboarding_token: str
-    full_name: str
-    email: EmailStr
