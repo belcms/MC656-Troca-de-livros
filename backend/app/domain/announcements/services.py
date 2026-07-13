@@ -130,8 +130,7 @@ def get_feed_announcements(
         db.query(models.TradeAnnouncement)
         .join(
             Edition,
-            models.TradeAnnouncement.edition_id
-            == Edition.id,
+            models.TradeAnnouncement.edition_id == Edition.id,
         )
         .join(
             Book,
@@ -141,20 +140,19 @@ def get_feed_announcements(
             joinedload(
                 models.TradeAnnouncement.edition
             ).joinedload(Edition.book),
-            joinedload(
-                models.TradeAnnouncement.user
-            ),
+            joinedload(models.TradeAnnouncement.user),
+            joinedload(models.TradeAnnouncement.location),
         )
         .filter(
-            models.TradeAnnouncement.status
-            == Status.Available
+            models.TradeAnnouncement.status == Status.Available
         )
     )
-    # removes posts created by you from the feed
+
+    # Remove anúncios criados pelo próprio usuário.
     if current_user_id is not None:
         query = query.filter(
-        models.TradeAnnouncement.user_id != current_user_id
-    )
+            models.TradeAnnouncement.user_id != current_user_id
+        )
 
     if conditions:
         mapped_conditions = [
@@ -173,16 +171,6 @@ def get_feed_announcements(
             map_genre(genre)
             for genre in genres
         ]
-    # Returns:
-    #     list[FeedAnnouncementResponse]: A list of mapped announcement objects 
-    #     containing the necessary data for the feed UI.
-    # """
-    
-    # announcements = db.query(models.TradeAnnouncement).options(
-    #     joinedload(models.TradeAnnouncement.edition).joinedload(Edition.book),
-    #     joinedload(models.TradeAnnouncement.user),
-    #     joinedload(models.TradeAnnouncement.location)
-    # ).filter(models.TradeAnnouncement.status == Status.Available).order_by(models.TradeAnnouncement.create_date.desc()).limit(limit).offset(offset).all()
 
         query = query.filter(
             Book.genre.in_(mapped_genres)
@@ -198,8 +186,8 @@ def get_feed_announcements(
             Edition.publish_year <= end_year
         )
 
-    # A paginação será feita somente depois
-    # do filtro por distância.
+    # Busca todos antes da paginação porque o filtro por distância
+    # é realizado em Python.
     announcements = (
         query
         .order_by(
@@ -230,7 +218,7 @@ def get_feed_announcements(
                 detail="Current user not found",
             )
 
-        if current_user.cep is None:
+        if current_user.cep_id is None:
             raise HTTPException(
                 status_code=400,
                 detail=(
@@ -240,7 +228,7 @@ def get_feed_announcements(
             )
 
         current_user_cep = (
-            current_user.cep
+            current_user.cep_id
             .replace("-", "")
             .strip()
         )
@@ -263,90 +251,184 @@ def get_feed_announcements(
                 ),
             )
 
-        owner_ceps = {
-            announcement.user.cep
-            .replace("-", "")
-            .strip()
-            for announcement in announcements
-            if (
-                announcement.user is not None
-                and announcement.user.cep is not None
+        if (
+            current_location.lat is None
+            or current_location.long is None
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "The current user location does not "
+                    "have latitude and longitude"
+                ),
             )
-        }
 
-        stored_locations = (
-            db.query(location_models.Location)
-            .filter(
-                location_models.Location.cep.in_(
-                    owner_ceps
-                )
-            )
-            .all()
-        )
-
-        locations_by_cep = {
-            stored_location.cep: stored_location
-            for stored_location in stored_locations
-        }
-
-        filtered_announcements = []
+        # Reúne os CEPs dos anúncios.
+        # Se o anúncio não tiver CEP próprio, usa o CEP do dono.
+        announcement_ceps: set[str] = set()
 
         for announcement in announcements:
-            owner = announcement.user
-
-            if owner is None or owner.cep is None:
-                continue
-
-            owner_cep = (
-                owner.cep
-                .replace("-", "")
-                .strip()
+            announcement_cep = getattr(
+                announcement,
+                "cep_id",
+                None,
             )
 
-            owner_location = locations_by_cep.get(
-                owner_cep
-            )
-
-            if owner_location is None:
-                continue
-
-            distance_km = _calculate_distance(
-                current_location,
-                owner_location,
-            )
-
-            if distance_km <= max_distance_km:
-                filtered_announcements.append(
-                    announcement
+            if (
+                announcement_cep is None
+                and announcement.user is not None
+            ):
+                announcement_cep = getattr(
+                    announcement.user,
+                    "cep_id",
+                    None,
                 )
 
-        announcements = filtered_announcements
+            if announcement_cep is not None:
+                announcement_ceps.add(
+                    announcement_cep
+                    .replace("-", "")
+                    .strip()
+                )
 
-    # Paginação aplicada uma única vez,
-    # após todos os filtros.
+        if not announcement_ceps:
+            announcements = []
+        else:
+            stored_locations = (
+                db.query(location_models.Location)
+                .filter(
+                    location_models.Location.cep.in_(
+                        announcement_ceps
+                    )
+                )
+                .all()
+            )
+
+            locations_by_cep = {
+                stored_location.cep: stored_location
+                for stored_location in stored_locations
+            }
+
+            filtered_announcements = []
+
+            for announcement in announcements:
+                # Prioriza o CEP do anúncio.
+                announcement_cep = getattr(
+                    announcement,
+                    "cep_id",
+                    None,
+                )
+
+                # Se não existir, usa o CEP do usuário dono.
+                if (
+                    announcement_cep is None
+                    and announcement.user is not None
+                ):
+                    announcement_cep = getattr(
+                        announcement.user,
+                        "cep_id",
+                        None,
+                    )
+
+                if announcement_cep is None:
+                    continue
+
+                clean_cep = (
+                    announcement_cep
+                    .replace("-", "")
+                    .strip()
+                )
+
+                announcement_location = (
+                    locations_by_cep.get(clean_cep)
+                )
+
+                if announcement_location is None:
+                    continue
+
+                if (
+                    announcement_location.lat is None
+                    or announcement_location.long is None
+                ):
+                    continue
+
+                distance_km = _calculate_distance(
+                    current_location,
+                    announcement_location,
+                )
+
+                # print(
+                #     "DISTANCE FILTER:",
+                #     {
+                #         "announcement_id": announcement.id,
+                #         "current_user_cep": current_user_cep,
+                #         "announcement_cep": clean_cep,
+                #         "distance_km": distance_km,
+                #         "max_distance_km": max_distance_km,
+                #     },
+                # )
+
+                if distance_km <= max_distance_km:
+                    filtered_announcements.append(
+                        announcement
+                    )
+
+            announcements = filtered_announcements
+
+    # Paginação aplicada depois de todos os filtros.
     announcements = announcements[
         offset:offset + limit
     ]
 
-    return [
-        FeedAnnouncementResponse(
-            id=ann.id,
-            title=ann.edition.book.title,
-            real_photo_url=ann.real_photo_url,
-            publishYear=ann.edition.publish_year,
-            cep=(
-                f"{ann.location.city} - {ann.location.state}"
-                if getattr(ann, "location", None)
-                else (
-                    getattr(ann, "cep_id", None)
-                    or getattr(ann.user, "cep_id", None)
-                    or getattr(ann.user, "cep", None)
-                    or "Localização não informada"
-                )
-            ),
+    responses = []
+
+    for announcement in announcements:
+        location = getattr(
+            announcement,
+            "location",
+            None,
         )
-        for ann in announcements
-    ]
+
+        # Se o anúncio não tiver relacionamento de localização,
+        # tenta encontrar pela localização do usuário.
+        if (
+            location is None
+            and announcement.user is not None
+        ):
+            location = getattr(
+                announcement.user,
+                "location",
+                None,
+            )
+
+        if location is not None:
+            display_location = (
+                f"{location.city} - {location.state}"
+            )
+        else:
+            display_location = (
+                getattr(announcement, "cep_id", None)
+                or getattr(
+                    announcement.user,
+                    "cep_id",
+                    None,
+                )
+                or "Localização não informada"
+            )
+
+        responses.append(
+            FeedAnnouncementResponse(
+                id=announcement.id,
+                title=announcement.edition.book.title,
+                real_photo_url=announcement.real_photo_url,
+                publishYear=(
+                    announcement.edition.publish_year
+                ),
+                cep=display_location,
+            )
+        )
+
+    return responses
     
 def map_genre(value: str):
     """

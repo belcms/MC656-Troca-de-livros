@@ -27,8 +27,9 @@ class FeedView extends StatefulWidget {
 class _FeedViewState extends State<FeedView> {
   List<dynamic> announcements = [];
   bool isLoading = true;
-  static const String currentUserId =
-    'ID_DO_USUARIO';
+  static const currentUserId = String.fromEnvironment(
+    'CURRENT_USER_ID',
+  );
 
   AnnouncementFilters activeFilters =
       const AnnouncementFilters();
