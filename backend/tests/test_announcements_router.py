@@ -63,7 +63,17 @@ def test_details_route_500_on_unhandled_exception(client_no_raise, monkeypatch):
 
 
 def test_feed_route_success_and_contract(client, monkeypatch):
-    def fake_feed_service(db, limit, offset):
+    def fake_feed_service(
+        db,
+        limit,
+        offset,
+        start_year=None,
+        end_year=None,
+        conditions=None,
+        genres=None,
+        max_distance_km=None,
+        current_user_id=None,
+    ):
         return [
             {
                 "id": "ann-1",
