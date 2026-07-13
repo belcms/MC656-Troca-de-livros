@@ -142,6 +142,7 @@ def get_feed_announcements(db: Session, limit: int = 20, offset: int = 0):
             id=ann.id,
             title=ann.edition.book.title,
             real_photo_url=ann.real_photo_url,
+            condition=ann.condition,
             publishYear=ann.edition.publish_year,
             cep=(
                 f'{ann.location.city} - {ann.location.state}'

@@ -1,7 +1,8 @@
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from app.domain.announcements.models import Condition, Status
+from app.domain.announcements.schemas import PhotoResponse
 
 class TradeAnnouncementBase(BaseModel):
     """
@@ -16,6 +17,7 @@ class TradeAnnouncementBase(BaseModel):
     condition: Condition
     description: Optional[str] = None
     status: Status = Status.Available
+    photos: List[PhotoResponse] = []
 
 class TradeAnnouncementResponse(TradeAnnouncementBase):
     """
@@ -73,7 +75,7 @@ class FeedAnnouncementResponse(BaseModel):
     publish_year: int = Field(alias='publishYear')
     cep: str
     real_photo_url: Optional[str] = None
-
+    condition: Condition
     model_config = ConfigDict(from_attributes=True)
 
 
