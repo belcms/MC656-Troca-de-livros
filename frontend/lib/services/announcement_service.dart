@@ -172,7 +172,56 @@ class AnnouncementService {
   //
   //  The [body] parameter contains the data for the announcement.
   //  The [userId] parameter is the unique identifier of the user creating the announcement.
-  static Future<bool> createAnnouncement({
+  // static Future<bool> createAnnouncement({
+  //   required Map<String, dynamic> body,
+  //   required String userId,
+  // }) async {
+  //   try {
+  //     // cria book
+  //     final bookUrl = Uri.parse('${ApiClient.baseUrl}/api/v1/books');
+  //     final bookResponse = await http.post(
+  //       bookUrl,
+  //       headers: {'Content-Type': 'application/json'},
+  //       body: jsonEncode(body),
+  //     );
+  //     if (bookResponse.statusCode != 201 && bookResponse.statusCode != 200)
+  //       return false;
+
+  //     // cria edition
+  //     final editionUrl = Uri.parse(
+  //       '${ApiClient.baseUrl}/api/v1/editions/${jsonDecode(bookResponse.body)["bookId"]}',
+  //     );
+  //     final editionResponse = await http.post(
+  //       editionUrl,
+  //       headers: {'Content-Type': 'application/json'},
+  //       body: jsonEncode(body),
+  //     );
+  //     if (editionResponse.statusCode != 201 &&
+  //         editionResponse.statusCode != 200)
+  //       return false;
+
+  //     // cria announcement
+  //     final announcementUrl = Uri.parse(
+  //       '${ApiClient.baseUrl}/api/v1/announcements/$userId',
+  //     );
+
+  //     body["editionId"] = jsonDecode(editionResponse.body)["editionId"];
+  //     final announcementResponse = await http.post(
+  //       announcementUrl,
+  //       headers: {'Content-Type': 'application/json'},
+  //       body: jsonEncode(body),
+  //     );
+  //     if (announcementResponse.statusCode != 201 &&
+  //         announcementResponse.statusCode != 200)
+  //       return false;
+  //   } catch (e) {
+  //     print('CREATE ERROR: $e');
+  //     return false;
+  //   }
+  //   return true;
+  // }
+
+  static Future<String?> createAnnouncement({
     required Map<String, dynamic> body,
     required String userId,
   }) async {
@@ -184,8 +233,9 @@ class AnnouncementService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
-      if (bookResponse.statusCode != 201 && bookResponse.statusCode != 200)
-        return false;
+      if (bookResponse.statusCode != 201 && bookResponse.statusCode != 200) {
+        return null; // Retorna null em vez de false
+      }
 
       // cria edition
       final editionUrl = Uri.parse(
@@ -197,8 +247,9 @@ class AnnouncementService {
         body: jsonEncode(body),
       );
       if (editionResponse.statusCode != 201 &&
-          editionResponse.statusCode != 200)
-        return false;
+          editionResponse.statusCode != 200) {
+        return null; // Retorna null em vez de false
+      }
 
       // cria announcement
       final announcementUrl = Uri.parse(
@@ -211,14 +262,30 @@ class AnnouncementService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
+
       if (announcementResponse.statusCode != 201 &&
-          announcementResponse.statusCode != 200)
-        return false;
+          announcementResponse.statusCode != 200) {
+        return null; // Retorna null em vez de false
+      }
+
+      // SUCESSO! Pega a resposta do backend e extrai o ID gerado.
+      final responseBody = jsonDecode(announcementResponse.body);
+      print("RESPOSTA DO BACKEND: $responseBody");
+
+      final String? extractedId = responseBody["data"]?["id"]?.toString();
+
+      if (extractedId == null) {
+        print("ALERTA: O anúncio foi criado, mas não achei o ID no JSON!");
+      }
+
+      // NOTA: Se o seu backend FastAPI retorna o ID com um nome diferente de "id"
+      // (como "announcement_id" ou "announcementId"), ajuste a chave abaixo:
+      // return responseBody["id"]?.toString();
+      return extractedId;
     } catch (e) {
       print('CREATE ERROR: $e');
-      return false;
+      return null;
     }
-    return true;
   }
 
   // Sets dummy data in the backend.

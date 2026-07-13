@@ -216,6 +216,15 @@ class _BookCreationPageState extends State<BookCreationPage> {
   /// Displays snackbars for validation errors or the final success/failure result.
   /// If successful, it clears the form and resets the UI state.
   Future<void> _saveBook() async {
+
+    if (_selectedImages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('É obrigatório adicionar pelo menos uma foto do livro.')),
+      );
+      return;
+    }
+
+
     // Validações básicas (exemplo: título e autor não podem ser vazios)
     if (vm.titleController.text.isEmpty) {
       ScaffoldMessenger.of(
@@ -287,11 +296,32 @@ class _BookCreationPageState extends State<BookCreationPage> {
         return;
       }
     }
-    // Sugestão: Passe o _imagemCapa como parâmetro para que o ViewModel faça o upload.
-    final success = await vm.submit(
+
+   final String? announcementId = await vm.submit(
       _imagemCapaUrl,
       currentUserId!,
-    ); // Passa o userId para o ViewModel
+    );
+
+    // // Sugestão: Passe o _imagemCapa como parâmetro para que o ViewModel faça o upload.
+    // final success = await vm.submit(
+    //   _imagemCapaUrl,
+    //   currentUserId!,
+    // ); // Passa o userId para o ViewModel
+
+    bool uploadSuccess = true;
+
+    // 3. UPLOAD DAS FOTOS (Se o anúncio foi criado com sucesso)
+    if (announcementId != null && announcementId.isNotEmpty) {
+      final uploadService = UploadService(); // Instancia o serviço se não estiver no topo da classe
+      
+      for (var image in _selectedImages) {
+        bool result = await uploadService.uploadBookPhoto(announcementId, image);
+        if (!result) {
+          uploadSuccess = false;
+          // Aqui você poderia colocar uma lógica de retry ou avisar qual foto falhou
+        }
+      }
+    }
 
     if (!mounted) return;
 
@@ -299,17 +329,31 @@ class _BookCreationPageState extends State<BookCreationPage> {
       isSaving = false;
     });
 
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   SnackBar(
+    //     content: Text(
+    //       success
+    //           ? 'Anúncio criado com sucesso.'
+    //           : 'Não foi possível criar o anúncio.',
+    //     ),
+    //   ),
+    // );
+
+    final bool isCompletelySuccessful = (announcementId != null) && uploadSuccess;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          success
-              ? 'Anúncio criado com sucesso.'
-              : 'Não foi possível criar o anúncio.',
+          isCompletelySuccessful
+              ? 'Anúncio e fotos salvos com sucesso!'
+              : (announcementId != null 
+                  ? 'Anúncio criado, mas houve falha ao enviar algumas fotos.' 
+                  : 'Não foi possível criar o anúncio.'),
         ),
       ),
     );
 
-    if (success) {
+    if (isCompletelySuccessful) {
       // Volta para a tela anterior se salvou com sucesso
       DefaultTabController.of(
         context,
