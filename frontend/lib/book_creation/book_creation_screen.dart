@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import '../services/location_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:frontend/services/upload_service.dart';
+import 'package:frontend/components/photo_carousel_picker.dart';
 
 class BookCreationPage extends StatefulWidget {
   final String? userId; // A página será carrega com o ID do usuário logado
@@ -392,8 +393,14 @@ class _BookCreationPageState extends State<BookCreationPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildPhotoGallery(),
+          // _buildPhotoGallery(),
+          PhotoCarouselPicker(
+            images: _selectedImages,
+            onAddImage: _pickImages,
+            onRemoveImage: _removeImage,
+          ),
           const SizedBox(height: 24),
+
           /// STATUS
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -978,35 +985,40 @@ class _BookCreationPageState extends State<BookCreationPage> {
   //     ],
   //   );
   // }
-Widget _buildPhotoGallery() {
+
+  Widget _buildPhotoGallery() {
     return SizedBox(
-      width: double.infinity, // 1. Força a ocupar a tela toda para o centro funcionar
+      width: double
+          .infinity, // 1. Força a ocupar a tela toda para o centro funcionar
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center, // 2. Centraliza o texto e o carrossel
+        crossAxisAlignment:
+            CrossAxisAlignment.center, // 2. Centraliza o texto e o carrossel
         children: [
           const Text(
             'Fotos do Livro',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
-          
+
           // Carrossel Horizontal
           SingleChildScrollView(
-            scrollDirection: Axis.horizontal, 
-            clipBehavior: Clip.none, 
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
             child: Padding(
-              padding: const EdgeInsets.only(top: 12, bottom: 8), 
+              padding: const EdgeInsets.only(top: 12, bottom: 8),
               child: Row(
                 children: [
                   // Renderiza as fotos selecionadas
                   ...List.generate(_selectedImages.length, (index) {
                     return Padding(
-                      padding: const EdgeInsets.only(right: 12.0), // Espaço entre as fotos
+                      padding: const EdgeInsets.only(
+                        right: 12.0,
+                      ), // Espaço entre as fotos
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
                           Container(
-                            width: 120, 
-                            height: 160, 
+                            width: 120,
+                            height: 160,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: Colors.grey.shade300),
@@ -1046,7 +1058,7 @@ Widget _buildPhotoGallery() {
                     GestureDetector(
                       onTap: _pickImages,
                       child: Container(
-                        width: 120, 
+                        width: 120,
                         height: 160,
                         decoration: BoxDecoration(
                           color: Colors.grey.shade100,
@@ -1071,7 +1083,7 @@ Widget _buildPhotoGallery() {
           Text(
             '${_selectedImages.length}/5',
             style: TextStyle(
-              fontSize: 12, 
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Colors.grey.shade600,
             ),
