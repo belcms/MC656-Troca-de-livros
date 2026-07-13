@@ -12,6 +12,7 @@ class Book {
   final String status;
   final String condition;
   final String? coverUrl;
+  final String? cep_id;
 
   Book({
     required this.id,
@@ -27,6 +28,7 @@ class Book {
     required this.status,
     required this.condition,
     this.coverUrl,
+    this.cep_id,
   });
 
   /// maps genre values received from backend to frontend labels
@@ -207,6 +209,7 @@ class Book {
       status: _mapStatusFromBack(json['status']),
       condition: _mapConditionFromBack(json['condition']),
       coverUrl: json['real_photo_url']?.toString(),
+      cep_id: json['cep_id']?.toString()
     );
   }
 
@@ -226,6 +229,7 @@ class Book {
       'status': _mapStatusToBack(status),
       'condition': _mapConditionToBack(condition),
       'real_photo_url': coverUrl,
+      'cep_id': cep_id
     };
   }
 }

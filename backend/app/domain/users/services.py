@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import case
 from typing import Optional
 from . import models
+from app.domain.locations.models import location as LocationModel
 from app.domain.announcements.models import TradeAnnouncement, Status
 from app.domain.books.models import Edition, Book
 from app.domain.users.models import User
@@ -42,13 +43,17 @@ def get_user_announcements(db: Session, user_id: str, status_filter: Optional[St
     query = (
         db.query(
             TradeAnnouncement.id,
+            TradeAnnouncement.cep_id,
             TradeAnnouncement.real_photo_url,
             TradeAnnouncement.status,
             Book.title,
             Edition.publish_year,
+            LocationModel.city, # Novo
+            LocationModel.state # Novo
         )
         .join(Edition, TradeAnnouncement.edition_id == Edition.id)
         .join(Book, Edition.book_id == Book.id)
+        .outerjoin(LocationModel, TradeAnnouncement.cep_id == LocationModel.cep)
         .filter(TradeAnnouncement.user_id == user_id)
     )
 
@@ -59,12 +64,25 @@ def get_user_announcements(db: Session, user_id: str, status_filter: Optional[St
     
     cards = []
     for row in results:
+        city = getattr(row, 'city', None)
+        state = getattr(row, 'state', None)
+
+        if city and state:
+            location = f"{city} - {state}"
+        elif city:
+            location = city
+        elif state:
+            location = state
+        else:
+            location = "Localização não informada"
+
         cards.append({
             "id": row.id,
             "title": row.title,
             "publish_year": row.publish_year,
             "real_photo_url": row.real_photo_url,
             "status": row.status,
+            "location": location
         })
         
     return cards

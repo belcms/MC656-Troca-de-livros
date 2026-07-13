@@ -17,7 +17,8 @@ def test_get_user_announcements_endpoint_returns_cards(users_client, db_session,
     assert [item["status"] for item in payload] == ["Available", "Reserved"]
     assert payload[0]["id"] == second["announcement"].id
     assert payload[1]["id"] == first["announcement"].id
-    assert set(payload[0].keys()) == {"id", "title", "publish_year", "real_photo_url", "status"}
+    assert set(payload[0].keys()) == {"id", "title", "publish_year", "real_photo_url", "status", "location"}
+    assert payload[0]["location"] != "Localização não informada"
 
 
 def test_get_user_announcements_endpoint_returns_empty_list_for_non_existent_user(users_client):
