@@ -48,6 +48,7 @@ class MyBooksCarousel extends StatelessWidget {
               publishYear: book.publishYear,
               photo: book.realPhotoUrl ?? 'https://via.placeholder.com/300x400',
               status: book.status,
+              location: book.location,
               onEdit: () async {
                 await Navigator.push(
                   context,

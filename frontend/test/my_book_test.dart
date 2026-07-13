@@ -25,6 +25,7 @@ void main() {
         'publish_year': 2008,
         'real_photo_url': 'https://example.com/cover.jpg',
         'status': 'available',
+        'location': 'Campinas - SP',
       });
 
       expect(model.id, 'book-1');
@@ -32,6 +33,7 @@ void main() {
       expect(model.publishYear, 2008);
       expect(model.realPhotoUrl, 'https://example.com/cover.jpg');
       expect(model.status, 'available');
+      expect(model.location, 'Campinas - SP');
     });
   });
 
@@ -48,6 +50,7 @@ void main() {
                 publishYear: 2003,
                 photo: 'https://example.com/cover.jpg',
                 status: 'available',
+                location: 'Campinas - SP',
               ),
             ),
           ),
@@ -57,6 +60,7 @@ void main() {
       expect(find.text('Domain-Driven Design'), findsOneWidget);
       expect(find.text('2003'), findsOneWidget);
       expect(find.text('Disponivel'), findsOneWidget);
+      expect(find.text('Campinas - SP'), findsOneWidget);
       expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
     });
 
@@ -74,6 +78,7 @@ void main() {
                 publishYear: 1999,
                 photo: 'https://example.com/cover.jpg',
                 status: 'reserved',
+                location: 'Sao Paulo - SP',
                 onEdit: () => tapped = true,
               ),
             ),
@@ -99,13 +104,14 @@ void main() {
     });
 
     testWidgets('renders books in horizontal list', (tester) async {
-      final books = [
+      final List<MyBooksModel> books = [
         MyBooksModel(
           id: '1',
           title: 'Book A',
           publishYear: 2021,
           realPhotoUrl: null,
           status: 'traded',
+          location: 'Campinas - SP',
         ),
         MyBooksModel(
           id: '2',
@@ -113,6 +119,7 @@ void main() {
           publishYear: 2022,
           realPhotoUrl: null,
           status: 'traded',
+          location: 'Sao Paulo - SP',
         ),
       ];
 
