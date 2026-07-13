@@ -77,6 +77,7 @@ class FeedAnnouncementResponse(BaseModel):
     real_photo_url: Optional[str] = None
     condition: Condition
     model_config = ConfigDict(from_attributes=True)
+    cover_photo: str = ""
 
 
 class SearchAnnouncementsResponse(BaseModel):

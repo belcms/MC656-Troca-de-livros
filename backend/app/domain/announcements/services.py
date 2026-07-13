@@ -133,30 +133,42 @@ def get_feed_announcements(db: Session, limit: int = 20, offset: int = 0):
     announcements = db.query(models.TradeAnnouncement).options(
         joinedload(models.TradeAnnouncement.edition).joinedload(Edition.book),
         joinedload(models.TradeAnnouncement.user),
-        joinedload(models.TradeAnnouncement.location)
+        joinedload(models.TradeAnnouncement.location),
+        joinedload(models.TradeAnnouncement.photos)
     ).filter(models.TradeAnnouncement.status == Status.Available).order_by(models.TradeAnnouncement.create_date.desc()).limit(limit).offset(offset).all()
 
 
-    return [
-        FeedAnnouncementResponse(
-            id=ann.id,
-            title=ann.edition.book.title,
-            real_photo_url=ann.real_photo_url,
-            condition=ann.condition,
-            publishYear=ann.edition.publish_year,
-            cep=(
-                f'{ann.location.city} - {ann.location.state}'
-                if getattr(ann, "location", None)
-                else (
-                    getattr(ann, "cep_id", None)
-                    or getattr(ann.user, "cep_id", None)
-                    or getattr(ann.user, "cep", None)
-                    or "Localização não informada"
-                )
-            ),
+    feed_responses = []
+    for ann in announcements:
+        # LÓGICA DA CAPA: Pega a URL da primeira foto, se houver.
+        # Se não houver, cai para a foto antiga, ou fica vazio.
+        first_photo_url = ""
+        if ann.photos and len(ann.photos) > 0:
+            first_photo_url = ann.photos[0].photo_url
+        elif ann.real_photo_url:
+            first_photo_url = ann.real_photo_url
+
+        feed_responses.append(
+            FeedAnnouncementResponse(
+                id=ann.id,
+                title=ann.edition.book.title,
+                condition=ann.condition,
+                publishYear=ann.edition.publish_year,
+                cep=(
+                    f'{ann.location.city} - {ann.location.state}'
+                    if getattr(ann, "location", None)
+                    else (
+                        getattr(ann, "cep_id", None)
+                        or getattr(ann.user, "cep_id", None)
+                        or getattr(ann.user, "cep", None)
+                        or "Localização não informada"
+                    )
+                ),
+                cover_photo=first_photo_url, # Passamos só a string aqui!
+                real_photo_url=ann.real_photo_url
+            )
         )
-        for ann in announcements
-    ]
+    return feed_responses
     
 
 

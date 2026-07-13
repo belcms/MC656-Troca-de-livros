@@ -106,12 +106,7 @@ class _FeedViewState extends State<FeedView> {
                           child: AnnouncementCard(
                             title: ann['title'],
                             publishYear: ann['publishYear'],
-                            photo:
-                                (ann['photos'] != null &&
-                                    (ann['photos'] as List).isNotEmpty)
-                                ? (ann['photos'][0]['photo_url'] ??
-                                      '') // Se a chave existir mas for nula, vira ''
-                                : '',
+                            photo: ann['cover_photo']?.toString() ?? '',
                             // photo: ann['real_photo_url'] ?? '',
                             location: ann['cep'],
                             condition: ann['condition'] ?? '',
