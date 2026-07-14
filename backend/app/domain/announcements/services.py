@@ -607,6 +607,7 @@ async def create_dummy_data(db: Session = Depends(get_db)):
         publish_year=1949,
         number_of_pages=328,
         language=books_models.Language.En,
+        cover_photo="https://m.media-amazon.com/images/I/91g5gcjTxsL._SY522_.jpg"
     )
     edition2 = books_models.Edition(
         book_id=book2.id,
@@ -614,6 +615,7 @@ async def create_dummy_data(db: Session = Depends(get_db)):
         publish_year=1965,
         number_of_pages=412,
         language=books_models.Language.En,
+        cover_photo="https://m.media-amazon.com/images/I/81zN7udGRUL._SL1500_.jpg"
     )
 
     db.add_all([edition1, edition2])
@@ -650,6 +652,12 @@ async def create_dummy_data(db: Session = Depends(get_db)):
     db.commit()
     db.refresh(announcement1)
     db.refresh(announcement2)
+
+    wishlist1 = users_models.Wishlist(user_id=user1.id, edition_id=edition2.id)
+    wishlist2 = users_models.Wishlist(user_id=user2.id, edition_id=edition1.id)
+    wishlist3 = users_models.Wishlist(user_id=user1.id, edition_id=edition1.id)
+    db.add_all([wishlist1, wishlist2, wishlist3])
+    db.commit()
 
     return {
         "message": "Dummy data created successfully!",
@@ -889,6 +897,38 @@ def get_book_details(id: str, db: Session = Depends(get_db)):
         "real_photo_url": announcement.real_photo_url,
     }
 
+def get_edition_details(id: str, db: Session = Depends(get_db)):
+    """
+    Retrieve detailed information about a specific edition and its book.
+
+    Args:
+        id (str): The unique identifier of the edition.
+        db (Session): The active SQLAlchemy database session.
+
+    Returns:
+        dict: A dictionary containing the edition and book details.
+
+    Raises:
+        HTTPException (404): If no edition is found.
+    """
+    edition = db.query(books_models.Edition).filter(books_models.Edition.id == id).first()
+    if not edition:
+        raise HTTPException(status_code=404, detail="Edition not found")
+        
+    book = edition.book
+    return {
+        "id": edition.id,
+        "book_id": book.id,
+        "title": book.title,
+        "author": book.author,
+        "publisher": edition.publisher,
+        "genre": book.genre.value if book.genre else None,
+        "language": edition.language.value if edition.language else None,
+        "publishYear": edition.publish_year,
+        "pages": edition.number_of_pages,
+        "synopsis": book.synopsis,
+        "cover_photo": edition.cover_photo
+    }
 
 def update_book(
     id: str,

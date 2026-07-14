@@ -3,11 +3,16 @@ import 'package:flutter/material.dart';
 import '../my_books/my_books_screen.dart';
 import '../my_books/my_books_model.dart';
 import '../services/my_books_service.dart';
+import '../services/user_service.dart';
+import '../services/wishlist_service.dart';
 import '../auth/auth_controller.dart';
-
+import '../auth/auth_repository.dart';
 import '../book_details/announcement_detail_screen.dart';
 import '../book_edition/book_edition_screen.dart';
 import '../my_books/my_book_card.dart';
+import '../components/edition_card.dart';
+import 'wishlist_screen.dart';
+import '../book_details/edition_details_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -18,11 +23,22 @@ class UserProfileScreen extends StatefulWidget {
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
   late Future<List<MyBooksModel>> _booksFuture;
+  late Future<List<WishlistItem>> _wishlistFuture;
 
   @override
   void initState() {
     super.initState();
     _booksFuture = _loadInitialBooks();
+    _wishlistFuture = _loadWishlist();
+  }
+
+  Future<List<WishlistItem>> _loadWishlist() async {
+    final userId = AuthRepository.instance.user?.id;
+    if (userId != null) {
+      final items = await WishlistService.getWishlist(userId);
+      return items ?? [];
+    }
+    return [];
   }
 
   Future<List<MyBooksModel>> _loadInitialBooks() async {
@@ -30,18 +46,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return await MyBooksService.fetchMyBooks() ?? [];
   }
 
-  Future<void> _openEditBook(String id) async {
-    final updated = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => BookEditionPage(id: id)),
-    );
 
-    if (updated == true) {
-      setState(() {
-        _booksFuture = _loadInitialBooks();
-      });
-    }
-  }
 
   Widget _buildTopHeader() {
     return Padding(
@@ -101,13 +106,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       child: GestureDetector(
-        onTap: () async{
+        onTap: () async {
           // Espera a tela de Meus Livros ser fechada
           await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const MyBooksScreen()),
           );
-          
+
           // Quando o usuário apertar na seta de voltar, recarregamos o carrossel do perfil
           setState(() {
             _booksFuture = _loadInitialBooks();
@@ -171,33 +176,111 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                   );
                 },
-                    child: MyBookCard(
-                      title: book.title,
-                      publishYear: book.publishYear,
-                      photo:
-                          book.coverPhoto ??
-                          'https://via.placeholder.com/300x400',
-                      status: book.status,
-                      location: book.location,
-                      onEdit: () async {
-                        // 1. Espera a tela de edição fechar e recebe a resposta (updated)
-                        final updated = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => BookEditionPage(
-                              id: book.id,
-                            ),
-                          ),
-                        );
-                        
-                        // 2. Se salvou com sucesso (true), recarrega o banco!
-                        if (updated == true) {
-                          setState(() {
-                            _booksFuture = _loadInitialBooks();
-                          });
-                        }
-                      },
+                child: MyBookCard(
+                  title: book.title,
+                  publishYear: book.publishYear,
+                  photo:
+                      book.coverPhoto ?? 'https://via.placeholder.com/300x400',
+                  status: book.status,
+                  location: book.location,
+                  onEdit: () async {
+                    // 1. Espera a tela de edição fechar e recebe a resposta (updated)
+                    final updated = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BookEditionPage(id: book.id),
+                      ),
+                    );
+
+                    // 2. Se salvou com sucesso (true), recarrega o banco!
+                    if (updated == true) {
+                      setState(() {
+                        _booksFuture = _loadInitialBooks();
+                      });
+                    }
+                  },
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildWishlistNavigation(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: GestureDetector(
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const WishlistScreen()),
+          );
+        },
+        child: Row(
+          children: [
+            Text(
+              'Desejos',
+              style: Theme.of(
+                context,
+              ).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const Icon(Icons.chevron_right, size: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWishlistCarousel() {
+    return FutureBuilder<List<WishlistItem>>(
+      future: _wishlistFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 290,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        } else if (snapshot.hasError) {
+          return SizedBox(
+            height: 290,
+            child: Center(child: Text('Erro: ${snapshot.error}')),
+          );
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox(
+            height: 290,
+            child: Center(child: Text('Nenhum livro encontrado na wishlist.')),
+          );
+        }
+
+        final items = snapshot.data!;
+        return SizedBox(
+          height: 290,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            scrollDirection: Axis.horizontal,
+            itemCount: items.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 14),
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return EditionCard(
+                title: item.title,
+                author: item.author,
+                coverPhoto: item.coverPhoto,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          EditionDetailsScreen(editionId: item.editionId),
                     ),
+                  ).then((_) {
+                    setState(() {
+                      _wishlistFuture = _loadWishlist();
+                    });
+                  });
+                },
               );
             },
           ),
@@ -232,6 +315,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 _buildMyBooksNavigation(context),
                 const SizedBox(height: 16),
                 _buildBooksCarousel(),
+                const SizedBox(height: 30),
+                _buildWishlistNavigation(context),
+                const SizedBox(height: 16),
+                _buildWishlistCarousel(),
               ],
             ),
           ),
