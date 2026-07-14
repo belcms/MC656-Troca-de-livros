@@ -23,10 +23,6 @@ class AnnouncementCard extends StatelessWidget {
   final double? distanceKm;
 
   /// Creates a new announcement card.
-  ///
-  /// The parameters [title], [publishYear], [photo], and [cep] are required.
-  /// The [distanceKm] parameter is optional because the backend may not be
-  /// able to calculate distance for all announcements.
   const AnnouncementCard({
     super.key,
     required this.title,
@@ -61,26 +57,20 @@ class AnnouncementCard extends StatelessWidget {
         elevation: 4.0,
         color: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(
-            10.0,
-          ),
+          borderRadius: BorderRadius.circular(10.0),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(
-            16.0,
-          ),
+          padding: const EdgeInsets.all(14.0),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(
-                    8.0,
-                  ),
+                  borderRadius: BorderRadius.circular(8.0),
                   child: Image.network(
                     photo,
-                    height: 190,
+                    height: 176,
                     width: 144,
                     fit: BoxFit.cover,
                     errorBuilder: (
@@ -88,50 +78,46 @@ class AnnouncementCard extends StatelessWidget {
                       error,
                       stackTrace,
                     ) {
-                      return const Icon(
-                        Icons.broken_image,
-                        size: 50,
+                      return Container(
+                        height: 176,
+                        width: 144,
+                        alignment: Alignment.center,
+                        color: Colors.grey.shade200,
+                        child: const Icon(
+                          Icons.broken_image,
+                          size: 50,
+                        ),
                       );
                     },
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(
                 title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
               ),
+              const SizedBox(height: 2),
               Text(
                 '$publishYear',
-                style: Theme.of(context)
-                    .textTheme
-                    .labelMedium
-                    ?.copyWith(
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.w400,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
               ),
               Text(
                 cep,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelMedium
-                    ?.copyWith(
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.w400,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
               ),
               if (distanceLabel.isNotEmpty)
@@ -139,10 +125,7 @@ class AnnouncementCard extends StatelessWidget {
                   distanceLabel,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelMedium
-                      ?.copyWith(
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF416956),
                       ),
