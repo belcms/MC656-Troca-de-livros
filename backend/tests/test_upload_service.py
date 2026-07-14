@@ -9,19 +9,20 @@ client = TestClient(app)
 # ==========================================
 
 def test_upload_image_to_supabase_success(mocker):
-    # Mocka o s3_client para não fazer upload de verdade
-    mock_s3 = mocker.patch("app.services.storage_service.s3_client") # Ajuste o caminho do import!
+    # 👇 ADICIONE ESTA LINHA: Finge que a variável de ambiente existe
+    mocker.patch("app.services.storage_service.ENDPOINT_URL", "https://projeto.supabase.co/s3")
+    mocker.patch("app.services.storage_service.BUCKET_NAME", "meu-bucket")
+    mock_s3 = mocker.patch("app.services.storage_service.s3_client")
     
-    # Cria um UploadFile falso
     from fastapi import UploadFile
     import io
     fake_file = UploadFile(filename="teste.jpg", file=io.BytesIO(b"fake_image_data"))
     
-    # Chama a sua função real (que está mockada por dentro)
-    from app.services.storage_service import upload_image_to_supabase # Ajuste o caminho!
+    # IMPORTANTE: Garanta que você está importando a função de onde o ENDPOINT_URL foi mockado
+    from app.services.storage_service import upload_image_to_supabase
+    
     url_retornada = upload_image_to_supabase(fake_file)
     
-    # Verifica se o S3 foi chamado e se a URL tem o formato esperado
     mock_s3.upload_fileobj.assert_called_once()
     assert ".jpg" in url_retornada
     assert "object/public/" in url_retornada
