@@ -15,6 +15,9 @@ abstract class AnnouncementServiceInterface {
     required String id,
     required Map<String, dynamic> body,
   });
+
+  /// Deletes an announcement from the backend.
+  Future<bool> deleteAnnouncement(String id);
 }
 
 /// adapts the real service to the interface used by the viewmodel
@@ -32,6 +35,11 @@ class AnnouncementServiceAdapter implements AnnouncementServiceInterface {
     required Map<String, dynamic> body,
   }) {
     return AnnouncementService.updateAnnouncement(id: id, body: body);
+  }
+
+  @override
+  Future<bool> deleteAnnouncement(String id) {
+    return AnnouncementService.deleteAnnouncement(id);
   }
 }
 
@@ -60,8 +68,9 @@ class BookEditionViewModel {
   String status = "Disponível";
   String condition = "Novo";
   
+  /// URLs of the photos already associated with the announcement.
   List<String> photoUrls = [];
-
+  
   /// loads announcement data from backend
   /// fills controllers and local state with returned values
   Future<bool> loadFromServer(String id) async {
@@ -119,7 +128,6 @@ class BookEditionViewModel {
   Book buildBook(String id) {
     return Book(
       id: id,
-      /// trims user input before sending
       title: titleController.text.trim(),
       author: authorController.text.trim(),
       publisher: publisherController.text.trim(),
@@ -131,7 +139,7 @@ class BookEditionViewModel {
       description: descriptionController.text.trim(),
       status: status,
       condition: condition,
-      photoUrls: photoUrls, // Manda a primeira foto como capa (se o book_model ainda usar isso)
+      photoUrls: List<String>.from(photoUrls),
       cep_id: cepController.text.trim(),
       // Se o seu book_model aceitar a lista inteira, adicione ela aqui (ex: photos: photoUrls)
     );

@@ -265,6 +265,26 @@ class AnnouncementService {
       return null;
     }
   }
+  /// Deletes an announcement by id.
+  ///
+  /// Makes a DELETE request to:
+  /// `/api/v1/announcements/{id}`
+  static Future<bool> deleteAnnouncement(String id) async {
+    try {
+      final response = await ApiClient.delete(
+        '/api/v1/announcements/$id',
+      );
+
+      print('DELETE STATUS: ${response.statusCode}');
+      print('DELETE RESPONSE: ${response.body}');
+
+      return response.statusCode == 200 ||
+          response.statusCode == 204;
+    } catch (e) {
+      print('DELETE ERROR: $e');
+      return false;
+    }
+  }
 
   /// Requests the backend to create dummy data.
   static Future<bool> setDummyData() async {

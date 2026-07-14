@@ -12,7 +12,8 @@ class ApiClient {
       _send('POST', path, body: body);
   static Future<http.Response> put(String path, {String? body}) =>
       _send('PUT', path, body: body);
-
+  static Future<http.Response> delete(String path, {String? body}) =>
+      _send('DELETE', path, body: body);
   static Future<http.Response> _send(
     String method,
     String path, {
@@ -28,6 +29,8 @@ class ApiClient {
       response = await http.post(uri, headers: headers, body: body);
     } else if (method == 'PUT') {
       response = await http.put(uri, headers: headers, body: body);
+    } else if (method == 'DELETE') {
+      response = await http.delete(uri, headers: headers, body: body);
     } else {
       response = await http.get(uri, headers: headers);
     }

@@ -23,6 +23,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
   bool isLoading = true;
   bool hasError = false;
   bool isSaving = false;
+  bool isDeleting = false;
   String _locationInfo = "Buscando localização...";
 
   // 1. Variáveis para gerenciamento de fotos (URLs do servidor e XFiles locais)
@@ -270,6 +271,64 @@ class _BookEditionPageState extends State<BookEditionPage> {
         const SnackBar(
           content: Text(
             'Salvo com ressalvas. Houve falha ao atualizar algumas fotos.',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _confirmDelete() async {
+  final confirm = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text('Excluir anúncio'),
+        content: const Text(
+          'Deseja realmente excluir este anúncio? '
+          'Essa ação não poderá ser desfeita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (confirm == true) {
+    await _deleteBook();
+  }
+}
+
+  Future<void> _deleteBook() async {
+    setState(() {
+      isDeleting = true;
+    });
+
+    final success = await vm.delete(widget.id);
+
+    if (!mounted) return;
+
+    setState(() {
+      isDeleting = false;
+    });
+
+    if (success) {
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não foi possível excluir o anúncio.',
           ),
         ),
       );
@@ -584,6 +643,43 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
           const SizedBox(height: 12),
 
+          /// botao deletar anuncio
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: isSaving || isDeleting
+                  ? null
+                  : _confirmDelete,
+              icon: isDeleting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.delete_outline,
+                      color: Colors.red,
+                    ),
+              label: Text(
+                isDeleting
+                    ? 'Excluindo...'
+                    : 'Excluir anúncio',
+                style: const TextStyle(
+                  color: Colors.red,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.red),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
           /// BOTÃO CANCELAR
           SizedBox(
             width: double.infinity,

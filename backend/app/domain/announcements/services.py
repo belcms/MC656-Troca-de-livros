@@ -19,6 +19,35 @@ import app.domain.books.schemas as books_schemas
 import app.domain.announcements.schemas as announcements_schemas
 import app.domain.locations.services as locations_services
 
+def delete_announcement(
+    id: str,
+    db: Session = Depends(get_db),
+    owner_id: str | None = None,
+):
+    announcement = (
+        db.query(announcements_models.TradeAnnouncement)
+        .filter(announcements_models.TradeAnnouncement.id == id)
+        .first()
+    )
+
+    if not announcement:
+        raise HTTPException(
+            status_code=404,
+            detail="Announcement not found",
+        )
+
+    if owner_id is not None and announcement.user_id != owner_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied",
+        )
+
+    db.delete(announcement)
+    db.commit()
+
+    return {
+        "message": "Announcement deleted successfully"
+    }
 
 def get_announcement_details(db: Session, id: str):
     """

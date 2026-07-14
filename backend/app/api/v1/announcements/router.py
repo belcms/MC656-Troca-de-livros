@@ -12,6 +12,7 @@ from app.domain.announcements.services import (
     get_announcement_details,
     get_feed_announcements,
     create_announcement as service_create_announcement,
+    delete_announcement as service_delete_announcement,
 )
 from app.domain.announcements.search import AnnouncementSearchService
 from app.api.v1.announcements.schemas import DeletePhotoRequest
@@ -169,3 +170,14 @@ def delete_announcement_photo(
         raise HTTPException(status_code=500, detail=f"Erro ao deletar foto: {str(e)}")
     
 
+@router.delete("/{id}")
+def delete_announcement_route(
+    id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return service_delete_announcement(
+        id=id,
+        db=db,
+        owner_id=current_user.id,
+    )
