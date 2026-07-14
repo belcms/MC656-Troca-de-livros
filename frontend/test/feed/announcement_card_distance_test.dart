@@ -16,6 +16,7 @@ void main() {
             photo: 'https://example.com/clean-code.jpg',
             cep: cep,
             distanceKm: distanceKm,
+            condition: "New",
           ),
         ),
       ),

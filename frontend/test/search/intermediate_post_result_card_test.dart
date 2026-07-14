@@ -38,6 +38,7 @@ void main() {
           publishYear: '2000',
           location: 'Campinas - SP',
           photoUrl: 'https://example.com/cover.jpg',
+          condition: "New",
         ),
       ),
     );
@@ -69,6 +70,7 @@ void main() {
           location: 'Campinas - SP',
           photoUrl: 'https://example.com/cover.jpg',
           onTap: () => tapped = true,
+          condition: "Worn",
         ),
       ),
     );

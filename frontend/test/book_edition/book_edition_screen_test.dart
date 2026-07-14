@@ -34,25 +34,19 @@ class FakeAnnouncementService implements AnnouncementServiceInterface {
 
 void main() {
   testWidgets('renderiza a tela de edição', (tester) async {
-    final viewModel = BookEditionViewModel(
-      service: FakeAnnouncementService(),
-    );
+    final viewModel = BookEditionViewModel(service: FakeAnnouncementService());
 
     await tester.pumpWidget(
       MaterialApp(
-        home: BookEditionPage(
-          id: '1',
-          viewModel: viewModel,
-        ),
+        home: BookEditionPage(id: '1', viewModel: viewModel),
       ),
     );
 
     await tester.pumpAndSettle();
 
     expect(find.byType(BookEditionPage), findsOneWidget);
-    expect(find.text('Editar livro'), findsOneWidget);
+    expect(find.text("Editar anúncio"), findsNWidgets(2));
     expect(find.text('Sobre o livro'), findsOneWidget);
     expect(find.text('Condição'), findsOneWidget);
-    expect(find.text('Editar anúncio'), findsOneWidget);
   });
 }

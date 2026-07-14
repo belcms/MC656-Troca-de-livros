@@ -1,8 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'book_creation_viewmodel.dart';
 import '../services/user_service.dart';
 import 'package:flutter/cupertino.dart';
 import '../services/location_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:frontend/services/upload_service.dart';
+import 'package:frontend/components/photo_carousel_picker.dart';
 
 class BookCreationPage extends StatefulWidget {
   final String? userId; // A página será carrega com o ID do usuário logado
@@ -20,53 +24,88 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
   // Variável para guardar a URL que o usuário digitar
   String? _imagemCapaUrl;
-
+  final ImagePicker _picker = ImagePicker();
+  List<XFile> _selectedImages = [];
   // Controller temporário só para o pop-up de colar o link
   final _urlCapaController = TextEditingController();
 
-
   @override
-    void initState() {
-      super.initState();
-      _carregarUsuarioLogado();
+  void initState() {
+    super.initState();
+    _carregarUsuarioLogado();
+  }
+
+  // Função para abrir a galeria e escolher as fotos
+  Future<void> _pickImages() async {
+    if (_selectedImages.length >= 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Você já adicionou o limite máximo de 5 fotos.'),
+        ),
+      );
+      return;
     }
 
-    // Pega o CEP do usuário atual e faz a busca inicial
-    Future<void> _carregarUsuarioLogado() async {
-      final users = await UserService.fetchUsers();
-      if (users != null && users.isNotEmpty) {
-        final user = users.first; 
-        final cepUser = user['cep_id'];
-        if (cepUser != null && cepUser.toString().isNotEmpty) {
-          vm.cepController.text = cepUser.toString();
-          await _buscarLocalizacao(cepUser.toString());
+    // Permite que o usuário selecione várias imagens de uma vez na galeria
+    final List<XFile> images = await _picker.pickMultiImage(
+      imageQuality: 80, // Comprime levemente para o upload ser mais rápido
+    );
+
+    if (images.isNotEmpty) {
+      setState(() {
+        // Adiciona as fotos escolhidas, garantindo que não passe de 5 no total
+        for (var img in images) {
+          if (_selectedImages.length < 5) {
+            _selectedImages.add(img);
+          }
         }
+      });
+    }
+  }
+
+  // Função para remover uma foto da lista se o usuário desistir dela
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
+  // Pega o CEP do usuário atual e faz a busca inicial
+  Future<void> _carregarUsuarioLogado() async {
+    final users = await UserService.fetchUsers();
+    if (users != null && users.isNotEmpty) {
+      final user = users.first;
+      final cepUser = user['cep_id'];
+      if (cepUser != null && cepUser.toString().isNotEmpty) {
+        vm.cepController.text = cepUser.toString();
+        await _buscarLocalizacao(cepUser.toString());
       }
     }
+  }
 
-    // Faz a requisição ao backend quando o usuário digita 8 números
-    Future<void> _buscarLocalizacao(String cep) async {
-      final cleanCep = cep.replaceAll(RegExp(r'[^0-9]'), '');
-      if (cleanCep.length != 8) return;
+  // Faz a requisição ao backend quando o usuário digita 8 números
+  Future<void> _buscarLocalizacao(String cep) async {
+    final cleanCep = cep.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanCep.length != 8) return;
 
-      setState(() {
-        _locationInfo = "Buscando localização...";
-      });
+    setState(() {
+      _locationInfo = "Buscando localização...";
+    });
 
-      final loc = await LocationService.fetchLocation(cleanCep);
-      if (!mounted) return;
+    final loc = await LocationService.fetchLocation(cleanCep);
+    if (!mounted) return;
 
-      setState(() {
-        if (loc != null) {
-          final district = loc['district'] ?? "";
-          _locationInfo = "${loc['city']} - ${loc['state']}" + (district.isNotEmpty ? ", $district" : "");
-        } else {
-          _locationInfo = "CEP não encontrado ou inválido.";
-        }
-      });
-    }
-
-
+    setState(() {
+      if (loc != null) {
+        final district = loc['district'] ?? "";
+        _locationInfo =
+            "${loc['city']} - ${loc['state']}" +
+            (district.isNotEmpty ? ", $district" : "");
+      } else {
+        _locationInfo = "CEP não encontrado ou inválido.";
+      }
+    });
+  }
 
   /// Displays an alert dialog prompting the user to paste a URL for the book cover image.
   /// Updates the state with the provided URL upon confirmation.
@@ -177,6 +216,17 @@ class _BookCreationPageState extends State<BookCreationPage> {
   /// Displays snackbars for validation errors or the final success/failure result.
   /// If successful, it clears the form and resets the UI state.
   Future<void> _saveBook() async {
+    if (_selectedImages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'É obrigatório adicionar pelo menos uma foto do livro.',
+          ),
+        ),
+      );
+      return;
+    }
+
     // Validações básicas (exemplo: título e autor não podem ser vazios)
     if (vm.titleController.text.isEmpty) {
       ScaffoldMessenger.of(
@@ -248,11 +298,30 @@ class _BookCreationPageState extends State<BookCreationPage> {
         return;
       }
     }
-    // Sugestão: Passe o _imagemCapa como parâmetro para que o ViewModel faça o upload.
-    final success = await vm.submit(
+
+    final String? announcementId = await vm.submit(
       _imagemCapaUrl,
       currentUserId!,
-    ); // Passa o userId para o ViewModel
+    );
+
+    bool uploadSuccess = true;
+
+    // 3. UPLOAD DAS FOTOS (Se o anúncio foi criado com sucesso)
+    if (announcementId != null && announcementId.isNotEmpty) {
+      final uploadService =
+          UploadService(); // Instancia o serviço se não estiver no topo da classe
+
+      for (var image in _selectedImages) {
+        bool result = await uploadService.uploadBookPhoto(
+          announcementId,
+          image,
+        );
+        if (!result) {
+          uploadSuccess = false;
+          // Aqui você poderia colocar uma lógica de retry ou avisar qual foto falhou
+        }
+      }
+    }
 
     if (!mounted) return;
 
@@ -260,17 +329,22 @@ class _BookCreationPageState extends State<BookCreationPage> {
       isSaving = false;
     });
 
+    final bool isCompletelySuccessful =
+        (announcementId != null) && uploadSuccess;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          success
-              ? 'Anúncio criado com sucesso.'
-              : 'Não foi possível criar o anúncio.',
+          isCompletelySuccessful
+              ? 'Anúncio e fotos salvos com sucesso!'
+              : (announcementId != null
+                    ? 'Anúncio criado, mas houve falha ao enviar algumas fotos.'
+                    : 'Não foi possível criar o anúncio.'),
         ),
       ),
     );
 
-    if (success) {
+    if (isCompletelySuccessful) {
       // Volta para a tela anterior se salvou com sucesso
       DefaultTabController.of(
         context,
@@ -319,68 +393,13 @@ class _BookCreationPageState extends State<BookCreationPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// CAPA
-          Center(
-            child: Column(
-              children: [
-                Container(
-                  width: 120,
-                  height: 170,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black12),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: _imagemCapaUrl != null && _imagemCapaUrl!.isNotEmpty
-                      ? Image.network(
-                          _imagemCapaUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.broken_image, color: Colors.red),
-                                  Text(
-                                    "Link inválido",
-                                    style: TextStyle(fontSize: 10),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        )
-                      : const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.link, size: 42, color: Colors.grey),
-                            SizedBox(height: 8),
-                            Text(
-                              "Colar Link",
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: _pedirUrlDaImagem, // Chama o pop-up aqui!
-                  child: Text(
-                    _imagemCapaUrl == null
-                        ? 'Adicionar foto da capa'
-                        : 'Trocar link',
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-            ),
+          // _buildPhotoGallery(),
+          PhotoCarouselPicker(
+            images: _selectedImages,
+            onAddImage: _pickImages,
+            onRemoveImage: _removeImage,
           ),
-
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
           /// STATUS
           Row(
@@ -393,7 +412,6 @@ class _BookCreationPageState extends State<BookCreationPage> {
           ),
 
           const SizedBox(height: 20),
-
 
           /// LOCALIZAÇÃO
           const Text(
@@ -433,7 +451,10 @@ class _BookCreationPageState extends State<BookCreationPage> {
                     Expanded(
                       child: Text(
                         _locationInfo,
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   ],
@@ -442,7 +463,7 @@ class _BookCreationPageState extends State<BookCreationPage> {
             ),
           ),
           const SizedBox(height: 20),
-                  
+
           /// SOBRE
           const Text(
             "Sobre os livros",
@@ -585,29 +606,79 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
           const SizedBox(height: 30),
 
+          // /// BOTÃO SALVAR
+          // SizedBox(
+          //   width: double.infinity,
+          //   child: ElevatedButton(
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: const Color(0xFF416956),
+          //       foregroundColor: Colors.white,
+          //       padding: const EdgeInsets.symmetric(vertical: 16),
+          //     ),
+          //     onPressed: isSaving
+          //         ? null
+          //         : _saveBook, //o isSaving desabilita o botão e mostra o loading enquanto salva
+          //     child: isSaving
+          //         ? const SizedBox(
+          //             width: 20,
+          //             height: 20,
+          //             child: CircularProgressIndicator(
+          //               strokeWidth: 2,
+          //               color: Colors.white,
+          //             ),
+          //           )
+          //         : const Text("Criar anúncio"),
+          //   ),
+          // ),
+
           /// BOTÃO SALVAR
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF416956),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              onPressed: isSaving
-                  ? null
-                  : _saveBook, //o isSaving desabilita o botão e mostra o loading enquanto salva
-              child: isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text("Criar anúncio"),
-            ),
+          ListenableBuilder(
+            // Escuta as mudanças de todos os campos obrigatórios simultaneamente
+            listenable: Listenable.merge([
+              vm.titleController,
+              vm.authorController,
+              vm.publisherController,
+              vm.yearController,
+              vm.pagesController,
+            ]),
+            builder: (context, child) {
+              // 1. Define a regra: só é válido se todos os campos tiverem texto e tiver foto
+              final bool isFormValid =
+                  _selectedImages.isNotEmpty &&
+                  vm.titleController.text.trim().isNotEmpty &&
+                  vm.authorController.text.trim().isNotEmpty &&
+                  vm.publisherController.text.trim().isNotEmpty &&
+                  vm.yearController.text.trim().isNotEmpty &&
+                  vm.pagesController.text.trim().isNotEmpty;
+
+              // 2. O botão pode ser clicado se o form for válido E não estiver salvando
+              final bool canSubmit = isFormValid && !isSaving;
+
+              return SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF416956),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor:
+                        Colors.grey[400], // Cor do botão desabilitado
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  // 3. Aplica a condição aqui:
+                  onPressed: canSubmit ? _saveBook : null,
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text("Criar anúncio"),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -827,5 +898,198 @@ class _BookCreationPageState extends State<BookCreationPage> {
       default:
         return const Color(0xFF24523C);
     }
+  }
+
+  // Widget _buildPhotoGallery() {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       const Text(
+  //         'Fotos do Livro (Mínimo 1, Máximo 5)',
+  //         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+  //       ),
+  //       const SizedBox(height: 12),
+  //       Center(
+
+  //         child: Wrap(
+  //         spacing: 12.0, // Espaçamento horizontal entre as fotos
+  //         runSpacing: 12.0, // Espaçamento vertical se pular de linha
+  //         children: [
+  //           // Renderiza as fotos selecionadas
+  //           ...List.generate(_selectedImages.length, (index) {
+  //             return Stack(
+  //               clipBehavior: Clip.none,
+  //               children: [
+  //                 Container(
+  //                   width: 120, // Força a dimensão quadrada
+  //                   height: 160, // Força a dimensão quadrada
+  //                   decoration: BoxDecoration(
+  //                     borderRadius: BorderRadius.circular(8),
+  //                     border: Border.all(color: Colors.grey.shade300),
+  //                   ),
+  //                   clipBehavior: Clip.antiAlias,
+  //                   child: Image.file(
+  //                     File(_selectedImages[index].path),
+  //                     fit: BoxFit
+  //                         .cover, // Preenche todo o quadrado cortando as sobras
+  //                   ),
+  //                 ),
+  //                 // Botãozinho vermelho para excluir a foto
+  //                 Positioned(
+  //                   right: -10,
+  //                   top: -10,
+  //                   child: GestureDetector(
+  //                     onTap: () => _removeImage(index),
+  //                     child: Container(
+  //                       decoration: const BoxDecoration(
+  //                         shape: BoxShape.circle,
+  //                         color: Colors.white,
+  //                       ),
+  //                       child: const Icon(
+  //                         Icons.remove_circle,
+  //                         color: Colors.red,
+  //                         size: 28,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ],
+  //             );
+  //           }),
+
+  //           // Renderiza o botão de "Adicionar" apenas se tiver menos de 5 fotos
+  //           if (_selectedImages.length < 5)
+  //             GestureDetector(
+  //               onTap: _pickImages,
+  //               child: Container(
+  //                 width:
+  //                     120, // O slot de adição mantém as exatas proporções quadradas
+  //                 height: 160,
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.grey.shade100,
+  //                   borderRadius: BorderRadius.circular(8),
+  //                   border: Border.all(color: Colors.grey.shade400),
+  //                 ),
+  //                 child: const Center(
+  //                   child: Icon(
+  //                     Icons.add_a_photo,
+  //                     color: Colors.grey,
+  //                     size: 32,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //         ],
+  //       ),
+  //       )
+  //     ],
+  //   );
+  // }
+
+  Widget _buildPhotoGallery() {
+    return SizedBox(
+      width: double
+          .infinity, // 1. Força a ocupar a tela toda para o centro funcionar
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.center, // 2. Centraliza o texto e o carrossel
+        children: [
+          const Text(
+            'Fotos do Livro',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+
+          // Carrossel Horizontal
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 12, bottom: 8),
+              child: Row(
+                children: [
+                  // Renderiza as fotos selecionadas
+                  ...List.generate(_selectedImages.length, (index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                        right: 12.0,
+                      ), // Espaço entre as fotos
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 120,
+                            height: 160,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Image.file(
+                              File(_selectedImages[index].path),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          // Botãozinho vermelho para excluir a foto
+                          Positioned(
+                            right: -10,
+                            top: -10,
+                            child: GestureDetector(
+                              onTap: () => _removeImage(index),
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                ),
+                                child: const Icon(
+                                  Icons.remove_circle,
+                                  color: Colors.red,
+                                  size: 28,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+
+                  // Renderiza o botão de "Adicionar" apenas se tiver menos de 5 fotos
+                  if (_selectedImages.length < 5)
+                    GestureDetector(
+                      onTap: _pickImages,
+                      child: Container(
+                        width: 120,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade400),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.add_a_photo,
+                            color: Colors.grey,
+                            size: 32,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // Contador "pítico" centralizado embaixo
+          Text(
+            '${_selectedImages.length}/5',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

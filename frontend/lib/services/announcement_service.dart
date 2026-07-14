@@ -10,9 +10,7 @@ import '../search/announcement_search_models.dart';
 /// Service responsible for handling HTTP requests related to announcements.
 class AnnouncementService {
   /// Fetches the details of a specific announcement.
-  static Future<AnnouncementDetail?> fetchAnnouncementDetails(
-    String id,
-  ) async {
+  static Future<AnnouncementDetail?> fetchAnnouncementDetails(String id) async {
     try {
       final url = Uri.parse(
         '${ApiClient.baseUrl}/api/v1/announcements/details/$id',
@@ -33,9 +31,7 @@ class AnnouncementService {
         'Falha ao carregar anúncio (Erro ${response.statusCode}).',
       );
     } catch (e) {
-      throw Exception(
-        'Erro de conexão: Não foi possível acessar o servidor.',
-      );
+      throw Exception('Erro de conexão: Não foi possível acessar o servidor.');
     }
   }
 
@@ -58,9 +54,7 @@ class AnnouncementService {
         'Falha ao carregar anúncio (Erro ${response.statusCode}).',
       );
     } catch (e) {
-      throw Exception(
-        'Erro de conexão: Não foi possível acessar o servidor.',
-      );
+      throw Exception('Erro de conexão: Não foi possível acessar o servidor.');
     }
   }
 
@@ -75,31 +69,25 @@ class AnnouncementService {
     required Map body,
   }) async {
     try {
-      final url = Uri.parse(
-        '${ApiClient.baseUrl}/api/v1/books/$id',
-      );
+      final url = Uri.parse('${ApiClient.baseUrl}/api/v1/books/$id');
 
       print('UPDATE URL: $url');
       print('UPDATE BODY: ${jsonEncode(body)}');
 
       final response = await http.put(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
 
       print('UPDATE STATUS: ${response.statusCode}');
       print('UPDATE RESPONSE: ${response.body}');
 
-      return response.statusCode == 200 ||
-          response.statusCode == 204;
+      return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
       return false;
     }
   }
-
 
   /// Default behavior:
   /// - sends only [limit] and [offset], preserving the old feed behavior.
@@ -125,11 +113,9 @@ class AnnouncementService {
       };
 
       if (filters.hasYearFilter) {
-        queryParameters['start_year'] =
-            filters.startYear.toString();
+        queryParameters['start_year'] = filters.startYear.toString();
 
-        queryParameters['end_year'] =
-            filters.endYear.toString();
+        queryParameters['end_year'] = filters.endYear.toString();
       }
 
       if (filters.conditions.isNotEmpty) {
@@ -141,16 +127,12 @@ class AnnouncementService {
       }
 
       if (filters.maxDistanceKm != null) {
-        queryParameters['max_distance_km'] =
-            filters.maxDistanceKm.toString();
+        queryParameters['max_distance_km'] = filters.maxDistanceKm.toString();
       }
 
       final url = Uri.parse(
         '${ApiClient.baseUrl}/api/v1/announcements/feed',
-      ).replace(
-        queryParameters: queryParameters,
-      );
-
+      ).replace(queryParameters: queryParameters);
 
       final response = await http.get(url);
 
@@ -172,21 +154,19 @@ class AnnouncementService {
     int offset = 0,
   }) async {
     try {
-      final url = Uri.parse(
-        '${ApiClient.baseUrl}/api/v1/announcements/search',
-      ).replace(
-        queryParameters: {
-          'query': query,
-          'limit': limit.toString(),
-          'offset': offset.toString(),
-        },
-      );
+      final url = Uri.parse('${ApiClient.baseUrl}/api/v1/announcements/search')
+          .replace(
+            queryParameters: {
+              'query': query,
+              'limit': limit.toString(),
+              'offset': offset.toString(),
+            },
+          );
 
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
-        final data =
-            jsonDecode(response.body) as Map<String, dynamic>;
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
 
         return AnnouncementSearchResponse.fromJson(data);
       }
@@ -195,56 +175,42 @@ class AnnouncementService {
         'Falha ao buscar anúncios (Erro ${response.statusCode}).',
       );
     } catch (e) {
-      throw Exception(
-        'Erro de conexão: Não foi possível acessar a busca.',
-      );
+      throw Exception('Erro de conexão: Não foi possível acessar a busca.');
     }
   }
 
-
-  /// Creates an announcement.
-  ///
-  /// Makes a POST request to the `/api/v1/announcements/{userId}` endpoint.
-  /// The [body] parameter contains the data for the announcement.
-  /// The [userId] parameter is the unique identifier of the user creating the
-  /// announcement.
-
-  static Future<bool> createAnnouncement({
-    required Map body,
+  static Future<String?> createAnnouncement({
+    required Map<String, dynamic> body,
     required String userId,
   }) async {
     try {
       final requestBody = Map<String, dynamic>.from(body);
 
-      final bookUrl = Uri.parse(
-        '${ApiClient.baseUrl}/api/v1/books',
-      );
+      final bookUrl = Uri.parse('${ApiClient.baseUrl}/api/v1/books');
 
       final bookResponse = await http.post(
         bookUrl,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode(requestBody),
       );
+      if (bookResponse.statusCode != 201 && bookResponse.statusCode != 200) {
+        return null; // Retorna null em vez de false
+      }
 
       print('CREATE BOOK STATUS: ${bookResponse.statusCode}');
       print('CREATE BOOK RESPONSE: ${bookResponse.body}');
 
-      if (bookResponse.statusCode != 200 &&
-          bookResponse.statusCode != 201) {
-        return false;
+      if (bookResponse.statusCode != 200 && bookResponse.statusCode != 201) {
+        return null;
       }
 
-      final bookData =
-          jsonDecode(bookResponse.body) as Map<String, dynamic>;
+      final bookData = jsonDecode(bookResponse.body) as Map<String, dynamic>;
 
-      final bookId =
-          bookData['bookId'] ?? bookData['id'];
+      final bookId = bookData['bookId'] ?? bookData['id'];
 
       if (bookId == null) {
         print('CREATE ERROR: bookId não retornado pelo backend.');
-        return false;
+        return null;
       }
 
       final editionUrl = Uri.parse(
@@ -253,29 +219,30 @@ class AnnouncementService {
 
       final editionResponse = await http.post(
         editionUrl,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode(requestBody),
       );
+      if (editionResponse.statusCode != 201 &&
+          editionResponse.statusCode != 200) {
+        return null; // Retorna null em vez de false
+      }
 
       print('CREATE EDITION STATUS: ${editionResponse.statusCode}');
       print('CREATE EDITION RESPONSE: ${editionResponse.body}');
 
       if (editionResponse.statusCode != 200 &&
           editionResponse.statusCode != 201) {
-        return false;
+        return null;
       }
 
       final editionData =
           jsonDecode(editionResponse.body) as Map<String, dynamic>;
 
-      final editionId =
-          editionData['editionId'] ?? editionData['id'];
+      final editionId = editionData['editionId'] ?? editionData['id'];
 
       if (editionId == null) {
         print('CREATE ERROR: editionId não retornado pelo backend.');
-        return false;
+        return null;
       }
 
       requestBody['editionId'] = editionId;
@@ -286,43 +253,46 @@ class AnnouncementService {
 
       final announcementResponse = await http.post(
         announcementUrl,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode(requestBody),
       );
 
-      print(
-        'CREATE ANNOUNCEMENT STATUS: '
-        '${announcementResponse.statusCode}',
-      );
-      print(
-        'CREATE ANNOUNCEMENT RESPONSE: '
-        '${announcementResponse.body}',
-      );
+      if (announcementResponse.statusCode != 201 &&
+          announcementResponse.statusCode != 200) {
+        return null; // Retorna null em vez de false
+      }
 
-      return announcementResponse.statusCode == 200 ||
-          announcementResponse.statusCode == 201;
+      // SUCESSO! Pega a resposta do backend e extrai o ID gerado.
+      final responseBody = jsonDecode(announcementResponse.body);
+      print("RESPOSTA DO BACKEND: $responseBody");
+
+      final String? extractedId = responseBody["data"]?["id"]?.toString();
+
+      if (extractedId == null) {
+        print("ALERTA: O anúncio foi criado, mas não achei o ID no JSON!");
+      }
+
+      // NOTA: Se o seu backend FastAPI retorna o ID com um nome diferente de "id"
+      // (como "announcement_id" ou "announcementId"), ajuste a chave abaixo:
+      // return responseBody["id"]?.toString();
+      return extractedId;
     } catch (e) {
       print('CREATE ERROR: $e');
-      return false;
+      return null;
     }
   }
 
   /// Requests the backend to create dummy data.
   static Future<bool> setDummyData() async {
     try {
-      final url = Uri.parse(
-        '${ApiClient.baseUrl}/create-dummy-data',
-      );
+      final url = Uri.parse('${ApiClient.baseUrl}/create-dummy-data');
 
       final response = await http.post(url);
 
       print('DUMMY STATUS: ${response.statusCode}');
       print('DUMMY BODY: ${response.body}');
 
-      return response.statusCode == 200 ||
-          response.statusCode == 204;
+      return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
       print('DUMMY ERROR: $e');
       return false;

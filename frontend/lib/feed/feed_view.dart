@@ -12,7 +12,6 @@ import 'package:frontend/search/widgets/custom_search_bar.dart';
 import '../services/announcement_service.dart';
 import 'announcement_card.dart';
 
-
 /// The main screen of the application that displays the feed of book
 /// announcements.
 ///
@@ -22,9 +21,7 @@ import 'announcement_card.dart';
 /// an [EmptyFeedState] if no books are found, or a grid of
 /// [AnnouncementCard]s.
 class FeedView extends StatefulWidget {
-  const FeedView({
-    super.key,
-  });
+  const FeedView({super.key});
 
   @override
   State<FeedView> createState() => _FeedViewState();
@@ -33,12 +30,9 @@ class FeedView extends StatefulWidget {
 class _FeedViewState extends State<FeedView> {
   List<dynamic> announcements = [];
   bool isLoading = true;
-  static const currentUserId = String.fromEnvironment(
-    'CURRENT_USER_ID',
-  );
+  static const currentUserId = String.fromEnvironment('CURRENT_USER_ID');
 
-  AnnouncementFilters activeFilters =
-      const AnnouncementFilters();
+  AnnouncementFilters activeFilters = const AnnouncementFilters();
 
   @override
   void initState() {
@@ -55,8 +49,7 @@ class _FeedViewState extends State<FeedView> {
       isLoading = true;
     });
 
-    final data =
-        await AnnouncementService.fetchFeedAnnouncements(
+    final data = await AnnouncementService.fetchFeedAnnouncements(
       currentUserId: currentUserId,
       filters: activeFilters,
       sortByDistance: true,
@@ -72,21 +65,16 @@ class _FeedViewState extends State<FeedView> {
   }
 
   Future<void> _openFilters() async {
-    final result =
-        await showModalBottomSheet<AnnouncementFilters>(
+    final result = await showModalBottomSheet<AnnouncementFilters>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(24),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        return AnnouncementFilterSheet(
-          initialFilters: activeFilters,
-        );
+        return AnnouncementFilterSheet(initialFilters: activeFilters);
       },
     );
 
@@ -111,41 +99,29 @@ class _FeedViewState extends State<FeedView> {
 
   Future<void> _removeYearFilter() async {
     setState(() {
-      activeFilters = activeFilters.copyWith(
-        clearYears: true,
-      );
+      activeFilters = activeFilters.copyWith(clearYears: true);
     });
 
     await _loadFeed();
   }
 
-  Future<void> _removeCondition(
-    String condition,
-  ) async {
-    final updatedConditions = List<String>.from(
-      activeFilters.conditions,
-    )..remove(condition);
+  Future<void> _removeCondition(String condition) async {
+    final updatedConditions = List<String>.from(activeFilters.conditions)
+      ..remove(condition);
 
     setState(() {
-      activeFilters = activeFilters.copyWith(
-        conditions: updatedConditions,
-      );
+      activeFilters = activeFilters.copyWith(conditions: updatedConditions);
     });
 
     await _loadFeed();
   }
 
-  Future<void> _removeGenre(
-    String genre,
-  ) async {
-    final updatedGenres = List<String>.from(
-      activeFilters.genres,
-    )..remove(genre);
+  Future<void> _removeGenre(String genre) async {
+    final updatedGenres = List<String>.from(activeFilters.genres)
+      ..remove(genre);
 
     setState(() {
-      activeFilters = activeFilters.copyWith(
-        genres: updatedGenres,
-      );
+      activeFilters = activeFilters.copyWith(genres: updatedGenres);
     });
 
     await _loadFeed();
@@ -153,9 +129,7 @@ class _FeedViewState extends State<FeedView> {
 
   Future<void> _removeDistanceFilter() async {
     setState(() {
-      activeFilters = activeFilters.copyWith(
-        clearDistance: true,
-      );
+      activeFilters = activeFilters.copyWith(clearDistance: true);
     });
 
     await _loadFeed();
@@ -204,7 +178,6 @@ class _FeedViewState extends State<FeedView> {
 
     return double.tryParse(value?.toString() ?? '');
   }
-  
 
   @override
   Widget build(BuildContext context) {
@@ -214,37 +187,22 @@ class _FeedViewState extends State<FeedView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                16,
-                8,
-                12,
-                12,
-              ),
+              padding: const EdgeInsets.fromLTRB(16, 8, 12, 12),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       'Home',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineLarge
-                          ?.copyWith(
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
+                      style: Theme.of(context).textTheme.headlineLarge
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ),
                   IconButton(
                     onPressed: _openFilters,
                     tooltip: 'Filtrar livros',
                     icon: Badge(
-                      isLabelVisible:
-                          activeFilters
-                              .hasActiveFilters,
-                      child: const Icon(
-                        Icons.tune,
-                        size: 28,
-                      ),
+                      isLabelVisible: activeFilters.hasActiveFilters,
+                      child: const Icon(Icons.tune, size: 28),
                     ),
                   ),
                 ],
@@ -254,28 +212,17 @@ class _FeedViewState extends State<FeedView> {
             if (activeFilters.hasActiveFilters)
               _ActiveFiltersSection(
                 filters: activeFilters,
-                conditionLabel:
-                    _conditionLabel,
+                conditionLabel: _conditionLabel,
                 genreLabel: _genreLabel,
-                onRemoveYear:
-                    _removeYearFilter,
-                onRemoveCondition:
-                    _removeCondition,
-                onRemoveGenre:
-                    _removeGenre,
-                onRemoveDistance:
-                    _removeDistanceFilter,
-                onClearAll:
-                    _clearAllFilters,
+                onRemoveYear: _removeYearFilter,
+                onRemoveCondition: _removeCondition,
+                onRemoveGenre: _removeGenre,
+                onRemoveDistance: _removeDistanceFilter,
+                onClearAll: _clearAllFilters,
               ),
 
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                16,
-                16,
-                16,
-                8,
-              ),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: CustomSearchBar(
                 readOnly: true,
                 hintText: 'Buscar livros, autores ou editoras',
@@ -283,8 +230,7 @@ class _FeedViewState extends State<FeedView> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          const IntermediateSearchScreen(),
+                      builder: (context) => const IntermediateSearchScreen(),
                     ),
                   );
                 },
@@ -295,76 +241,61 @@ class _FeedViewState extends State<FeedView> {
             ),
             Expanded(
               child: isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(),
-                    )
+                  ? const Center(child: CircularProgressIndicator())
                   : announcements.isEmpty
-                      ? const EmptyFeedState()
-                      : RefreshIndicator(
-                          onRefresh: _loadFeed,
-                          child: GridView.builder(
-                            padding:
-                                const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            physics:
-                                const AlwaysScrollableScrollPhysics(),
-                            itemCount:
-                                announcements.length,
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
+                  ? const EmptyFeedState()
+                  : RefreshIndicator(
+                      onRefresh: _loadFeed,
+                      child: GridView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: announcements.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
                               crossAxisSpacing: 8,
                               mainAxisSpacing: 16,
                               childAspectRatio: 0.50,
+                              mainAxisExtent: 390,
                             ),
-                            itemBuilder:
-                                (context, index) {
-                              final ann =
-                                  announcements[index] as Map;
+                        itemBuilder: (context, index) {
+                          final ann = announcements[index] as Map;
 
-                              final announcementId =
-                                  ann['id']?.toString() ?? '';
+                          final announcementId = ann['id']?.toString() ?? '';
 
-                              return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) =>
-                                              AnnouncementDetailScreen(
-                                        announcementId:
-                                            announcementId,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child:
-                                    AnnouncementCard(
-                                  title:
-                                      ann['title']?.toString() ??
-                                          'Livro sem título',
-                                  publishYear:
-                                      _parsePublishYear(
-                                        ann[
-                                            'publishYear'],
-                                      ),
-                                  photo:
-                                      ann['real_photo_url']?.toString() ??
-                                          '',
-                                  cep: ann['cep']?.toString() ??
-                                      'Localização não informada',
-                                  distanceKm:
-                                      _parseDistanceKm(
-                                        ann['distanceKm'],
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      AnnouncementDetailScreen(
+                                        announcementId: announcementId,
                                       ),
                                 ),
                               );
                             },
-                          ),
-                        ),
+                            child: AnnouncementCard(
+                              title:
+                                  ann['title']?.toString() ??
+                                  'Livro sem título',
+                              publishYear: _parsePublishYear(
+                                ann['publishYear'],
+                              ),
+                              photo: ann['cover_photo']?.toString() ?? '',
+                              cep:
+                                  ann['cep']?.toString() ??
+                                  'Localização não informada',
+                              distanceKm: _parseDistanceKm(ann['distanceKm']),
+                              condition: ann['condition'] ?? '',
+                            ),
+                          );
+                        },
+                      ),
+                    ),
             ),
           ],
         ),
@@ -397,53 +328,34 @@ class _ActiveFiltersSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(
-        bottom: 12,
-      ),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding:
-                const EdgeInsets.symmetric(
-              horizontal: 16,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 Text(
                   'Filtros ativos',
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelLarge
-                      ?.copyWith(
-                        fontWeight:
-                            FontWeight.w600,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 const Spacer(),
-                TextButton(
-                  onPressed: onClearAll,
-                  child: const Text('Limpar'),
-                ),
+                TextButton(onPressed: onClearAll, child: const Text('Limpar')),
               ],
             ),
           ),
 
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding:
-                const EdgeInsets.symmetric(
-              horizontal: 16,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 if (filters.hasYearFilter)
                   Padding(
-                    padding:
-                        const EdgeInsets.only(
-                      right: 8,
-                    ),
+                    padding: const EdgeInsets.only(right: 8),
                     child: InputChip(
                       label: Text(
                         '${filters.startYear}'
@@ -460,18 +372,10 @@ class _ActiveFiltersSection extends StatelessWidget {
 
                 ...filters.conditions.map(
                   (condition) => Padding(
-                    padding:
-                        const EdgeInsets.only(
-                      right: 8,
-                    ),
+                    padding: const EdgeInsets.only(right: 8),
                     child: InputChip(
-                      label: Text(
-                        conditionLabel(condition),
-                      ),
-                      avatar: const Icon(
-                        Icons.auto_stories_outlined,
-                        size: 18,
-                      ),
+                      label: Text(conditionLabel(condition)),
+                      avatar: const Icon(Icons.auto_stories_outlined, size: 18),
                       onDeleted: () {
                         onRemoveCondition(condition);
                       },
@@ -481,18 +385,10 @@ class _ActiveFiltersSection extends StatelessWidget {
 
                 ...filters.genres.map(
                   (genre) => Padding(
-                    padding:
-                        const EdgeInsets.only(
-                      right: 8,
-                    ),
+                    padding: const EdgeInsets.only(right: 8),
                     child: InputChip(
-                      label: Text(
-                        genreLabel(genre),
-                      ),
-                      avatar: const Icon(
-                        Icons.menu_book_outlined,
-                        size: 18,
-                      ),
+                      label: Text(genreLabel(genre)),
+                      avatar: const Icon(Icons.menu_book_outlined, size: 18),
                       onDeleted: () {
                         onRemoveGenre(genre);
                       },
@@ -502,21 +398,14 @@ class _ActiveFiltersSection extends StatelessWidget {
 
                 if (filters.maxDistanceKm != null)
                   Padding(
-                    padding:
-                        const EdgeInsets.only(
-                      right: 8,
-                    ),
+                    padding: const EdgeInsets.only(right: 8),
                     child: InputChip(
                       label: Text(
                         'Até '
                         '${filters.maxDistanceKm!.toInt()} km',
                       ),
-                      avatar: const Icon(
-                        Icons.location_on_outlined,
-                        size: 18,
-                      ),
-                      onDeleted:
-                          onRemoveDistance,
+                      avatar: const Icon(Icons.location_on_outlined, size: 18),
+                      onDeleted: onRemoveDistance,
                     ),
                   ),
               ],
@@ -528,31 +417,22 @@ class _ActiveFiltersSection extends StatelessWidget {
   }
 }
 
-
 /// A visual placeholder displayed when the feed has no announcements.
 ///
 /// This widget shows a book icon and a friendly message encouraging the
 /// user to take the first step and create a book trade announcement.
 class EmptyFeedState extends StatelessWidget {
-  const EmptyFeedState({
-    super.key,
-  });
+  const EmptyFeedState({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(
-          20.0,
-        ),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.auto_stories,
-              size: 80.0,
-              color: Colors.grey,
-            ),
+            const Icon(Icons.auto_stories, size: 80.0, color: Colors.grey),
             const SizedBox(height: 24.0),
             Text(
               "O feed está vazio!",
@@ -562,9 +442,9 @@ class EmptyFeedState extends StatelessWidget {
             Text(
               "Que tal dar o primeiro passo e anunciar aquele livro que está parado na estante?",
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
             ),
           ],
         ),

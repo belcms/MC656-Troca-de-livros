@@ -68,6 +68,7 @@ def get_announcement_details(db: Session, id: str):
         "cep_id": getattr(announcements, "cep_id", None),
         "edition_id": announcements.edition_id,
         "real_photo_url": announcements.real_photo_url,
+        "photos": [p.photo_url for p in announcements.photos] if announcements.photos else [],
         "condition": announcements.condition.value,
         "description": announcements.description,
         "create_date": announcements.create_date.isoformat(),
@@ -77,6 +78,7 @@ def get_announcement_details(db: Session, id: str):
             "book_id": edition.book_id,
             "publisher": edition.publisher,
             "publish_year": edition.publish_year,
+            "pages": edition.number_of_pages,
         },
         "book": {
             "id": book.id,
@@ -154,6 +156,7 @@ def get_feed_announcements(
                 User.location
             ),
             joinedload(models.TradeAnnouncement.location),
+            joinedload(models.TradeAnnouncement.photos)
         )
         .filter(
             models.TradeAnnouncement.status == Status.Available
@@ -259,10 +262,18 @@ def get_feed_announcements(
         )
 
     def build_response(announcement, distance_km: float | None = None):
+        first_photo_url = ""
+        if announcement.photos and len(announcement.photos) > 0:
+            first_photo_url = announcement.photos[0].photo_url
+        elif announcement.real_photo_url:
+            first_photo_url = announcement.real_photo_url
+
         return FeedAnnouncementResponse(
             id=announcement.id,
             title=announcement.edition.book.title,
+            condition=announcement.condition,
             real_photo_url=announcement.real_photo_url,
+            cover_photo=first_photo_url, # Passamos só a string aqui!
             publishYear=announcement.edition.publish_year,
             cep=build_location_label(announcement),
             distanceKm=(

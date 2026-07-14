@@ -7,14 +7,14 @@ abstract class CreationServiceInterface {
   ///
   /// [body] is a map containing the parsed book and announcement data.
   /// [userId] is the unique identifier of the user creating the announcement.
-  Future<bool> createAnnouncement({required Map<String, dynamic> body, required String userId,});
+  Future<String?> createAnnouncement({required Map<String, dynamic> body, required String userId,});
 }
 
 /// Concrete implementation of [CreationServiceInterface] that delegates
 /// the creation request to the [AnnouncementService].
 class CreationServiceAdapter implements CreationServiceInterface {
   @override
-  Future<bool> createAnnouncement({required Map<String, dynamic> body, required String userId,}) {
+  Future<String?> createAnnouncement({required Map<String, dynamic> body, required String userId,}) {
     return AnnouncementService.createAnnouncement(body: body, userId: userId);
   }
 }
@@ -68,7 +68,7 @@ class BookCreationViewModel {
   ///
   /// Returns a Future that resolves to `true` if the announcement was created
   /// successfully, or `false` if an error occurred.
-  Future<bool> submit(String? coverUrl, String userId) async {
+  Future<String?> submit(String? coverUrl, String userId) async {
     // 1. TRADUTORES: Convertem do português da tela para o inglês do Banco
     String mapLanguage() {
       if (language == "Inglês") return "En";
@@ -135,11 +135,18 @@ class BookCreationViewModel {
       "cep": cepController.text.trim().isNotEmpty ? cepController.text.trim() : null,
     };
 
+    // try {
+    //   final sucesso = await service.createAnnouncement(body: novoLivro, userId: userId,);
+    //   return sucesso;
+    // } catch (e) {
+    //   return false;
+    // }
+
     try {
-      final sucesso = await service.createAnnouncement(body: novoLivro, userId: userId,);
-      return sucesso;
+      // Como o service agora devolve o ID (String?), é só retornar direto!
+      return await service.createAnnouncement(body: novoLivro, userId: userId);
     } catch (e) {
-      return false;
+      return null; // Retorna null em caso de erro
     }
   }
 

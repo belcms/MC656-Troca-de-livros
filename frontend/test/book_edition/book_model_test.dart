@@ -2,13 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/book_edition/book_model.dart';
 
 void main() {
-
   /// tests related to conversion from backend json to book object
   group('Book.fromJson', () {
-
     /// verifies if backend enum values are correctly converted to portuguese labels
     test('converte enums do backend para português', () {
-
       final json = {
         "id": "1",
         "title": "1984",
@@ -22,7 +19,7 @@ void main() {
         "description": "livro bom",
         "status": "Available",
         "condition": "Good",
-        "real_photo_url": "https://example.com/book.jpg"
+        "real_photo_url": "https://example.com/book.jpg",
       };
 
       final book = Book.fromJson(json);
@@ -36,12 +33,10 @@ void main() {
       expect(book.language, "Inglês");
       expect(book.status, "Disponível");
       expect(book.condition, "Bom");
-
     });
 
     /// verifies if default values are used when backend data is missing
     test('usa fallback quando campos faltam', () {
-
       final book = Book.fromJson({});
 
       /// checks fallback values
@@ -51,17 +46,13 @@ void main() {
       expect(book.language, "Português");
       expect(book.status, "Disponível");
       expect(book.condition, "Novo");
-
     });
-
   });
 
   /// tests relate to conversion from book object to backend json
   group('Book.toJson', () {
-
     /// verifies if frontend values are correctly converted to backend format
     test('converte valores do front para formato do backend', () {
-
       final book = Book(
         id: "1",
         title: "1984",
@@ -75,7 +66,7 @@ void main() {
         description: "livro bom",
         status: "Disponível",
         condition: "Bom",
-        coverUrl: "url",
+        photoUrls: ["https://example.com/book.jpg"],
       );
 
       final json = book.toJson();
@@ -85,9 +76,6 @@ void main() {
       expect(json["language"], "En");
       expect(json["status"], "Available");
       expect(json["condition"], "Good");
-
     });
-
   });
-
 }

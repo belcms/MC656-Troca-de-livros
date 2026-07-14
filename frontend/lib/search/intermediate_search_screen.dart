@@ -7,6 +7,7 @@ import 'package:frontend/search/final_search_results_screen.dart';
 import 'package:frontend/services/announcement_service.dart';
 import 'package:frontend/search/widgets/custom_search_bar.dart';
 import 'package:frontend/search/widgets/intermediate_post_result_card.dart';
+import 'package:frontend/components/badge_component.dart';
 
 typedef SearchAnnouncementsLoader =
     Future<AnnouncementSearchResponse> Function({
@@ -240,7 +241,8 @@ class _IntermediateSearchScreenState extends State<IntermediateSearchScreen> {
                               title: result.title,
                               publishYear: result.publishYear.toString(),
                               location: result.cep,
-                              photoUrl: result.realPhotoUrl ?? '',
+                              photoUrl: result.coverPhoto ?? '',
+                              condition: result.condition,
                             ),
                           if (_shouldShowMoreButton) ...[
                             const SizedBox(height: 20),

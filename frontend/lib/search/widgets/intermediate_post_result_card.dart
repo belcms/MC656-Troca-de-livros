@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/components/badge_component.dart';
 
 /// Visual card used to display an intermediate search result for a post.
 class IntermediatePostResultCard extends StatelessWidget {
@@ -10,6 +11,7 @@ class IntermediatePostResultCard extends StatelessWidget {
     required this.location,
     required this.photoUrl,
     this.onTap,
+    required this.condition,
   });
 
   /// Book title shown in the card.
@@ -26,6 +28,8 @@ class IntermediatePostResultCard extends StatelessWidget {
 
   /// Optional tap handler used by the future search screen.
   final VoidCallback? onTap;
+
+  final String condition;
 
   @override
   Widget build(BuildContext context) {
@@ -119,12 +123,39 @@ class IntermediatePostResultCard extends StatelessWidget {
                     style: detailStyle,
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    location,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: detailStyle,
+                  // Text(
+                  //   location,
+                  //   maxLines: 1,
+                  //   overflow: TextOverflow.ellipsis,
+                  //   style: detailStyle,
+                  // ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          location,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w400,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 12),
+                  buildBadge(condition, context),
                 ],
               ),
             ),

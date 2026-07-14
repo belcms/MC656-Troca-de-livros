@@ -7,6 +7,8 @@ class AnnouncementSearchItem {
     required this.publishYear,
     required this.cep,
     required this.realPhotoUrl,
+    required this.condition,
+    this.coverPhoto,
   });
 
   /// Announcement identifier.
@@ -24,6 +26,10 @@ class AnnouncementSearchItem {
   /// Cover photo URL.
   final String? realPhotoUrl;
 
+  final String condition;
+
+  final String? coverPhoto;
+
   /// Creates an [AnnouncementSearchItem] from JSON.
   factory AnnouncementSearchItem.fromJson(Map<String, dynamic> json) {
     final publishYearValue = json['publishYear'] ?? json['publish_year'];
@@ -36,6 +42,8 @@ class AnnouncementSearchItem {
           : int.tryParse(publishYearValue.toString()) ?? 0,
       cep: (json['cep'] ?? '') as String,
       realPhotoUrl: json['real_photo_url'] as String?,
+      condition: json['condition'] as String,
+      coverPhoto: json['cover_photo'] as String?
     );
   }
 }
