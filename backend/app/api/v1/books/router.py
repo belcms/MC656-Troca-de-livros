@@ -72,3 +72,16 @@ def create_edition(book_id: str, body: books_schemas.EditionPydantic, db: Sessio
         The created edition payload with HTTP 201 status.
     """
     return books_services.create_edition(book_id, body, db)
+
+@router.get("/editions/{id}")
+def get_edition_details(id: str, db: Session = Depends(get_db)):
+    """Retrieve detailed information for a specific edition.
+
+    Args:
+        id: Edition identifier from path parameters.
+        db: SQLAlchemy session injected by FastAPI.
+
+    Returns:
+        The detailed edition payload.
+    """
+    return books_services.get_edition_details(id, db)
