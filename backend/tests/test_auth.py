@@ -6,7 +6,7 @@ from app.api.v1.auth.router import router as auth_router
 from app.api.v1.users.router import router as users_router
 from app.core.database import get_db
 from app.domain.auth import services as auth_services
-from app.domain.locations.models import location as Location
+from app.domain.locations.models import Location as Location
 from app.domain.users.models import AuthSession, User
 
 

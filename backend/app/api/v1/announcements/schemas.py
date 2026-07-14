@@ -1,7 +1,8 @@
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from app.domain.announcements.models import Condition, Status
+from app.domain.announcements.schemas import PhotoResponse
 
 class TradeAnnouncementBase(BaseModel):
     """
@@ -16,6 +17,7 @@ class TradeAnnouncementBase(BaseModel):
     condition: Condition
     description: Optional[str] = None
     status: Status = Status.Available
+    photos: List[PhotoResponse] = []
 
 class TradeAnnouncementResponse(TradeAnnouncementBase):
     """
@@ -51,6 +53,7 @@ class MyBooksCardResponse(BaseModel):
     real_photo_url: Optional[str]
     status: Status
     location: str = "Localização não informada"
+    cover_photo: str = ""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -73,10 +76,43 @@ class FeedAnnouncementResponse(BaseModel):
     publish_year: int = Field(alias='publishYear')
     cep: str
     real_photo_url: Optional[str] = None
+    condition: Condition
+    cover_photo: str = ""
+    distance_km: Optional[float] = Field(default=None, alias="distanceKm")
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+    )
 
 
+class AnnouncementFilters(BaseModel):
+    """Filters supported by the announcements feed."""
+
+    start_year: int | None = Field(
+        default=None,
+        ge=1000,
+        le=2100,
+    )
+
+    end_year: int | None = Field(
+        default=None,
+        ge=1000,
+        le=2100,
+    )
+
+    conditions: list[str] = Field(
+        default_factory=list,
+    )
+
+    genres: list[str] = Field(
+        default_factory=list,
+    )
+
+    max_distance_km: float | None = Field(
+        default=None,
+        gt=0,
+    )
 class SearchAnnouncementsResponse(BaseModel):
     """Envelope returned by the announcement search endpoint.
 
@@ -88,3 +124,6 @@ class SearchAnnouncementsResponse(BaseModel):
     total: int
 
     model_config = ConfigDict(from_attributes=True)
+
+class DeletePhotoRequest(BaseModel):
+    photo_url: str

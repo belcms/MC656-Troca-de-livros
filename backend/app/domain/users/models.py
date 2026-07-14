@@ -23,7 +23,7 @@ class User(Base):
     cep = synonym("cep_id")
 
     announcements = relationship("TradeAnnouncement", back_populates="user")
-    location = relationship("location", back_populates="users")
+    location = relationship("Location", back_populates="users")
     sessions = relationship("AuthSession", back_populates="user", cascade="all, delete-orphan")
 
 

@@ -22,13 +22,15 @@ def _mock_query_chain_first(db, first_result):
 
 def _mock_feed_chain_all(db, all_result):
     query_obj = db.query.return_value
-    options_obj = query_obj.options.return_value
-    # Adicionando os mocks para o filter e order_by que faltavam:
-    filter_obj = options_obj.filter.return_value
-    order_by_obj = filter_obj.order_by.return_value
-    limit_obj = order_by_obj.limit.return_value
-    offset_obj = limit_obj.offset.return_value
-    offset_obj.all.return_value = all_result
+
+    query_obj.join.return_value = query_obj
+    query_obj.outerjoin.return_value = query_obj
+    query_obj.options.return_value = query_obj
+    query_obj.filter.return_value = query_obj
+    query_obj.order_by.return_value = query_obj
+    query_obj.limit.return_value = query_obj
+    query_obj.offset.return_value = query_obj
+    query_obj.all.return_value = all_result
 
 
 def test_get_announcement_details_success(mocker):
@@ -46,6 +48,7 @@ def test_get_announcement_details_success(mocker):
         publisher="Chilton Books",
         publish_year=1965,
         book=book,
+        number_of_pages=200,
     )
     user = _obj(username="Neymar", cep="87654321")
     ann = _obj(
@@ -59,6 +62,7 @@ def test_get_announcement_details_success(mocker):
         status=Status.Available,
         edition=edition,
         user=user,
+        photos=[],
     )
 
     _mock_query_chain_first(db, ann)
@@ -123,20 +127,33 @@ def test_get_feed_announcements_success(mocker):
     ann1 = _obj(
         id="ann-1",
         real_photo_url="http://img1",
+        condition=Condition.New,
         edition=_obj(
             publish_year=1965,
             book=_obj(title="Dune"),
         ),
-        user=_obj(cep="87654321"),
+        photos=[],
+        user=_obj(
+            cep="87654321",
+            cep_id="87654321",
+        ),
+        cep_id="87654321",
     )
+
     ann2 = _obj(
         id="ann-2",
         real_photo_url=None,
+        condition=Condition.New,
         edition=_obj(
             publish_year=1949,
             book=_obj(title="1984"),
         ),
-        user=_obj(cep="12345678"),
+        photos=[],
+        user=_obj(
+            cep="12345678",
+            cep_id="12345678",
+        ),
+        cep_id="12345678",
     )
 
     _mock_feed_chain_all(db, [ann1, ann2])
@@ -172,6 +189,7 @@ def test_get_feed_announcements_without_location_uses_fallback(mocker):
     announcement = _obj(
         id="ann-without-location",
         real_photo_url=None,
+        condition=Condition.New,
         edition=_obj(
             publish_year=2000,
             book=_obj(title="Book without location"),
@@ -179,6 +197,7 @@ def test_get_feed_announcements_without_location_uses_fallback(mocker):
         user=_obj(cep=None, cep_id=None),
         cep_id=None,
         location=None,
+        photos=[],
     )
     _mock_feed_chain_all(db, [announcement])
 

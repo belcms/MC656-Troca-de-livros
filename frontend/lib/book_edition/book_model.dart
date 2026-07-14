@@ -11,7 +11,9 @@ class Book {
   final String description;
   final String status;
   final String condition;
-  final String? coverUrl;
+
+  final List<String> photoUrls;
+
   final String? cep_id;
 
   Book({
@@ -27,7 +29,8 @@ class Book {
     required this.description,
     required this.status,
     required this.condition,
-    this.coverUrl,
+    this.photoUrls =
+        const [], // Inicializa sempre como lista vazia por segurança
     this.cep_id,
   });
 
@@ -194,6 +197,16 @@ class Book {
         ? json['edition'] as Map<String, dynamic>
         : <String, dynamic>{};
 
+    List<String> extractedPhotos = [];
+    if (json['photos'] != null && json['photos'] is List) {
+      // Se o backend mandar uma lista chamada 'photos'
+      extractedPhotos = List<String>.from(json['photos']);
+    } else if (json['real_photo_url'] != null &&
+        json['real_photo_url'].toString().isNotEmpty) {
+      // Fallback: se o backend mandar apenas o padrão antigo, transformamos em uma lista de 1 item
+      extractedPhotos = [json['real_photo_url'].toString()];
+    }
+
     return Book(
       id: (json['id'] ?? '').toString(),
       title: (json['title'] ?? book['title'] ?? '').toString(),
@@ -201,15 +214,22 @@ class Book {
       publisher: (json['publisher'] ?? edition['publisher'] ?? '').toString(),
       genre: _mapGenreFromBack(json['genre'] ?? book['genre']),
       language: _mapLanguageFromBack(json['language'] ?? edition['language']),
-      year: (json['publishYear'] ?? json['year'] ?? edition['publish_year'] ?? '')
-          .toString(),
-      pages: (json['pages'] ?? edition['number_of_pages'] ?? '').toString(),
+      year:
+          (json['publishYear'] ?? json['year'] ?? edition['publish_year'] ?? '')
+              .toString(),
+      pages:
+          (json['pages'] ??
+                  edition['pages'] ??
+                  book['number_of_pages'] ??
+                  edition['number_of_pages'] ??
+                  '')
+              .toString(),
       synopsis: (json['synopsis'] ?? book['synopsis'] ?? '').toString(),
       description: (json['description'] ?? '').toString(),
       status: _mapStatusFromBack(json['status']),
       condition: _mapConditionFromBack(json['condition']),
-      coverUrl: json['real_photo_url']?.toString(),
-      cep_id: json['cep_id']?.toString()
+      photoUrls: extractedPhotos, // Atribui a lista tratada aqui
+      cep_id: json['cep_id']?.toString(),
     );
   }
 
@@ -228,8 +248,11 @@ class Book {
       'description': description,
       'status': _mapStatusToBack(status),
       'condition': _mapConditionToBack(condition),
-      'real_photo_url': coverUrl,
-      'cep_id': cep_id
+
+      'photos': photoUrls,
+      'real_photo_url': photoUrls.isNotEmpty ? photoUrls.first : null,
+
+      'cep_id': cep_id,
     };
   }
 }

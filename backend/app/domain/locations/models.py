@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 
-class location(Base):
+class Location(Base):
     __tablename__ = "locations"
 
     cep = Column(String(8), primary_key=True)

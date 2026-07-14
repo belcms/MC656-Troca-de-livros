@@ -19,7 +19,7 @@ def test_get_user_announcements_returns_only_user_data(db_session, seed_announce
     }
     assert all(
         set(item.keys())
-        == {"id", "title", "publish_year", "real_photo_url", "status", "location"}
+        == {"id", "title", "publish_year", "real_photo_url", "status", "location", "cover_photo"}
         for item in result
     )
     assert all(item["location"] == "Campinas - SP" for item in result)

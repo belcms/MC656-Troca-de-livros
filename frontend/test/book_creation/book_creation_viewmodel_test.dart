@@ -3,13 +3,15 @@ import 'package:frontend/book_creation/book_creation_viewmodel.dart';
 
 // 1. Criamos um serviço Falso que intercepta os dados em vez de mandar para a API
 class FakeCreationService implements CreationServiceInterface {
-  bool createResponse = true;
+  String? createResponse = 'announcement-123';
   Map<String, dynamic>? lastBody;
 
   @override
-  Future<bool> createAnnouncement({required Map<String, dynamic> body}) async {
+  Future<String?> createAnnouncement({
+    required Map<String, dynamic> body,
+  }) async {
     lastBody = body;
-    return createResponse; // Simula que a API deu 201 Created
+    return createResponse;
   }
 }
 
@@ -17,6 +19,9 @@ void main() {
   group('BookCreationViewModel', () {
     test('submit traduz Enums e converte Ints para o backend', () async {
       final fakeService = FakeCreationService();
+      // Se você quiser garantir um ID específico no teste, pode setar aqui:
+      // fakeService.createResponse = "meu_id_123";
+
       final vm = BookCreationViewModel(service: fakeService);
 
       // Preenchendo a tela como se fosse um usuário real
@@ -35,10 +40,10 @@ void main() {
       vm.condition = "Muito bom";
 
       // Disparando a função do botão
-      final ok = await vm.submit("http://minhacapa.com/duna.jpg");
+      final announcementId = await vm.submit("http://minhacapa.com/duna.jpg");
 
       // Verificações
-      expect(ok, true, reason: 'O submit deveria retornar sucesso');
+      expect(announcementId, 'announcement-123');
 
       // Valida se os campos de texto foram passados corretamente
       expect(fakeService.lastBody?["title"], "Duna");
@@ -66,11 +71,11 @@ void main() {
       final vm = BookCreationViewModel(service: fakeService);
 
       // Dispara o submit com a foto nula
-      final ok = await vm.submit(null);
+      final announcementId = await vm.submit(null);
 
-      expect(ok, true);
       // O ViewModel deveria enviar uma String vazia "" quando a imagem é nula
       expect(fakeService.lastBody?["coverUrl"], "");
+      expect(announcementId, 'announcement-123');
 
       vm.dispose();
     });

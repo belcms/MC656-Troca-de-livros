@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'book_edition_viewmodel.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:image_picker/image_picker.dart';
+import 'book_edition_viewmodel.dart';
 import '../services/location_service.dart';
+import 'package:frontend/components/photo_carousel_picker.dart';
+import 'package:frontend/services/upload_service.dart';
 
 class BookEditionPage extends StatefulWidget {
   final String id;
@@ -21,8 +25,11 @@ class _BookEditionPageState extends State<BookEditionPage> {
   bool isSaving = false;
   String _locationInfo = "Buscando localização...";
 
-  /// called when the screen is created
-  /// loads book data from backend using the id
+  // 1. Variáveis para gerenciamento de fotos (URLs do servidor e XFiles locais)
+  final ImagePicker _picker = ImagePicker();
+  List<dynamic> _selectedImages = [];
+  List<String> _deletedPhotosUrls = [];
+
   @override
   void initState() {
     super.initState();
@@ -30,39 +37,79 @@ class _BookEditionPageState extends State<BookEditionPage> {
     _loadBook();
   }
 
-  // change the color of book status
+  // Define a cor baseada no status do livro
   Color _statusColor(String value) {
     switch (value) {
       case "Disponível":
         return const Color(0xFF24523C);
-
       case "Negociando":
         return const Color(0xFFDB8F44);
-
       case "Trocado":
         return const Color(0xFF7B2518);
-
       default:
         return const Color(0xFF24523C);
     }
   }
 
-  /// fetches book data from server
-  /// updates loading and error states
+  // Carrega os dados iniciais do livro e as fotos que já estão no servidor
   Future<void> _loadBook() async {
     final success = await vm.loadFromServer(widget.id);
 
     if (!mounted) return;
-    if(success && vm.cepController.text.isNotEmpty) {
+    if (success && vm.cepController.text.isNotEmpty) {
       await _buscarLocalizacao(vm.cepController.text);
     }
 
     setState(() {
       isLoading = false;
       hasError = !success;
+
+      // Popula o carrossel com as fotos que já existem no backend
+      if (vm.photoUrls.isNotEmpty) {
+        // Passa todas as fotos que vieram do banco para o seu carrossel
+        _selectedImages = List.from(vm.photoUrls);
+      }
     });
   }
 
+  // Funções do Carrossel de Imagens
+  Future<void> _pickImages() async {
+    if (_selectedImages.length >= 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Você já adicionou o limite máximo de 5 fotos.'),
+        ),
+      );
+      return;
+    }
+
+    final List<XFile> images = await _picker.pickMultiImage(imageQuality: 80);
+
+    if (images.isNotEmpty) {
+      setState(() {
+        for (var img in images) {
+          if (_selectedImages.length < 5) {
+            _selectedImages.add(img);
+          }
+        }
+      });
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      final itemRemovido = _selectedImages[index];
+
+      // Se for uma String (URL que veio do banco), guarda na lista de exclusão!
+      if (itemRemovido is String) {
+        _deletedPhotosUrls.add(itemRemovido);
+      }
+
+      _selectedImages.removeAt(index);
+    });
+  }
+
+  // Busca e exibe o endereço baseado no CEP
   Future<void> _buscarLocalizacao(String cep) async {
     final cleanCep = cep.replaceAll(RegExp(r'[^0-9]'), '');
     if (cleanCep.length != 8) return;
@@ -77,26 +124,26 @@ class _BookEditionPageState extends State<BookEditionPage> {
     setState(() {
       if (loc != null) {
         final district = loc['district'] ?? "";
-        _locationInfo = "${loc['city']} - ${loc['state']}" + (district.isNotEmpty ? ", $district" : "");
+        _locationInfo =
+            "${loc['city']} - ${loc['state']}" +
+            (district.isNotEmpty ? ", $district" : "");
       } else {
         _locationInfo = "CEP não encontrado ou inválido.";
       }
     });
   }
 
-
+  // Mostra a roleta para selecionar o ano
   void _mostrarRoletaDeAno(TextEditingController controller) {
-    // Gera uma lista de anos: do ano atual descendo até 1900
     final int anoAtual = DateTime.now().year;
     final List<int> anos = List.generate(
       anoAtual - 1900 + 1,
       (index) => anoAtual - index,
     );
 
-    // Tenta pegar o ano que já está no controller, ou usa o ano atual como padrão
     int anoSelecionado = int.tryParse(controller.text) ?? anoAtual;
     int indexInicial = anos.indexOf(anoSelecionado);
-    if (indexInicial == -1) indexInicial = 0; // fallback de segurança
+    if (indexInicial == -1) indexInicial = 0;
 
     showModalBottomSheet(
       context: context,
@@ -106,7 +153,6 @@ class _BookEditionPageState extends State<BookEditionPage> {
           height: 250,
           child: Column(
             children: [
-              // Barra superior com o botão de "Concluído"
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -119,16 +165,14 @@ class _BookEditionPageState extends State<BookEditionPage> {
                   ),
                 ],
               ),
-              // A Roleta em si
               Expanded(
                 child: CupertinoPicker(
-                  itemExtent: 40.0, // Altura de cada item na roleta
+                  itemExtent: 40.0,
                   scrollController: FixedExtentScrollController(
                     initialItem: indexInicial,
                   ),
                   onSelectedItemChanged: (int index) {
                     setState(() {
-                      // Atualiza o TextField automaticamente enquanto gira a roleta
                       controller.text = anos[index].toString();
                     });
                   },
@@ -149,41 +193,17 @@ class _BookEditionPageState extends State<BookEditionPage> {
     );
   }
 
-  /// sends updated book information to backend
-  /// shows feedback message to the user
+  // Salva o livro editado no backend
   Future<void> _saveBook() async {
-    // Validações básicas (exemplo: título e autor não podem ser vazios)
-    if (vm.titleController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('O título é obrigatório.')));
-      return;
-    }
-    if (vm.authorController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('O autor é obrigatório.')));
-      return;
-    }
-    if (vm.publisherController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('A editora é obrigatória.')));
-      return;
-    }
-    if (vm.yearController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('O ano é obrigatório.')));
-      return;
-    }
-    if (vm.pagesController.text.isEmpty) {
+    if (_selectedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('O número de páginas é obrigatório.')),
+        const SnackBar(
+          content: Text('É obrigatório manter pelo menos uma foto do livro.'),
+        ),
       );
       return;
     }
-    
+
     final cleanCep = vm.cepController.text.replaceAll(RegExp(r'[^0-9]'), '');
     if (vm.cepController.text.trim().isNotEmpty) {
       if (cleanCep.length != 8) {
@@ -206,7 +226,36 @@ class _BookEditionPageState extends State<BookEditionPage> {
       isSaving = true;
     });
 
+    vm.photoUrls = _selectedImages.whereType<String>().toList();
+
+    // 1. Atualiza os dados do texto no backend
     final success = await vm.submit(widget.id);
+
+    // 2. Upload das NOVAS fotos
+    bool uploadSuccess = true;
+    if (success) {
+      final uploadService = UploadService();
+
+      for (var image in _selectedImages) {
+        if (image is XFile) {
+          // Só faz upload dos arquivos novos (XFile)
+          bool result = await uploadService.uploadBookPhoto(widget.id, image);
+          if (!result) {
+            uploadSuccess = false; // Marca que deu erro em alguma foto
+          }
+        }
+      }
+
+      for (var urlParaDeletar in _deletedPhotosUrls) {
+        bool result = await uploadService.deleteBookPhoto(
+          widget.id,
+          urlParaDeletar,
+        );
+        if (!result) {
+          uploadSuccess = false; // Se der erro, avisa a tela!
+        }
+      }
+    }
 
     if (!mounted) return;
 
@@ -214,30 +263,31 @@ class _BookEditionPageState extends State<BookEditionPage> {
       isSaving = false;
     });
 
-    if (success) {
+    if (success && uploadSuccess) {
       Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível atualizar o livro.')),
+        const SnackBar(
+          content: Text(
+            'Salvo com ressalvas. Houve falha ao atualizar algumas fotos.',
+          ),
+        ),
       );
     }
   }
 
-  /// disposes viewmodel to avoid memory leak
   @override
   void dispose() {
     vm.dispose();
     super.dispose();
   }
 
-  /// builds main structure of the page
-  /// defines background and app bar
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF6EA),
       appBar: AppBar(
-        title: const Text("Editar livro"),
+        title: const Text("Editar anúncio"),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -245,8 +295,6 @@ class _BookEditionPageState extends State<BookEditionPage> {
     );
   }
 
-  /// decides which content should be shown
-  /// loading spinner, error state or form
   Widget _buildBody() {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -285,52 +333,16 @@ class _BookEditionPageState extends State<BookEditionPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// book cover preview and edit button
-          Center(
-            child: Column(
-              children: [
-                Container(
-                  width: 120,
-                  height: 170,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black12),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-
-                  /// loads image from url if available
-                  /// fallback icon if no image
-                  child: vm.coverUrl != null && vm.coverUrl!.isNotEmpty
-                      ? Image.network(
-                          vm.coverUrl!,
-                          fit: BoxFit.cover,
-
-                          /// handles image loading error
-                          errorBuilder: (context, error, stackTrace) {
-                            print("ERRO IMAGEM: $error");
-                            return const Center(
-                              child: Text("Erro ao carregar"),
-                            );
-                          },
-                        )
-                      : const Icon(Icons.book, size: 42),
-                ),
-                const SizedBox(height: 12),
-
-                /// button to edit cover image
-                OutlinedButton(
-                  onPressed: () {},
-                  child: const Text('Editar foto da capa'),
-                ),
-              ],
-            ),
+          /// Galeria de Fotos Editável
+          PhotoCarouselPicker(
+            images: _selectedImages,
+            onAddImage: _pickImages,
+            onRemoveImage: _removeImage,
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-
-          /// book trade status selector
+          /// STATUS
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -341,7 +353,8 @@ class _BookEditionPageState extends State<BookEditionPage> {
           ),
 
           const SizedBox(height: 20),
-        /// LOCALIZAÇÃO (NOVO BLOCO VISUAL!)
+
+          /// LOCALIZAÇÃO
           const Text(
             "Localização",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -354,12 +367,12 @@ class _BookEditionPageState extends State<BookEditionPage> {
                 TextField(
                   controller: vm.cepController,
                   keyboardType: TextInputType.number,
-                  maxLength: 8, // Limita o tamanho do CEP
+                  maxLength: 8,
                   decoration: InputDecoration(
                     hintText: "CEP",
                     filled: true,
                     fillColor: const Color(0xFFF5F5F5),
-                    counterText: "", // Esconde o contador 0/8
+                    counterText: "",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -379,7 +392,10 @@ class _BookEditionPageState extends State<BookEditionPage> {
                     Expanded(
                       child: Text(
                         _locationInfo,
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   ],
@@ -389,26 +405,21 @@ class _BookEditionPageState extends State<BookEditionPage> {
           ),
 
           const SizedBox(height: 20),
-          /// book basic information section
+
+          /// INFORMAÇÕES BÁSICAS
           const Text(
             "Sobre o livro",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-
           const SizedBox(height: 10),
-
-          /// card groups related inputs visually
           _card(
             Column(
               children: [
-                /// basic metadata inputs
                 _input(vm.titleController, "Título"),
                 _input(vm.authorController, "Autor"),
                 _input(vm.publisherController, "Editora"),
-
                 Row(
                   children: [
-                    /// dropdown for genre selection
                     Expanded(
                       child: _dropdown(
                         value: vm.genre,
@@ -431,10 +442,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
                         },
                       ),
                     ),
-
                     const SizedBox(width: 10),
-
-                    /// dropdown for language selection
                     Expanded(
                       child: _dropdown(
                         value: vm.language,
@@ -456,19 +464,13 @@ class _BookEditionPageState extends State<BookEditionPage> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 10),
-
                 Row(
                   children: [
-                    /// publication year input
                     Expanded(
                       child: _inputAnoSelecionavel(vm.yearController, "Ano"),
                     ),
-
                     const SizedBox(width: 10),
-
-                    /// number of pages input
                     Expanded(
                       child: _input(
                         vm.pagesController,
@@ -478,10 +480,7 @@ class _BookEditionPageState extends State<BookEditionPage> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 10),
-
-                /// book synopsis multiline field
                 _multiline(vm.synopsisController, "Sinopse"),
               ],
             ),
@@ -489,42 +488,33 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
           const SizedBox(height: 20),
 
-          /// book physical condition section
+          /// CONDIÇÃO
           const Text(
             "Condição",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-
           const SizedBox(height: 10),
-
           _card(
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// selectable radio options
                 _condition("Novo"),
                 _condition("Muito bom"),
                 _condition("Bom"),
                 _condition("Desgastado"),
-
                 const SizedBox(height: 6),
-
-                /// explanatory texts for each condition
                 conditionText(
                   "Novo",
                   "Nunca usado, sem marcas, sem dobras, sem grifos. Estado perfeito.",
                 ),
-
                 conditionText(
                   "Muito bom",
                   "Pouco usado, pode ter sinais mínimos de manuseio, sem rasgos ou danos relevantes.",
                 ),
-
                 conditionText(
                   "Bom",
                   "Sinais visíveis de uso, pode ter pequenos grifos ou leve desgaste na capa, totalmente legível.",
                 ),
-
                 conditionText(
                   "Desgastado",
                   "Bastante usado, pode ter manchas, páginas amareladas ou dobras, ainda possível de ler.",
@@ -535,50 +525,70 @@ class _BookEditionPageState extends State<BookEditionPage> {
 
           const SizedBox(height: 20),
 
-          /// additional description section
+          /// DESCRIÇÃO ADICIONAL
           const Text(
             "Descrição",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-
           const SizedBox(height: 10),
-
-          _card(_multiline(vm.descriptionController, "Descrição")),
+          _card(
+            _multiline(vm.descriptionController, "Sua descrição do anúncio..."),
+          ),
 
           const SizedBox(height: 30),
 
-          /// save button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF416956),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
+          /// BOTÃO DE SALVAR (Com validação em tempo real)
+          ListenableBuilder(
+            listenable: Listenable.merge([
+              vm.titleController,
+              vm.authorController,
+              vm.publisherController,
+              vm.yearController,
+              vm.pagesController,
+            ]),
+            builder: (context, child) {
+              final bool isFormValid =
+                  _selectedImages.isNotEmpty &&
+                  vm.titleController.text.trim().isNotEmpty &&
+                  vm.authorController.text.trim().isNotEmpty &&
+                  vm.publisherController.text.trim().isNotEmpty &&
+                  vm.yearController.text.trim().isNotEmpty &&
+                  vm.pagesController.text.trim().isNotEmpty;
 
-              onPressed: isSaving ? null : _saveBook,
+              final bool canSubmit = isFormValid && !isSaving;
 
-              child: isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text("Editar anúncio"),
-            ),
+              return SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF416956),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey[400],
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  onPressed: canSubmit ? _saveBook : null,
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text("Editar anúncio"),
+                ),
+              );
+            },
           ),
 
           const SizedBox(height: 12),
 
-          // cancel button
+          /// BOTÃO CANCELAR
           SizedBox(
             width: double.infinity,
             child: TextButton(
-              onPressed: () {
-                Navigator.pop(context, false);
-              },
-
+              onPressed: isSaving ? null : () => Navigator.pop(context, false),
               child: const Text(
                 "Cancelar",
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
@@ -590,7 +600,8 @@ class _BookEditionPageState extends State<BookEditionPage> {
     );
   }
 
-  /// chip used to select announcement status
+  // ==================== COMPONENTES AUXILIARES ==================== //
+
   Widget _statusChip(String value) {
     final color = _statusColor(value);
     final isSelected = vm.status == value;
@@ -599,12 +610,10 @@ class _BookEditionPageState extends State<BookEditionPage> {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: ChoiceChip(
         checkmarkColor: Colors.white,
-
         label: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (isSelected) const SizedBox(width: 4),
-
             Text(
               value,
               style: TextStyle(
@@ -614,15 +623,10 @@ class _BookEditionPageState extends State<BookEditionPage> {
             ),
           ],
         ),
-
         selected: isSelected,
-
         selectedColor: color,
-
         backgroundColor: Colors.transparent,
-
         shape: StadiumBorder(side: BorderSide(color: color)),
-
         onSelected: (_) {
           setState(() {
             vm.setStatus(value);
@@ -632,25 +636,20 @@ class _BookEditionPageState extends State<BookEditionPage> {
     );
   }
 
-  /// radio option for book condition
   Widget _condition(String value) {
     return RadioListTile<String>(
       value: value,
       groupValue: vm.condition,
       contentPadding: EdgeInsets.zero,
-
-      /// updates selected condition
       onChanged: (v) {
         setState(() {
           vm.setCondition(v!);
         });
       },
-
       title: Text(value),
     );
   }
 
-  /// reusable text input field
   Widget _input(
     TextEditingController controller,
     String hint, {
@@ -679,11 +678,8 @@ class _BookEditionPageState extends State<BookEditionPage> {
       padding: const EdgeInsets.only(bottom: 10),
       child: TextField(
         controller: controller,
-        readOnly: true, // OBRIGATÓRIO: Impede que o teclado suba!
-        onTap: () {
-          // Quando o usuário tocar no campo, abre a nossa roleta
-          _mostrarRoletaDeAno(controller);
-        },
+        readOnly: true,
+        onTap: () => _mostrarRoletaDeAno(controller),
         decoration: InputDecoration(
           hintText: hint,
           filled: true,
@@ -692,7 +688,6 @@ class _BookEditionPageState extends State<BookEditionPage> {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
-          // Um ícone de calendário ou seta indica pro usuário que é um menu
           suffixIcon: const Icon(
             Icons.calendar_today,
             color: Colors.grey,
@@ -703,17 +698,14 @@ class _BookEditionPageState extends State<BookEditionPage> {
     );
   }
 
-  /// multiline text field for longer content
   Widget _multiline(TextEditingController controller, String hint) {
     return TextField(
       controller: controller,
       maxLines: 4,
-
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
         fillColor: const Color(0xFFF5F5F5),
-
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -722,7 +714,6 @@ class _BookEditionPageState extends State<BookEditionPage> {
     );
   }
 
-  /// reusable dropdown component
   Widget _dropdown({
     required String value,
     required String hint,
@@ -731,65 +722,50 @@ class _BookEditionPageState extends State<BookEditionPage> {
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
-
       decoration: BoxDecoration(
         color: const Color(0xFFF5F5F5),
         borderRadius: BorderRadius.circular(12),
       ),
-
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          /// ensures value is always valid
           value: items.contains(value) ? value : items.first,
-
           hint: Text(hint),
           isExpanded: true,
-
           items: items
               .map((e) => DropdownMenuItem<String>(value: e, child: Text(e)))
               .toList(),
-
           onChanged: onChanged,
         ),
       ),
     );
   }
 
-  /// styled container used as visual group
   Widget _card(Widget child) {
     return Container(
       padding: const EdgeInsets.all(16),
-
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
         ],
       ),
-
-      child: Material(type: MaterialType.transparency, child: child),
+      child: Material(color: Colors.transparent, child: child),
     );
   }
 
-  /// helper text explaining each condition option
   Widget conditionText(String title, String description) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-
       child: Text.rich(
         TextSpan(
           children: [
             TextSpan(
               text: "$title: ",
-
               style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
             ),
-
             TextSpan(
               text: description,
-
               style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w300),
             ),
           ],

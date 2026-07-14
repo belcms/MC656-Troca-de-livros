@@ -46,6 +46,7 @@ def test_feed_schema_accepts_alias_publish_year():
         publishYear=1965,
         cep="87654321",
         real_photo_url=None,
+        condition="New",
     )
     dumped = model.model_dump(by_alias=True)
     assert dumped["publishYear"] == 1965

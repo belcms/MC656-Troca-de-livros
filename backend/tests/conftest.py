@@ -24,7 +24,7 @@ from app.api.v1.books.router import router as books_router
 from app.core.database import Base, get_db
 from app.domain.announcements.models import Condition, Status, TradeAnnouncement
 from app.domain.books.models import Book, Edition, Genre, Language
-from app.domain.locations.models import location as Location
+from app.domain.locations.models import Location as Location
 from app.domain.users.models import User
 from app.domain.auth.security import get_current_user
 

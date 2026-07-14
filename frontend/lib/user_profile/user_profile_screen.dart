@@ -175,7 +175,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       title: book.title,
                       publishYear: book.publishYear,
                       photo:
-                          book.realPhotoUrl ??
+                          book.coverPhoto ??
                           'https://via.placeholder.com/300x400',
                       status: book.status,
                       location: book.location,

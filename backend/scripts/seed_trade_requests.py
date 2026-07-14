@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from app.core.database import Base, SessionLocal, engine
@@ -13,6 +13,7 @@ from app.domain.books.models import (
     Genre,
     Language,
 )
+from app.domain.locations.models import Location
 from app.domain.offer.models import (
     Offer,
     OfferedAnnouncements,
@@ -63,7 +64,7 @@ def create_announcement(
         real_photo_url=None,
         condition=condition,
         description=description,
-        create_date=datetime.utcnow(),
+        create_date=datetime.now(UTC),
         status=Status.Available,
     )
 
@@ -78,6 +79,47 @@ def main() -> None:
         suffix = uuid4().hex[:8]
 
         # ---------------------------------------------------------
+        # LOCALIZAÇÕES
+        # ---------------------------------------------------------
+
+        locations = [
+            Location(
+                cep="13083852",
+                city="Campinas",
+                state="SP",
+                country="Brasil",
+                district="Barão Geraldo",
+                lat=-22.8173,
+                long=-47.0691,
+            ),
+            Location(
+                cep="11010000",
+                city="Santos",
+                state="SP",
+                country="Brasil",
+                district="Centro",
+                lat=-23.9338,
+                long=-46.3280,
+            ),
+            Location(
+                cep="01001000",
+                city="São Paulo",
+                state="SP",
+                country="Brasil",
+                district="Sé",
+                lat=-23.5505,
+                long=-46.6333,
+            ),
+        ]
+
+        for location in locations:
+            if db.get(Location, location.cep) is None:
+                db.add(location)
+
+        # Os CEPs precisam existir antes de serem referenciados pelos usuários.
+        db.flush()
+
+        # ---------------------------------------------------------
         # USUÁRIOS
         # ---------------------------------------------------------
 
@@ -86,7 +128,7 @@ def main() -> None:
             username=f"victor_owner_{suffix}",
             email=f"victor_owner_{suffix}@example.com",
             full_name="Victor Dono dos Anúncios",
-            cep="13083-852",
+            cep="13083852",
         )
 
         requester_one = User(
@@ -94,7 +136,7 @@ def main() -> None:
             username=f"interessado_um_{suffix}",
             email=f"interessado_um_{suffix}@example.com",
             full_name="Usuário Interessado Um",
-            cep="11010-000",
+            cep="11010000",
         )
 
         requester_two = User(
@@ -102,7 +144,7 @@ def main() -> None:
             username=f"interessado_dois_{suffix}",
             email=f"interessado_dois_{suffix}@example.com",
             full_name="Usuário Interessado Dois",
-            cep="01001-000",
+            cep="01001000",
         )
 
         db.add_all([owner, requester_one, requester_two])
