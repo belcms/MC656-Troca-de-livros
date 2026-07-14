@@ -27,6 +27,11 @@ def get_announcement_details(db: Session, id: str):
 
     announcements = (
         db.query(models.TradeAnnouncement)
+        .options(
+            joinedload(models.TradeAnnouncement.edition).joinedload(Edition.book),
+            joinedload(models.TradeAnnouncement.user),
+            joinedload(models.TradeAnnouncement.photos)
+        )
         .filter(models.TradeAnnouncement.id == id)
         .first()
     )
@@ -61,7 +66,10 @@ def get_announcement_details(db: Session, id: str):
             detail="User information is missing",
         )
 
-    text = {
+    return _map_announcement_to_dict(announcements, edition, book, user)
+
+def _map_announcement_to_dict(announcements, edition, book, user):
+    return {
         "id": announcements.id,
         "user_id": announcements.user_id,
         "user_name": user.username,
@@ -88,7 +96,192 @@ def get_announcement_details(db: Session, id: str):
         },
     }
 
-    return text
+def _has_coordinates(location) -> bool:
+    return (
+        location is not None
+        and getattr(location, "lat", None) is not None
+        and getattr(location, "long", None) is not None
+    )
+
+def _get_announcement_location(announcement):
+    announcement_location = getattr(
+        announcement,
+        "location",
+        None,
+    )
+
+    if _has_coordinates(announcement_location):
+        return announcement_location
+
+    if (
+        getattr(announcement, "user", None) is not None
+        and _has_coordinates(
+            getattr(announcement.user, "location", None)
+        )
+    ):
+        return announcement.user.location
+
+    return announcement_location
+
+def _build_location_label(announcement):
+    location = getattr(
+        announcement,
+        "location",
+        None,
+    )
+
+    if location is None and getattr(announcement, "user", None):
+        location = getattr(
+            announcement.user,
+            "location",
+            None,
+        )
+
+    if location is not None:
+        city = getattr(location, "city", None)
+        state = getattr(location, "state", None)
+
+        if city and state:
+            return f"{city} - {state}"
+
+        if city:
+            return city
+
+        if state:
+            return state
+
+    return (
+        getattr(announcement, "cep_id", None)
+        or getattr(announcement.user, "cep_id", None)
+        or getattr(announcement.user, "cep", None)
+        or "Localização não informada"
+    )
+
+def _build_feed_response(announcement, distance_km: float | None = None):
+    first_photo_url = ""
+    if announcement.photos and len(announcement.photos) > 0:
+        first_photo_url = announcement.photos[0].photo_url
+    elif announcement.real_photo_url:
+        first_photo_url = announcement.real_photo_url
+
+    return FeedAnnouncementResponse(
+        id=announcement.id,
+        title=announcement.edition.book.title,
+        condition=announcement.condition,
+        real_photo_url=announcement.real_photo_url,
+        cover_photo=first_photo_url, # Passamos só a string aqui!
+        publishYear=announcement.edition.publish_year,
+        cep=_build_location_label(announcement),
+        distanceKm=(
+            round(distance_km, 1)
+            if distance_km is not None
+            else None
+        ),
+    )
+
+
+def _calculate_distance_km(
+    origin_location,
+    target_location,
+) -> float:
+    earth_radius_km = 6371.0
+
+    origin_lat = math.radians(float(origin_location.lat))
+    origin_long = math.radians(float(origin_location.long))
+    target_lat = math.radians(float(target_location.lat))
+    target_long = math.radians(float(target_location.long))
+
+    delta_lat = target_lat - origin_lat
+    delta_long = target_long - origin_long
+
+    haversine_value = (
+        math.sin(delta_lat / 2) ** 2
+        + math.cos(origin_lat)
+        * math.cos(target_lat)
+        * math.sin(delta_long / 2) ** 2
+    )
+
+    angular_distance = 2 * math.atan2(
+        math.sqrt(haversine_value),
+        math.sqrt(1 - haversine_value),
+    )
+
+    return earth_radius_km * angular_distance
+
+
+
+def _build_feed_base_query(db, current_user_id, conditions, genres, start_year, end_year):
+    base_query = (
+        db.query(models.TradeAnnouncement)
+        .join(Edition, models.TradeAnnouncement.edition_id == Edition.id)
+        .join(Book, Edition.book_id == Book.id)
+        .options(
+            joinedload(models.TradeAnnouncement.edition).joinedload(Edition.book),
+            joinedload(models.TradeAnnouncement.user).joinedload(User.location),
+            joinedload(models.TradeAnnouncement.location),
+            joinedload(models.TradeAnnouncement.photos)
+        )
+        .filter(models.TradeAnnouncement.status == Status.Available)
+    )
+
+    if current_user_id:
+        base_query = base_query.filter(models.TradeAnnouncement.user_id != current_user_id)
+
+    if conditions:
+        mapped_conditions = [map_condition(condition) for condition in conditions]
+        base_query = base_query.filter(models.TradeAnnouncement.condition.in_(mapped_conditions))
+
+    if genres:
+        mapped_genres = [map_genre(genre) for genre in genres]
+        base_query = base_query.filter(Book.genre.in_(mapped_genres))
+
+    if start_year is not None:
+        base_query = base_query.filter(Edition.publish_year >= start_year)
+
+    if end_year is not None:
+        base_query = base_query.filter(Edition.publish_year <= end_year)
+
+    return base_query
+
+def _process_distance_and_paginate(
+    announcements, user_location, distance_filter_enabled, max_distance_km, distance_sort_enabled, offset, limit
+):
+    announcements_with_distance = []
+    for announcement in announcements:
+        announcement_location = _get_announcement_location(announcement)
+        distance_km = None
+
+        if _has_coordinates(announcement_location):
+            distance_km = _calculate_distance_km(
+                origin_location=user_location,
+                target_location=announcement_location,
+            )
+
+        if distance_filter_enabled:
+            if distance_km is None or distance_km > max_distance_km:
+                continue
+
+        announcements_with_distance.append({
+            "announcement": announcement,
+            "distance_km": distance_km,
+        })
+
+    if distance_sort_enabled:
+        announcements_with_distance.sort(
+            key=lambda item: (
+                item["distance_km"] is None,
+                item["distance_km"] if item["distance_km"] is not None else float("inf"),
+                -item["announcement"].create_date.timestamp() if item["announcement"].create_date is not None else 0,
+            )
+        )
+    else:
+        announcements_with_distance.sort(
+            key=lambda item: (
+                -item["announcement"].create_date.timestamp() if item["announcement"].create_date is not None else 0,
+            )
+        )
+
+    return announcements_with_distance[offset : offset + limit]
 
 def get_feed_announcements(
     db: Session,
@@ -104,29 +297,12 @@ def get_feed_announcements(
 ):
     """
     Retrieves a paginated list of available trade announcements for the feed.
-
-    Supports filtering by:
-    - publication year range;
-    - conservation condition;
-    - book genre;
-    - maximum distance from current user.
-
-    Distance behavior:
-    - if max_distance_km is provided, announcements farther than this limit
-      are removed;
-    - if sort_by_distance is true, announcements are ordered from nearest
-      to farthest;
-    - if sort_by_distance is false but max_distance_km is provided, the
-      announcements are filtered by distance but remain ordered by creation
-      date;
-    - announcements without calculable distance are kept only when there is
-      no distance filter.
     """
 
     distance_filter_enabled = max_distance_km is not None
     distance_sort_enabled = sort_by_distance is True
 
-    if max_distance_km is not None and max_distance_km <= 0:
+    if distance_filter_enabled and max_distance_km <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="max_distance_km deve ser maior que zero.",
@@ -138,198 +314,20 @@ def get_feed_announcements(
             detail="Filtro de distância requer current_user_id.",
         )
 
-    base_query = (
-        db.query(models.TradeAnnouncement)
-        .join(
-            Edition,
-            models.TradeAnnouncement.edition_id == Edition.id,
-        )
-        .join(
-            Book,
-            Edition.book_id == Book.id,
-        )
-        .options(
-            joinedload(
-                models.TradeAnnouncement.edition
-            ).joinedload(Edition.book),
-            joinedload(models.TradeAnnouncement.user).joinedload(
-                User.location
-            ),
-            joinedload(models.TradeAnnouncement.location),
-            joinedload(models.TradeAnnouncement.photos)
-        )
-        .filter(
-            models.TradeAnnouncement.status == Status.Available
-        )
+    base_query = _build_feed_base_query(
+        db, current_user_id, conditions, genres, start_year, end_year
     )
 
-    if current_user_id:
-        base_query = base_query.filter(
-            models.TradeAnnouncement.user_id != current_user_id
-        )
-
-    if conditions:
-        mapped_conditions = [
-            map_condition(condition)
-            for condition in conditions
-        ]
-
-        base_query = base_query.filter(
-            models.TradeAnnouncement.condition.in_(
-                mapped_conditions
-            )
-        )
-
-    if genres:
-        mapped_genres = [
-            map_genre(genre)
-            for genre in genres
-        ]
-
-        base_query = base_query.filter(
-            Book.genre.in_(mapped_genres)
-        )
-
-    if start_year is not None:
-        base_query = base_query.filter(
-            Edition.publish_year >= start_year
-        )
-
-    if end_year is not None:
-        base_query = base_query.filter(
-            Edition.publish_year <= end_year
-        )
-
-    def has_coordinates(location) -> bool:
-        return (
-            location is not None
-            and getattr(location, "lat", None) is not None
-            and getattr(location, "long", None) is not None
-        )
-
-    def get_announcement_location(announcement):
-        announcement_location = getattr(
-            announcement,
-            "location",
-            None,
-        )
-
-        if has_coordinates(announcement_location):
-            return announcement_location
-
-        if (
-            getattr(announcement, "user", None) is not None
-            and has_coordinates(
-                getattr(announcement.user, "location", None)
-            )
-        ):
-            return announcement.user.location
-
-        return announcement_location
-
-    def build_location_label(announcement):
-        location = getattr(
-            announcement,
-            "location",
-            None,
-        )
-
-        if location is None and getattr(announcement, "user", None):
-            location = getattr(
-                announcement.user,
-                "location",
-                None,
-            )
-
-        if location is not None:
-            city = getattr(location, "city", None)
-            state = getattr(location, "state", None)
-
-            if city and state:
-                return f"{city} - {state}"
-
-            if city:
-                return city
-
-            if state:
-                return state
-
-        return (
-            getattr(announcement, "cep_id", None)
-            or getattr(announcement.user, "cep_id", None)
-            or getattr(announcement.user, "cep", None)
-            or "Localização não informada"
-        )
-
-    def build_response(announcement, distance_km: float | None = None):
-        first_photo_url = ""
-        if announcement.photos and len(announcement.photos) > 0:
-            first_photo_url = announcement.photos[0].photo_url
-        elif announcement.real_photo_url:
-            first_photo_url = announcement.real_photo_url
-
-        return FeedAnnouncementResponse(
-            id=announcement.id,
-            title=announcement.edition.book.title,
-            condition=announcement.condition,
-            real_photo_url=announcement.real_photo_url,
-            cover_photo=first_photo_url, # Passamos só a string aqui!
-            publishYear=announcement.edition.publish_year,
-            cep=build_location_label(announcement),
-            distanceKm=(
-                round(distance_km, 1)
-                if distance_km is not None
-                else None
-            ),
-        )
-    
-    
-    def calculate_distance_km(
-        origin_location,
-        target_location,
-    ) -> float:
-        earth_radius_km = 6371.0
-
-        origin_lat = math.radians(float(origin_location.lat))
-        origin_long = math.radians(float(origin_location.long))
-        target_lat = math.radians(float(target_location.lat))
-        target_long = math.radians(float(target_location.long))
-
-        delta_lat = target_lat - origin_lat
-        delta_long = target_long - origin_long
-
-        haversine_value = (
-            math.sin(delta_lat / 2) ** 2
-            + math.cos(origin_lat)
-            * math.cos(target_lat)
-            * math.sin(delta_long / 2) ** 2
-        )
-
-        angular_distance = 2 * math.atan2(
-            math.sqrt(haversine_value),
-            math.sqrt(1 - haversine_value),
-        )
-
-        return earth_radius_km * angular_distance
-
-    needs_distance_calculation = (
-        distance_sort_enabled or distance_filter_enabled
-    )
+    needs_distance_calculation = distance_sort_enabled or distance_filter_enabled
 
     if not needs_distance_calculation:
         announcements = (
-            base_query.order_by(
-                models.TradeAnnouncement.create_date.desc()
-            )
+            base_query.order_by(models.TradeAnnouncement.create_date.desc())
             .limit(limit)
             .offset(offset)
             .all()
         )
-
-        return [
-            build_response(announcement)
-            for announcement in announcements
-        ]
+        return [_build_feed_response(ann) for ann in announcements]
 
     current_user = (
         db.query(User)
@@ -344,94 +342,33 @@ def get_feed_announcements(
             detail="Usuário não encontrado.",
         )
 
-    user_location = getattr(
-        current_user,
-        "location",
-        None,
-    )
+    user_location = getattr(current_user, "location", None)
 
-    if not has_coordinates(user_location):
+    if not _has_coordinates(user_location):
         if distance_filter_enabled:
             return []
 
         announcements = (
-            base_query.order_by(
-                models.TradeAnnouncement.create_date.desc()
-            )
+            base_query.order_by(models.TradeAnnouncement.create_date.desc())
             .limit(limit)
             .offset(offset)
             .all()
         )
-
-        return [
-            build_response(announcement)
-            for announcement in announcements
-        ]
+        return [_build_feed_response(ann) for ann in announcements]
 
     announcements = base_query.all()
 
-    announcements_with_distance = []
-
-    for announcement in announcements:
-        announcement_location = get_announcement_location(
-            announcement
-        )
-
-        distance_km = None
-
-        if has_coordinates(announcement_location):
-            distance_km = calculate_distance_km(
-                origin_location=user_location,
-                target_location=announcement_location,
-            )
-
-        if distance_filter_enabled:
-            if distance_km is None:
-                continue
-
-            if distance_km > max_distance_km:
-                continue
-
-        announcements_with_distance.append(
-            {
-                "announcement": announcement,
-                "distance_km": distance_km,
-            }
-        )
-
-    if distance_sort_enabled:
-        announcements_with_distance.sort(
-            key=lambda item: (
-                item["distance_km"] is None,
-                item["distance_km"]
-                if item["distance_km"] is not None
-                else float("inf"),
-                -item["announcement"].create_date.timestamp()
-                if item["announcement"].create_date is not None
-                else 0,
-            )
-        )
-    else:
-        announcements_with_distance.sort(
-            key=lambda item: (
-                -item["announcement"].create_date.timestamp()
-                if item["announcement"].create_date is not None
-                else 0,
-            )
-        )
-
-    paginated_items = announcements_with_distance[
-        offset : offset + limit
-    ]
+    paginated_items = _process_distance_and_paginate(
+        announcements, user_location, distance_filter_enabled, max_distance_km, distance_sort_enabled, offset, limit
+    )
 
     return [
-        build_response(
+        _build_feed_response(
             announcement=item["announcement"],
             distance_km=item["distance_km"],
         )
         for item in paginated_items
     ]
-
 
 def map_genre(value: str):
     """
