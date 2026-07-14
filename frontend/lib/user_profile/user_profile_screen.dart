@@ -8,6 +8,8 @@ import '../services/user_service.dart';
 import '../book_details/announcement_detail_screen.dart';
 import '../book_edition/book_edition_screen.dart';
 import '../my_books/my_book_card.dart';
+import '../components/edition_card.dart';
+import 'wishlist_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -35,12 +37,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
     return [];
   }
+
   Future<void> _openEditBook(String id) async {
     final updated = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => BookEditionPage(id: id),
-      ),
+      MaterialPageRoute(builder: (_) => BookEditionPage(id: id)),
     );
 
     if (updated == true) {
@@ -114,13 +115,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       child: GestureDetector(
-        onTap: () async{
+        onTap: () async {
           // Espera a tela de Meus Livros ser fechada
           await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const MyBooksScreen()),
           );
-          
+
           // Quando o usuário apertar na seta de voltar, recarregamos o carrossel do perfil
           setState(() {
             _booksFuture = _loadInitialBooks();
@@ -184,38 +185,105 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                   );
                 },
-                    child: MyBookCard(
-                      title: book.title,
-                      publishYear: book.publishYear,
-                      photo:
-                          book.coverPhoto ??
-                          'https://via.placeholder.com/300x400',
-                      status: book.status,
-                      location: book.location,
-                      onEdit: () async {
-                        // 1. Espera a tela de edição fechar e recebe a resposta (updated)
-                        final updated = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => BookEditionPage(
-                              id: book.id,
-                            ),
-                          ),
-                        );
-                        
-                        // 2. Se salvou com sucesso (true), recarrega o banco!
-                        if (updated == true) {
-                          setState(() {
-                            _booksFuture = _loadInitialBooks();
-                          });
-                        }
-                      },
-                    ),
+                child: MyBookCard(
+                  title: book.title,
+                  publishYear: book.publishYear,
+                  photo:
+                      book.coverPhoto ?? 'https://via.placeholder.com/300x400',
+                  status: book.status,
+                  location: book.location,
+                  onEdit: () async {
+                    // 1. Espera a tela de edição fechar e recebe a resposta (updated)
+                    final updated = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BookEditionPage(id: book.id),
+                      ),
+                    );
+
+                    // 2. Se salvou com sucesso (true), recarrega o banco!
+                    if (updated == true) {
+                      setState(() {
+                        _booksFuture = _loadInitialBooks();
+                      });
+                    }
+                  },
+                ),
               );
             },
           ),
         );
       },
+    );
+  }
+
+  Widget _buildWishlistNavigation(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: GestureDetector(
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const WishlistScreen()),
+          );
+        },
+        child: Row(
+          children: [
+            Text(
+              'Desejos',
+              style: Theme.of(
+                context,
+              ).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const Icon(Icons.chevron_right, size: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWishlistCarousel() {
+    // Dados mockados
+    final mockWishlist = [
+      {
+        'title': 'O Senhor dos Anéis',
+        'author': 'J.R.R. Tolkien',
+        'photo': 'https://m.media-amazon.com/images/I/81hCVEC0ExL._SL1500_.jpg',
+      },
+      {
+        'title': '1984',
+        'author': 'George Orwell',
+        'photo':
+            'https://m.media-amazon.com/images/I/71kXa1qcBPL._AC_UF1000,1000_QL80_.jpg',
+      },
+      {
+        'title': 'O Pequeno Príncipe',
+        'author': 'Antoine de Saint-Exupéry',
+        'photo':
+            'https://m.media-amazon.com/images/I/81B4W1hZc0L._AC_UF1000,1000_QL80_.jpg',
+      },
+    ];
+
+    return SizedBox(
+      height:
+          290, // Altura suficiente para a imagem (4:3 de 150=200) + textos + paddings
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        scrollDirection: Axis.horizontal,
+        itemCount: mockWishlist.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 14),
+        itemBuilder: (context, index) {
+          final item = mockWishlist[index];
+          return EditionCard(
+            title: item['title']!,
+            author: item['author']!,
+            coverPhoto: item['photo'],
+            onTap: () {
+              // TODO: Task 9 - Abrir detalhes da edição
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -237,6 +305,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 _buildMyBooksNavigation(context),
                 const SizedBox(height: 16),
                 _buildBooksCarousel(),
+                const SizedBox(height: 30),
+                _buildWishlistNavigation(context),
+                const SizedBox(height: 16),
+                _buildWishlistCarousel(),
               ],
             ),
           ),
