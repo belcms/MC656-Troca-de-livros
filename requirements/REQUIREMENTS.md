@@ -18,10 +18,10 @@ O Troca de Livros é uma aplicação que conecta leitores para a troca colaborat
 
 #### Login
 Tem opção de entrar com facebook ou google, além da opção tradicional com email e senha.
-![[Descrição da Imagem]]([Caminho da Imagem])
+![[Descrição da Imagem]]([assets/troca%20de%20livros/login-troca-de-livros.png])
 
 #### Cadastro
-![[Descrição da Imagem]]([Caminho da Imagem])
+![[Descrição da Imagem]]([[assets/troca%20de%20livros/cadastro-troca-de-livros.png])
 
 
 #### Exibição
@@ -315,6 +315,9 @@ O processo de brainstorming ocorreu em duas etapas: primeiro, fizemos uma dinâm
 ![Brainstorm evidência](assets/brainstorm/brainstorm-call.jpeg)
 ![Brainstorm Início](assets/brainstorm/brainstorm2-inicio.png)
 ![Brainstorm organizado por similaridade](assets/brainstorm/brainstorm2-org.png)
+
+## Arquitetura C4
+![arquitetura](assets/Untitled%20(3).png)
 
 
 
