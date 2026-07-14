@@ -8,7 +8,7 @@ Para a etapa de benchmarking, cada membro da equipe ficou responsável por testa
 Decidimos diversificar o escopo de aplicações a serem analisadas, porque julgamos que as iguais a nossa proposta eram insuficiente. Analisamos as seguintes aplicações:
 * **Escambook e Troca de Livros:** Plataformas mais alinhadas ao nosso objetivo principal de troca. Contudo, a análise indicou que ambas apresentam limitações para operar em grande escala.
 * **Estante Virtual:** Embora seja voltada para a venda de livros usados, foi selecionada por apresentar um fluxo inicial de usuário e jornada de busca muito semelhantes aos que pretendemos implementar no nosso projeto.
-* **OLX:** Mesmo não sendo focada exclusivamente em livros ou trocas, queríamos analisar a negociação via chat e a descoberta de itens de interesse entre os usuários.
+* **OLX:** Mesmo não sendo uma plataforma focada exclusivamente em livros ou trocas, queríamos analisar a negociação via chat e a descoberta de itens de interesse entre os usuários.
 * **Skoob:** Analisada por compartilhar exatamente o mesmo público-alvo que o nosso, oferecendo referências de interface para busca, catalogação e exibição de livros.
 
 ---
@@ -190,25 +190,37 @@ Não conseguimos acessar pois não possuímos cnpj
 ### OLX
 
 #### Busca
+A busca no aplicativo permite a inclusão de diferentes filtros de pesquisa, como preço, reputação do anunciante (se aplicável), categoria (e a depender da categoria novos filtros são aplicáveis). Além disso, é possível definir uma localização para buscar resultados próximos, algo que julgamos importante pela logística da troca. Os resultados podem ainda ser ordenados por preço, data de postagem e relevância. É possível também salvar uma busca para consulta posterior.
+
 ![Busca Olx](assets/olx/busca-olx.png)
 
-#### Cadastro
-![Cadastro Olx](assets/olx/cadastro-olx.png)
-
 #### Chat
+Ao iniciar uma nova conversa, o chat exibe as principais informações do vendedor para que o usuário possa avaliar a credibilidade e segurança da venda. É possível também olhar as informações mais importantes do anúncio na parte superior (título e preço), para que o usuário se contextualize mais facilmente. Algumas opções de mensagens rápidas são exibidas, para facilitar o primeiro contato e a negociação.
+Na aba de chats, as conversas podem ser separadas pelo status de comprador ou vendedor, e é possível buscar por chats específicos. Ao entrar pela primeira vez na aba de chat, o aplicativo exibe instruções de segurança, assim como no momento em que você inicia uma nova conversa com um vendedor.
+
 ![Chat Olx](assets/olx/chat-olx.png)
 
 #### Criar post
+A criação de uma nova publicação é feita de maneira sequencial. Ao definir a categoria principal a qual seu anúncio pertence, o app te direciona para caminhos diferentes que requisitam dados diferentes. Focamos em analisar o processo para o anúncio de um livro. O aplicativo pede as informações de genêro, estado de conservação, formato (capa dura, de bolso ou capa normal), além das informações padrão de título do anúncio, localidade, fotos, informações adicionais e preço.
+
 ![Criar post Olx](assets/olx/criar-post-olx.png)
 
 #### Feed
+O feed é segmentado em diferentes carrosseis, variando de acordo com o algoritmo. Os post são buscados com base na localização definida (pode usar a localização atual ou definir manualmente). É possível escolher categorias específicas para se ver no feed, desde categorias mais gerais como imóveis, a mais específicas como imóveis para venda.
+
 ![Feed Olx](assets/olx/feed-olx.png)
 
+
 #### Perfil 
+O perfil varia entre o perfil tradicional e o profissional. O perfil padrão é bem simples exibindo as informações de nome, foto, data de início no app, número de posts e histórico de postagens, de maneira bem simples, mostrando apenas o essencial.
+Perfis profissionais são mais trabalhados, mostrando mais estátiscas de venda, avaliação pelos usuários, trazendo maior credibilidade.
+O acesso ao próprio perfil se dá pelo menu, em um botão pequeno na parte de cima, meio escondido.  
+
 ![Perfil do usuário Olx](assets/olx/seu-perfil-olx.png)
 ![Perfil de outro usuário Olx](assets/olx/perfil-outro-user-olx.png)
 
 #### Publicação
+Em uma publicação, é possível ver as fotos do anúncio, título, preço, descrição, anunciante (podendo clicar e se redirecionar ao perfil), detalhes, localização e dicas de segurança.  
 ![Post Olx](assets/olx/post-olx.png)
 
 
@@ -218,8 +230,8 @@ Não conseguimos acessar pois não possuímos cnpj
 * Chat separado de posts que você publicou e posts que você teve interesse
 
 #### Pontos negativos
+* A avaliação ser uma funcionalidade exclusiva para perfis profissionais (com planos pagos). A funcionalidade agrega confiabilidade e segurança, mas por ficar restrita a perfis pagos quase não foi vista na exploração das publicações.
 * 
-*
 
 ---
 
