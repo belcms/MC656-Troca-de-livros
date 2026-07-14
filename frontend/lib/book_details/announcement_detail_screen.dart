@@ -57,6 +57,7 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   String? meuUsuarioLogadoId;
   bool isLoading = true;
   bool _isInWishlist = false;
+  bool _isLoadingWishlist = true;
 
   int _currentImageIndex = 0;
 
@@ -91,19 +92,35 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
         final data = await _future;
         if (data?.edition?.id != null) {
           await _checkWishlist(data!.edition!.id);
+        } else {
+          if (mounted) {
+            setState(() {
+              _isLoadingWishlist = false;
+            });
+          }
         }
       } catch (e) {
-        // Ignora erro aqui, o FutureBuilder já vai tratar e mostrar na tela.
+        if (mounted) {
+          setState(() {
+            _isLoadingWishlist = false;
+          });
+        }
       }
     }
   }
 
   Future<void> _checkWishlist(String editionId) async {
-    if (meuUsuarioLogadoId == null) return;
+    if (meuUsuarioLogadoId == null) {
+      if (mounted) setState(() => _isLoadingWishlist = false);
+      return;
+    }
     final wishlist = await WishlistService.getWishlist(meuUsuarioLogadoId!);
-    if (wishlist != null && mounted) {
+    if (mounted) {
       setState(() {
-        _isInWishlist = wishlist.any((item) => item.editionId == editionId);
+        if (wishlist != null) {
+          _isInWishlist = wishlist.any((item) => item.editionId == editionId);
+        }
+        _isLoadingWishlist = false;
       });
     }
   }
@@ -440,14 +457,23 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
         if (editionId != null)
           Align(
             alignment: Alignment.centerLeft,
-            child: IconButton(
-              icon: Icon(
-                _isInWishlist ? Icons.favorite : Icons.favorite_border,
-                color: _isInWishlist ? Colors.red : Colors.grey,
-                size: 28,
-              ),
-              onPressed: () => _toggleWishlist(editionId),
-            ),
+            child: _isLoadingWishlist
+                ? const Padding(
+                    padding: EdgeInsets.all(12.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2.0),
+                    ),
+                  )
+                : IconButton(
+                    icon: Icon(
+                      _isInWishlist ? Icons.favorite : Icons.favorite_border,
+                      color: _isInWishlist ? Colors.red : Colors.grey,
+                      size: 28,
+                    ),
+                    onPressed: () => _toggleWishlist(editionId),
+                  ),
           ),
 
         Column(
