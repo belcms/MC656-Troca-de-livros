@@ -40,6 +40,7 @@ class AnnouncementService {
   }
 
   /// Fetches the details of an announcement as raw JSON.
+
   static Future<Map<String, dynamic>?> fetchAnnouncementDetailsRaw(
     String id,
   ) async {
@@ -47,15 +48,10 @@ class AnnouncementService {
       final url = Uri.parse(
         '${ApiClient.baseUrl}/api/v1/announcements/details/$id',
       );
-
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
-      }
-
-      if (response.statusCode == 404) {
-        throw Exception('Anúncio não encontrado.');
       }
 
       throw Exception(
@@ -69,9 +65,14 @@ class AnnouncementService {
   }
 
   /// Updates an announcement.
+  ///
+  /// Makes a PUT request to the `/api/v1/books/{id}` endpoint.
+  ///
+  /// The [id] parameter is the unique identifier of the announcement.
+  /// The [body] parameter contains the updated data for the announcement.
   static Future<bool> updateAnnouncement({
     required String id,
-    required Map<String, dynamic> body,
+    required Map body,
   }) async {
     try {
       final url = Uri.parse(
@@ -95,16 +96,19 @@ class AnnouncementService {
       return response.statusCode == 200 ||
           response.statusCode == 204;
     } catch (e) {
-      print('UPDATE ERROR: $e');
       return false;
     }
   }
 
-  /// Fetches the paginated announcements shown in the main feed.
+
+  /// Default behavior:
+  /// - sends only [limit] and [offset], preserving the old feed behavior.
   ///
-  /// Supports filters for publication year, condition and genre.
-  /// When [sortByDistance] is true, the backend can sort announcements
-  /// using the location of [currentUserId].
+  /// Distance behavior:
+  /// - when [sortByDistance] is true and a non-empty [currentUserId] exists,
+  ///   sends `current_user_id` and `sort_by_distance=true`.
+  /// - the backend returns the feed already ordered by distance.
+
   static Future<List<dynamic>?> fetchFeedAnnouncements({
     required String currentUserId,
     int limit = 20,
@@ -147,12 +151,8 @@ class AnnouncementService {
         queryParameters: queryParameters,
       );
 
-      print('FEED URL: $url');
 
       final response = await http.get(url);
-
-      print('FEED STATUS: ${response.statusCode}');
-      print('FEED RESPONSE: ${response.body}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as List<dynamic>;
@@ -201,9 +201,16 @@ class AnnouncementService {
     }
   }
 
-  /// Creates a book, its edition and an announcement.
+
+  /// Creates an announcement.
+  ///
+  /// Makes a POST request to the `/api/v1/announcements/{userId}` endpoint.
+  /// The [body] parameter contains the data for the announcement.
+  /// The [userId] parameter is the unique identifier of the user creating the
+  /// announcement.
+
   static Future<bool> createAnnouncement({
-    required Map<String, dynamic> body,
+    required Map body,
     required String userId,
   }) async {
     try {

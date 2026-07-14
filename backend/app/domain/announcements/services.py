@@ -88,7 +88,6 @@ def get_announcement_details(db: Session, id: str):
 
     return text
 
-
 def get_feed_announcements(
     db: Session,
     limit: int = 20,
@@ -259,10 +258,7 @@ def get_feed_announcements(
             or "Localização não informada"
         )
 
-    def build_response(
-        announcement,
-        distance_km: float | None = None,
-    ):
+    def build_response(announcement, distance_km: float | None = None):
         return FeedAnnouncementResponse(
             id=announcement.id,
             title=announcement.edition.book.title,
@@ -275,7 +271,8 @@ def get_feed_announcements(
                 else None
             ),
         )
-
+    
+    
     def calculate_distance_km(
         origin_location,
         target_location,

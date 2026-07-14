@@ -12,6 +12,7 @@ import 'package:frontend/search/widgets/custom_search_bar.dart';
 import '../services/announcement_service.dart';
 import 'announcement_card.dart';
 
+
 /// The main screen of the application that displays the feed of book
 /// announcements.
 ///

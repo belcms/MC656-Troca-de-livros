@@ -191,20 +191,26 @@ Não conseguimos acessar pois não possuímos cnpj
 
 
 #### Busca
-![[Descrição da Imagem]]([Caminho da Imagem])
+![Busca Olx](assets/olx/busca-olx.png)
 
 #### Cadastro
-![[Descrição da Imagem]]([Caminho da Imagem])
+![Cadastro Olx](assets/olx/cadastro-olx.png)
 
 #### Chat
+![Chat Olx](assets/olx/chat-olx.png)
 
 #### Criar post
+![Criar post Olx](assets/olx/criar-post-olx.png)
 
 #### Feed
+![Feed Olx](assets/olx/feed-olx.png)
 
 #### Perfil 
+![Perfil do usuário Olx](assets/olx/seu-perfil-olx.png)
+![Perfil de outro usuário Olx](assets/olx/perfil-outro-user-olx.png)
 
-#### Post
+#### Publicação
+![Post Olx](assets/olx/post-olx.png)
 
 
 #### Pontos positivos
@@ -265,5 +271,9 @@ O sistema de pesquisa pode ser feito por texto (em vermelho) ou código de barra
 ## Brainstorm
 O processo de brainstorming ocorreu em duas etapas: primeiro, fizemos uma dinâmica livre de 10 minutos para que todos pudessem expor suas ideias. Em seguida, organizamos os resultados fazendo a clusterização dos post-its parecidos, o que nos ajudou a agrupar e definir os temas principais.
 
-##### [Título do Brainstorming]
-![[Descrição da Imagem]]([Caminho da Imagem])
+![Brainstorm Call](assets/brainstorm/brainstorm-call.jpeg)
+![Brainstorm Início](assets/brainstorm/brainstorm-inicio.jpeg)
+![Brainstorm organizado por similaridade](assets/brainstorm/brainstorm-org.jpeg)
+
+
+
