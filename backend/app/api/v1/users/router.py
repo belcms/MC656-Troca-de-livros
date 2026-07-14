@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
 
 from app.api.v1.announcements.schemas import MyBooksCardResponse
 
+from app.domain.users import schemas as user_schemas
 from app.domain.users import services 
 
 router = APIRouter(
@@ -57,3 +58,20 @@ def get_user_announcements(user_id: str, db: Session = Depends(get_db)):
     """
     announcements = services.get_user_announcements(db=db, user_id=user_id)
     return announcements
+
+@router.post("/{user_id}/wishlist/{edition_id}", summary="Add to Wishlist")
+def add_to_wishlist(user_id: str, edition_id: str, db: Session = Depends(get_db)):
+    result = services.add_to_wishlist(db=db, user_id=user_id, edition_id=edition_id)
+    return result
+
+@router.delete("/{user_id}/wishlist/{edition_id}", summary="Remove from Wishlist")
+def remove_from_wishlist(user_id: str, edition_id: str, db: Session = Depends(get_db)):
+    success = services.remove_from_wishlist(db=db, user_id=user_id, edition_id=edition_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Item not found in wishlist")
+    return {"message": "Item removed from wishlist"}
+
+@router.get("/{user_id}/wishlist", summary="Get User Wishlist")
+def get_wishlist(user_id: str, db: Session = Depends(get_db)):
+    wishlist = services.get_user_wishlist(db=db, user_id=user_id)
+    return wishlist
