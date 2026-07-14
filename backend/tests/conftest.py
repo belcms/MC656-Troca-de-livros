@@ -9,12 +9,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-pytest_plugins = ("tests.search_fixtures",)
-
 # Make tests independent from invocation directory (e.g., repo root vs backend root).
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
+
+# Imported here so pytest registers the fixture without the deprecated
+# ``pytest_plugins`` declaration in this nested conftest.
+from tests.search_fixtures import search_catalog  # noqa: E402, F401
 
 from app.api.v1.announcements.router import router as announcements_router
 from app.api.v1.users.router import router as users_router
