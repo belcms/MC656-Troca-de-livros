@@ -52,10 +52,6 @@ def get_book_details_route(id: str, db: Session = Depends(get_db)):
     "/feed",
     response_model=list[FeedAnnouncementResponse],
 )
-@router.get(
-    "/feed",
-    response_model=list[FeedAnnouncementResponse],
-)
 def feed_announcements_route(
     limit: int = Query(
         default=20,
@@ -97,16 +93,17 @@ def feed_announcements_route(
     """Return the filtered announcements feed."""
 
     return get_feed_announcements(
-        db=db,
-        limit=limit,
-        offset=offset,
-        start_year=start_year,
-        end_year=end_year,
-        conditions=condition,
-        genres=genre,
-        current_user_id=current_user_id,
-        sort_by_distance=sort_by_distance,
-    )
+    db=db,
+    limit=limit,
+    offset=offset,
+    start_year=start_year,
+    end_year=end_year,
+    conditions=condition,
+    genres=genre,
+    current_user_id=current_user_id,
+    sort_by_distance=sort_by_distance,
+    max_distance_km=max_distance_km,
+)
 
 @router.post("/{user_id}", status_code=201)
 def create_announcement_route(user_id: str, body: announcements_schemas.TradeAnnouncementPydantic, db: Session = Depends(get_db)):
