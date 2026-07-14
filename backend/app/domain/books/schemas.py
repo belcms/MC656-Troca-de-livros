@@ -28,3 +28,18 @@ class EditionPydantic(BaseModel):
 
     class Config:
         from_attributes = True 
+
+class BookUpdatePayload(BaseModel):
+    title: Optional[str] = None
+    author: Optional[str] = None
+    synopsis: Optional[str] = None
+    genre: Optional[str] = None
+    publisher: Optional[str] = None
+    language: Optional[str] = None
+    publishYear: Optional[int] = None
+    pages: Optional[int] = None
+    description: Optional[str] = None
+    real_photo_url: Optional[str] = None
+    cep_id: Optional[str] = None
+    status: Optional[str] = None
+    condition: Optional[str] = None
