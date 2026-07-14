@@ -82,6 +82,7 @@ void main() {
             publishYear: 2000,
             cep: '13000-000',
             realPhotoUrl: 'https://example.com/flores.jpg',
+            condition: "New",
           ),
           AnnouncementSearchItem(
             id: '2',
@@ -89,6 +90,7 @@ void main() {
             publishYear: 2000,
             cep: '13000-000',
             realPhotoUrl: 'https://example.com/1984.jpg',
+            condition: "New",
           ),
           AnnouncementSearchItem(
             id: '3',
@@ -96,6 +98,7 @@ void main() {
             publishYear: 2000,
             cep: '13000-000',
             realPhotoUrl: 'https://example.com/habito.jpg',
+            condition: "Worn",
           ),
           AnnouncementSearchItem(
             id: '4',
@@ -103,6 +106,7 @@ void main() {
             publishYear: 2000,
             cep: '13000-000',
             realPhotoUrl: 'https://example.com/mais-um.jpg',
+            condition: "Good",
           ),
         ],
       );
@@ -141,6 +145,7 @@ void main() {
             publishYear: 2000,
             cep: '13000-000',
             realPhotoUrl: 'https://example.com/flores.jpg',
+            condition: "New",
           ),
         ],
       );
@@ -178,6 +183,7 @@ void main() {
             publishYear: 2000,
             cep: '13000-000',
             realPhotoUrl: 'https://example.com/flores.jpg',
+            condition: "New",
           ),
         ],
       );
