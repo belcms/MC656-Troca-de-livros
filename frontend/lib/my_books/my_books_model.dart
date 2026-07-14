@@ -32,7 +32,7 @@ class MyBooksModel {
       realPhotoUrl: json['real_photo_url'] as String?,
       status: json['status'] as String,
       location: (json['location'] as String?) ?? "Localização não informada",
-      coverPhoto: json['cover_photo'] as String,
+      coverPhoto: json['cover_photo'] as String?,
     );
   }
 }

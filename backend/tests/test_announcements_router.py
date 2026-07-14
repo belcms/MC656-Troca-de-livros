@@ -67,8 +67,13 @@ def test_feed_route_success_and_contract(client, monkeypatch):
         db,
         limit,
         offset,
+        start_year=None,
+        end_year=None,
+        conditions=None,
+        genres=None,
         current_user_id=None,
         sort_by_distance=False,
+        max_distance_km=None,
     ):
         return [
             {
@@ -100,6 +105,8 @@ def test_feed_route_success_and_contract(client, monkeypatch):
             "publishYear": 1965,
             "cep": "87654321",
             "real_photo_url": "http://img",
+            "condition": "New",
+            "cover_photo": "",
             "distanceKm": None,
         }
     ]
@@ -111,13 +118,23 @@ def test_feed_route_passes_distance_sorting_params(client, monkeypatch):
         db,
         limit,
         offset,
+        start_year=None,
+        end_year=None,
+        conditions=None,
+        genres=None,
         current_user_id=None,
         sort_by_distance=False,
+        max_distance_km=None,
     ):
         captured["limit"] = limit
         captured["offset"] = offset
+        captured["start_year"] = start_year
+        captured["end_year"] = end_year
+        captured["conditions"] = conditions
+        captured["genres"] = genres
         captured["current_user_id"] = current_user_id
         captured["sort_by_distance"] = sort_by_distance
+        captured["max_distance_km"] = max_distance_km
 
         return [
             {
@@ -126,6 +143,7 @@ def test_feed_route_passes_distance_sorting_params(client, monkeypatch):
                 "publishYear": 1965,
                 "cep": "Campinas - SP",
                 "real_photo_url": "http://img",
+                "condition": "New",
                 "distanceKm": 12.4,
             }
         ]
@@ -148,8 +166,13 @@ def test_feed_route_passes_distance_sorting_params(client, monkeypatch):
     assert captured == {
         "limit": 10,
         "offset": 5,
+        "start_year": None,
+        "end_year": None,
+        "conditions": None,
+        "genres": None,
         "current_user_id": "user-1",
         "sort_by_distance": True,
+        "max_distance_km": None,
     }
     assert response.json() == [
         {
@@ -158,6 +181,8 @@ def test_feed_route_passes_distance_sorting_params(client, monkeypatch):
             "publishYear": 1965,
             "cep": "Campinas - SP",
             "real_photo_url": "http://img",
+            "condition": "New",
+            "cover_photo": "",
             "distanceKm": 12.4,
         }
     ]
