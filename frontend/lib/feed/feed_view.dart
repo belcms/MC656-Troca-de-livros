@@ -6,6 +6,7 @@ import '../services/announcement_service.dart';
 import 'announcement_card.dart';
 import 'announcement_filter_sheet.dart';
 import 'announcement_filters.dart';
+import 'feed_announcement.dart';
 
 import 'package:frontend/search/intermediate_search_screen.dart';
 import 'package:frontend/search/widgets/custom_search_bar.dart';
@@ -26,7 +27,7 @@ class FeedView extends StatefulWidget {
 }
 
 class _FeedViewState extends State<FeedView> {
-  List<dynamic> announcements = [];
+  List<FeedAnnouncement> announcements = [];
   bool isLoading = true;
 
   AnnouncementFilters activeFilters = const AnnouncementFilters();
@@ -163,22 +164,6 @@ class _FeedViewState extends State<FeedView> {
     return labels[value] ?? value;
   }
 
-  int _parsePublishYear(dynamic value) {
-    if (value is int) {
-      return value;
-    }
-
-    return int.tryParse(value?.toString() ?? '') ?? 0;
-  }
-
-  double? _parseDistanceKm(dynamic value) {
-    if (value is num) {
-      return value.toDouble();
-    }
-
-    return double.tryParse(value?.toString() ?? '');
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -262,9 +247,7 @@ class _FeedViewState extends State<FeedView> {
                               mainAxisExtent: 390,
                             ),
                         itemBuilder: (context, index) {
-                          final ann = announcements[index] as Map;
-
-                          final announcementId = ann['id']?.toString() ?? '';
+                          final ann = announcements[index];
 
                           return GestureDetector(
                             onTap: () {
@@ -273,24 +256,18 @@ class _FeedViewState extends State<FeedView> {
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       AnnouncementDetailScreen(
-                                        announcementId: announcementId,
+                                        announcementId: ann.id,
                                       ),
                                 ),
                               );
                             },
                             child: AnnouncementCard(
-                              title:
-                                  ann['title']?.toString() ??
-                                  'Livro sem título',
-                              publishYear: _parsePublishYear(
-                                ann['publishYear'],
-                              ),
-                              photo: ann['cover_photo']?.toString() ?? '',
-                              cep:
-                                  ann['cep']?.toString() ??
-                                  'Localização não informada',
-                              distanceKm: _parseDistanceKm(ann['distanceKm']),
-                              condition: ann['condition'] ?? '',
+                              title: ann.title,
+                              publishYear: ann.publishYear,
+                              photo: ann.coverPhoto,
+                              cep: ann.location,
+                              distanceKm: ann.distanceKm,
+                              condition: ann.condition,
                             ),
                           );
                         },
