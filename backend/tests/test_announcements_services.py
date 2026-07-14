@@ -46,6 +46,7 @@ def test_get_announcement_details_success(mocker):
         publisher="Chilton Books",
         publish_year=1965,
         book=book,
+        number_of_pages=200,
     )
     user = _obj(username="Neymar", cep="87654321")
     ann = _obj(
@@ -124,6 +125,7 @@ def test_get_feed_announcements_success(mocker):
     ann1 = _obj(
         id="ann-1",
         real_photo_url="http://img1",
+        condition=Condition.New,
         edition=_obj(
             publish_year=1965,
             book=_obj(title="Dune"),
@@ -134,6 +136,7 @@ def test_get_feed_announcements_success(mocker):
     ann2 = _obj(
         id="ann-2",
         real_photo_url=None,
+        condition=Condition.New,
         edition=_obj(
             publish_year=1949,
             book=_obj(title="1984"),
@@ -175,6 +178,7 @@ def test_get_feed_announcements_without_location_uses_fallback(mocker):
     announcement = _obj(
         id="ann-without-location",
         real_photo_url=None,
+        condition=Condition.New,
         edition=_obj(
             publish_year=2000,
             book=_obj(title="Book without location"),
