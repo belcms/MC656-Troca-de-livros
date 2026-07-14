@@ -17,7 +17,7 @@ def test_get_user_announcements_endpoint_returns_cards(users_client, db_session,
     assert [item["status"] for item in payload] == ["Available", "Reserved"]
     assert payload[0]["id"] == second["announcement"].id
     assert payload[1]["id"] == first["announcement"].id
-    assert set(payload[0].keys()) == {"id", "title", "publish_year", "real_photo_url", "status", "location"}
+    assert set(payload[0].keys()) == {"id", "title", "publish_year", "real_photo_url", "status", "location", "cover_photo"}
     assert payload[0]["location"] != "Localização não informada"
 
 

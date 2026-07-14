@@ -71,6 +71,7 @@ def test_feed_route_success_and_contract(client, monkeypatch):
                 "publishYear": 1965,
                 "cep": "87654321",
                 "real_photo_url": "http://img",
+                "condition": "New",
             }
         ]
 

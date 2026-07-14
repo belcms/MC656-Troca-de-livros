@@ -59,6 +59,7 @@ def test_get_announcement_details_success(mocker):
         status=Status.Available,
         edition=edition,
         user=user,
+        photos=[],
     )
 
     _mock_query_chain_first(db, ann)
@@ -128,6 +129,7 @@ def test_get_feed_announcements_success(mocker):
             book=_obj(title="Dune"),
         ),
         user=_obj(cep="87654321"),
+        photos=[],
     )
     ann2 = _obj(
         id="ann-2",
@@ -137,6 +139,7 @@ def test_get_feed_announcements_success(mocker):
             book=_obj(title="1984"),
         ),
         user=_obj(cep="12345678"),
+        photos=[],
     )
 
     _mock_feed_chain_all(db, [ann1, ann2])
@@ -179,6 +182,7 @@ def test_get_feed_announcements_without_location_uses_fallback(mocker):
         user=_obj(cep=None, cep_id=None),
         cep_id=None,
         location=None,
+        photos=[],
     )
     _mock_feed_chain_all(db, [announcement])
 
