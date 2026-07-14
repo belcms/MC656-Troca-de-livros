@@ -618,7 +618,7 @@ def get_book_details(
 
 def update_book(
     id: str,
-    body: dict = Body(...),
+    payload: books_schemas.BookUpdatePayload,
     db: Session = Depends(get_db),
     owner_id: str | None = None,
 ):
@@ -640,63 +640,46 @@ def update_book(
     edition = announcement.edition
     book = edition.book
 
-    book.title = body.get("title", book.title)
-    book.author = body.get("author", book.author)
-    book.synopsis = body.get("synopsis", book.synopsis)
-    book.genre = map_genre(
-        body.get("genre", book.genre.value)
-    )
+    if payload.title is not None:
+        book.title = payload.title
+    if payload.author is not None:
+        book.author = payload.author
+    if payload.synopsis is not None:
+        book.synopsis = payload.synopsis
+    if payload.genre is not None:
+        book.genre = map_genre(payload.genre)
 
-    edition.publisher = body.get(
-        "publisher",
-        edition.publisher,
-    )
-    edition.language = map_language(
-        body.get("language", edition.language.value)
-    )
+    if payload.publisher is not None:
+        edition.publisher = payload.publisher
+    if payload.language is not None:
+        edition.language = map_language(payload.language)
+    if payload.publishYear is not None:
+        edition.publish_year = payload.publishYear
+    if payload.pages is not None:
+        edition.number_of_pages = payload.pages
 
-    if body.get("publishYear"):
-        edition.publish_year = int(body["publishYear"])
+    if payload.description is not None:
+        announcement.description = payload.description
+    if payload.real_photo_url is not None:
+        announcement.real_photo_url = payload.real_photo_url
+    if payload.status is not None:
+        announcement.status = map_status(payload.status)
+    if payload.condition is not None:
+        announcement.condition = map_condition(payload.condition)
 
-    if body.get("pages"):
-        edition.number_of_pages = int(body["pages"])
-
-    announcement.description = body.get(
-        "description",
-        announcement.description,
-    )
-    announcement.real_photo_url = body.get(
-        "real_photo_url",
-        announcement.real_photo_url,
-    )
-
-    if "cep_id" in body:
-        clean_cep = locations_services.normalize_cep(
-            body.get("cep_id")
-        )
-
+    if payload.cep_id is not None:
+        clean_cep = locations_services.normalize_cep(payload.cep_id)
         if clean_cep is None:
             announcement.cep_id = None
         else:
-            loc = locations_services.get_or_create_location_by_cep(
-                clean_cep,
-                db,
-            )
+            loc = locations_services.get_or_create_location_by_cep(clean_cep, db)
             announcement.cep_id = loc.cep
-
-    announcement.status = map_status(
-        body.get("status", announcement.status.value)
-    )
-    announcement.condition = map_condition(
-        body.get("condition", announcement.condition.value)
-    )
 
     db.commit()
 
     return {
         "message": "Book updated successfully",
     }
-
 
 def create_book(
     body: books_schemas.BookPydantic,
@@ -838,45 +821,3 @@ def get_edition_details(id: str, db: Session = Depends(get_db)):
         "cover_photo": edition.cover_photo
     }
 
-def update_book(
-    id: str,
-    body: dict = Body(...),
-    db: Session = Depends(get_db),
-    owner_id: str | None = None,
-):
-    announcement = (
-        db.query(announcements_models.TradeAnnouncement)
-        .filter(announcements_models.TradeAnnouncement.id == id)
-        .first()
-    )
-
-    if not announcement:
-        raise HTTPException(status_code=404, detail="Announcement not found")
-    if owner_id is not None and announcement.user_id != owner_id:
-        raise HTTPException(status_code=403, detail="Acesso negado")
-
-    edition = announcement.edition
-    book = edition.book
-
-    book.title = body.get("title", book.title)
-    book.author = body.get("author", book.author)
-    book.synopsis = body.get("synopsis", book.synopsis)
-    book.genre = map_genre(body.get("genre", book.genre.value))
-
-    edition.publisher = body.get("publisher", edition.publisher)
-    edition.language = map_language(body.get("language", edition.language.value))
-
-    if body.get("publishYear"):
-        edition.publish_year = int(body["publishYear"])
-
-    if body.get("pages"):
-        edition.number_of_pages = int(body["pages"])
-
-    announcement.description = body.get("description", announcement.description)
-    announcement.real_photo_url = body.get("real_photo_url", announcement.real_photo_url)
-    announcement.status = map_status(body.get("status", announcement.status.value))
-    announcement.condition = map_condition(body.get("condition", announcement.condition.value))
-
-    db.commit()
-
-    return {"message": "Book updated successfully"}
