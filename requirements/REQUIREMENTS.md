@@ -150,18 +150,26 @@ ortografia.
 ### Estante Virtual
 
 #### Cadastro
-![[Descrição da Imagem]]([Caminho da Imagem])
 O cadastro pede cpf, data de aniversário, número de celular e preenche automaticamente os dados de nome e sobrenome. O número de celular é usado para fazer uma verificação do cadastro. Gostamos do campo de apelido pois como o sistema puxa o nome automaticamente, dá a opção do usuário escolher um nome que prefira, gerando maior respeito e identificação.
 
+![[Cadastro Estante Virtual]](assets/estante%20virtual/cadastro-estante.png)
+
+
 #### Favoritos
-![[Descrição da Imagem]]([Caminho da Imagem])
+
 A aba de favoritos possui 3 opções de lista: minhas listas, comprar mais tarde e minhas listas antigas. O usuário ainda pode criar uma nova lista e preencher campo de nome, descricao e seleção de privacidade, caso selecione como lista pública, a mesma pode ser usada para recomendação no feed. As listas podem ser editadas, deletadas ou compartilhadas e sua visualização na tela é dada com nome da lista, cadeado de privacidade e quantidade de livros que ela contém.
+
+![[Favoritos Estante Virtual]](assets/estante%20virtual/favoritos-estante.png)
 
 #### Feed
 O feed possui carroseis com diferentes tópicos: o que os outros clientes estão comprando, livros mais vendidos, clássicos, universos literários, editoras, entre outros. Isso é muito legal para que o usuário conheça novos livros sem ser os que ele está buscando. O feed também possui alguns filtros de frete grátis, ofertas entre outros.
 
+![[Feed Estante Virtual]](assets/estante%20virtual/feed-estante.png)
+
 #### Filtro e Busca
 O filtro possui alguns campos: Autor e Título, título, autor, editorae e isbn. A pesquisa funciona muito bem, mesmo tendo colocado um nome bem errado na procura de um livro, ele achou o livro que estava procurando. A única ressalva é que a pesquisa precisa estar de acordo com o filtro (e não há um default), entao se eu estiver em um filtro de editora, nao ira aparecer nada se um buscar pelo título de um livro - o usuário tem que ficar sempre atento a isso, oque pode não ser bem visto.
+
+![[Filtro e busca Estante Virtual]](assets/estante%20virtual/filtro-busca-estante.png)
 
 #### Post
 O post no feed contem foto, título, nome do autor, ano de publicação, menor oferta e botão que vai para a tela em que mostra tods as ofertas daquela edição. Ao clicar nesse botão, vemos novas informações além das citadas, como por exemplo sinopse, avaliação do vendedor, compartilhamento, e as ofertas. As ofertas posseum filtro de localização e ordenação por preço, facilitando o usuário entender qual oferta mais o agrada. Gostamos da opção de compartilhamento, pois permite ao usuário compartilhar algo que ele gostou ou que sabe que outros vão gostar.
@@ -169,8 +177,12 @@ Ao selecionar uma oferta também é possível colocar na lista de comprar mais t
 A página de ver detalhes informa mais sobre o estado de conservação do livro, além das informações de edição (e o botão de comprar)
 Não chegamos a falar com o vendedor, mas a tela é um campo em que voce digita o texto (que não pode ter alguns caracters).
 
+![[Post Estante Virtual]](assets/estante%20virtual/post-estante.png)
+
 #### Página vendedor
 Não conseguimos acessar pois não possuímos cnpj
+
+![[Página do vendedor Estante Virtual]](assets/estante%20virtual/vendedor-estante.png)
 
 
 #### Pontos positivos
@@ -232,7 +244,6 @@ Em uma publicação, é possível ver as fotos do anúncio, título, preço, des
 
 #### Pontos negativos
 * A avaliação ser uma funcionalidade exclusiva para perfis profissionais (com planos pagos). A funcionalidade agrega confiabilidade e segurança, mas por ficar restrita a perfis pagos quase não foi vista na exploração das publicações.
-* 
 
 ---
 
@@ -244,17 +255,27 @@ No Skoob o perfil pessoal possui três setores interessantes: contador de seguid
 O contador de seguidores (em amarelo) é interessante pois pode criar uma cultura de trocadores comuns, i.e, trocadores de um bairro ou região específica se seguindo (se você segue um outro usuário, você é notificado quando ele publica). Quanto ao contador de livros na biblioteca, pode ter um contador de trocas realizadas ou livros disponíveis para troca. A clicar no botão de configuração (em verde), abre-se a seguinte tela onde é possível configurar o perfil (info, bio e foto), e acessar a mesma configuração de tamanho de fonte, disponível na tela do perfil.
 A barra de conteúdos (em vermelho) possui 5 abas, sendo elas: Feed, Citações, Resenhas, Vídeos e Histórico de leitura. Não vejo essa aba fazendo sentido em um "Market" place. Assim, talvez o layout pode servir de inspiração, mas as abas podem ser substituídas (e.g, Livros para troca, Livros de interesse). Para fins de comparação, é assim que o perfil de um terceiro aparece:
 
+![[Perfil Skoob]](assets/skoob/Perfil_Page-skoob.jpg)
 
-Perfil de Autor
+
+#### Perfil de Autor
 A estrutura é parecida com a de leitor, mas possui um contador de Leitores (no lugar de seguindo) e informações sobre sua escrita, com um sobre, Gênero, links externos e livros publicados. É interessante, pois abre a possibilidade de pesquisa por autor e cria uma comunidade em volta de um escritor.
-![[Descrição da Imagem]]([Caminho da Imagem])
+
+![[Perfil de autor Skoob]](assets/skoob/autor_1Page-skoob.jpeg)
+![[Perfil de autor Skoob]](assets/skoob/autor_2Page-skoob.jpeg)
+
 
 #### Acessibilidade
 ##### Tamanho do texto
 A tela de tamanho de texto é a página com um dos ui/ux mais legais do app, nela o usuário configura o tamanho da fonte com um preview iterativo de uma interface do app. O design é intuitivo e facilita o uso para quem precisa da acessibilidade.
 
+![[Ajuste tamanho de texto Skoob]](assets/skoob/fonte_1-skoob.jpeg)
+![[Ajuste tamanho de texto Skoob]](assets/skoob/fonte_2-skoob.jpeg)
+
 ##### Temas
 O app possui tema escuro e claro, oque facilita a utilização dele em ambientes claros e escuros.
+![[Escolha de tema Skoob]](assets/skoob/temas-skoob.jpeg)
+
 
 #### Descrição do livro
 A tela de um livro possui a Sinopse (em vermelho), as informações de identificação (editora, nº páginas, ISBN, etc.) em (em amarelo). Além disso, tem a seção de Leitores (em azul), com as informações do livro no site (e.g, Leram, Lendo, Quer ler, Relendo, Abandonados). Por fim, a seção de avaliações que é atualizada conforme a resenha dos usuários.
@@ -262,8 +283,16 @@ A tela de um livro possui a Sinopse (em vermelho), as informações de identific
 Essa tela é interessante para acumular informações de uma obra específica, pode ajudar no
 sistemas de busca por livro.
 
+![[Descrição livro Skoob]](assets/skoob/descricao_1-skoob.jpg)
+![[Descrição livro Skoob]](assets/skoob/descricao_2-skoob.jpg)
+
+
+
 #### Sistema de busca
 O sistema de pesquisa pode ser feito por texto (em vermelho) ou código de barra do livro (em verde). Além disso, tem como pesquisar por filtro de editoras (em cinza) e separar a pesquisa por Livros, Leitores, Autores (em amarelo).
+
+![[Busca livro Skoob]](assets/skoob/busca-skoob.jpg)
+
 
 #### Pontos positivos
 * 
