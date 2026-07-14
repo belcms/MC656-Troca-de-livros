@@ -208,7 +208,7 @@ A criação de uma nova publicação é feita de maneira sequencial. Ao definir 
 #### Feed
 O feed é segmentado em diferentes carrosseis, variando de acordo com o algoritmo. Os post são buscados com base na localização definida (pode usar a localização atual ou definir manualmente). É possível escolher categorias específicas para se ver no feed, desde categorias mais gerais como imóveis, a mais específicas como imóveis para venda.
 
-![Feed Olx](assets/olx/feed-olx.png)
+![Feed Olx](assets/olx/Feed-2-olx.png)
 
 
 #### Perfil 
@@ -216,8 +216,9 @@ O perfil varia entre o perfil tradicional e o profissional. O perfil padrão é 
 Perfis profissionais são mais trabalhados, mostrando mais estátiscas de venda, avaliação pelos usuários, trazendo maior credibilidade.
 O acesso ao próprio perfil se dá pelo menu, em um botão pequeno na parte de cima, meio escondido.  
 
+![Perfil de outro usuário Olx](assets/olx/perfil-outra-olx-2.png)
 ![Perfil do usuário Olx](assets/olx/seu-perfil-olx.png)
-![Perfil de outro usuário Olx](assets/olx/perfil-outro-user-olx.png)
+
 
 #### Publicação
 Em uma publicação, é possível ver as fotos do anúncio, título, preço, descrição, anunciante (podendo clicar e se redirecionar ao perfil), detalhes, localização e dicas de segurança.  
