@@ -1,6 +1,6 @@
 from fastapi.params import Body, Depends
 from sqlalchemy.orm import Session, joinedload
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from app.domain.announcements import models
 from app.domain.announcements.models import Status
 from app.api.v1.announcements.schemas import FeedAnnouncementResponse
@@ -16,6 +16,11 @@ from app.api.v1.announcements.schemas import FeedAnnouncementResponse
 from app.api.v1.announcements.schemas import FeedAnnouncementResponse
 from app.domain.locations import models as location_models
 from app.domain.locations.services import _calculate_distance
+
+import math
+
+
+
 
 #excluir, não ideal (apenas para create_dummy_data/teste)
 import app.domain.locations.services as locations_services
@@ -123,10 +128,30 @@ def get_feed_announcements(
     end_year: int | None = None,
     conditions: list[str] | None = None,
     genres: list[str] | None = None,
-    max_distance_km: float | None = None,
     current_user_id: str | None = None,
+    sort_by_distance: bool = False,
+    max_distance_km: float | None = None,
 ):
-    query = (
+    """
+    Retrieves a paginated list of available trade announcements for the feed.
+
+    Supports filtering by:
+    - Publication year range (start_year, end_year)
+    - Conservation condition(s)
+    - Genre(s)
+
+    Default behavior:
+    - returns available announcements ordered from newest to oldest.
+
+    Distance behavior:
+    - when sort_by_distance=True and current_user_id is provided,
+      announcements are ordered by distance from the current user.
+    - announcements without a calculable distance are placed at the end.
+    - create_date is used as a tiebreaker, with newer announcements first.
+    - pagination is applied after distance ordering.
+    """
+
+    base_query = (
         db.query(models.TradeAnnouncement)
         .join(
             Edition,
@@ -150,7 +175,7 @@ def get_feed_announcements(
 
     # Remove anúncios criados pelo próprio usuário.
     if current_user_id is not None:
-        query = query.filter(
+        base_query = base_query.filter(
             models.TradeAnnouncement.user_id != current_user_id
         )
 
@@ -160,7 +185,7 @@ def get_feed_announcements(
             for condition in conditions
         ]
 
-        query = query.filter(
+        base_query = base_query.filter(
             models.TradeAnnouncement.condition.in_(
                 mapped_conditions
             )
@@ -172,213 +197,182 @@ def get_feed_announcements(
             for genre in genres
         ]
 
-        query = query.filter(
+        base_query = base_query.filter(
             Book.genre.in_(mapped_genres)
         )
 
     if start_year is not None:
-        query = query.filter(
+        base_query = base_query.filter(
             Edition.publish_year >= start_year
         )
 
     if end_year is not None:
-        query = query.filter(
+        base_query = base_query.filter(
             Edition.publish_year <= end_year
         )
 
-    # Busca todos antes da paginação porque o filtro por distância
-    # é realizado em Python.
-    announcements = (
-        query
-        .order_by(
-            models.TradeAnnouncement.create_date.desc()
+    def build_location_label(announcement):
+        if getattr(announcement, "location", None):
+            city = getattr(announcement.location, "city", None)
+            state = getattr(announcement.location, "state", None)
+
+            if city and state:
+                return f"{city} - {state}"
+
+            if city:
+                return city
+
+            if state:
+                return state
+
+        return (
+            getattr(announcement, "cep_id", None)
+            or getattr(announcement.user, "cep_id", None)
+            or getattr(announcement.user, "cep", None)
+            or "Localização não informada"
         )
-        .all()
+
+    def build_response(announcement, distance_km: float | None = None):
+        return FeedAnnouncementResponse(
+            id=announcement.id,
+            title=announcement.edition.book.title,
+            real_photo_url=announcement.real_photo_url,
+            publishYear=announcement.edition.publish_year,
+            cep=build_location_label(announcement),
+            distanceKm=(
+                round(distance_km, 1)
+                if distance_km is not None
+                else None
+            ),
+        )
+
+    def has_coordinates(location) -> bool:
+        return (
+            location is not None
+            and getattr(location, "lat", None) is not None
+            and getattr(location, "long", None) is not None
+        )
+
+    def calculate_distance_km(origin_location, target_location) -> float:
+        earth_radius_km = 6371.0
+
+        origin_lat = math.radians(float(origin_location.lat))
+        origin_long = math.radians(float(origin_location.long))
+        target_lat = math.radians(float(target_location.lat))
+        target_long = math.radians(float(target_location.long))
+
+        delta_lat = target_lat - origin_lat
+        delta_long = target_long - origin_long
+
+        haversine_value = (
+            math.sin(delta_lat / 2) ** 2
+            + math.cos(origin_lat)
+            * math.cos(target_lat)
+            * math.sin(delta_long / 2) ** 2
+        )
+
+        angular_distance = 2 * math.atan2(
+            math.sqrt(haversine_value),
+            math.sqrt(1 - haversine_value),
+        )
+
+        return earth_radius_km * angular_distance
+
+    if not sort_by_distance or not current_user_id:
+        announcements = (
+            base_query.order_by(
+                models.TradeAnnouncement.create_date.desc()
+            )
+            .limit(limit)
+            .offset(offset)
+            .all()
+        )
+
+        return [
+            build_response(announcement)
+            for announcement in announcements
+        ]
+
+    current_user = (
+        db.query(User)
+        .options(joinedload(User.location))
+        .filter(User.id == current_user_id)
+        .first()
     )
 
-    if max_distance_km is not None:
-        if current_user_id is None:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "current_user_id is required "
-                    "when filtering by distance"
-                ),
-            )
-
-        current_user = (
-            db.query(User)
-            .filter(User.id == current_user_id)
-            .first()
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuário não encontrado.",
         )
 
-        if current_user is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Current user not found",
-            )
+    user_location = getattr(current_user, "location", None)
 
-        if current_user.cep_id is None:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "The current user does not "
-                    "have a registered CEP"
-                ),
+    if not has_coordinates(user_location):
+        announcements = (
+            base_query.order_by(
+                models.TradeAnnouncement.create_date.desc()
             )
-
-        current_user_cep = (
-            current_user.cep_id
-            .replace("-", "")
-            .strip()
+            .limit(limit)
+            .offset(offset)
+            .all()
         )
 
-        current_location = (
-            db.query(location_models.Location)
-            .filter(
-                location_models.Location.cep
-                == current_user_cep
-            )
-            .first()
+        return [
+            build_response(announcement)
+            for announcement in announcements
+        ]
+
+    announcements = base_query.all()
+
+    announcements_with_distance = []
+
+    for announcement in announcements:
+        announcement_location = getattr(
+            announcement,
+            "location",
+            None,
         )
 
-        if current_location is None:
-            raise HTTPException(
-                status_code=404,
-                detail=(
-                    "Location for the current "
-                    "user CEP was not found"
-                ),
+        distance_km = None
+
+        if has_coordinates(announcement_location):
+            distance_km = calculate_distance_km(
+                origin_location=user_location,
+                target_location=announcement_location,
             )
 
-        if (
-            current_location.lat is None
-            or current_location.long is None
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "The current user location does not "
-                    "have latitude and longitude"
-                ),
-            )
-
-        # Reúne os CEPs dos anúncios.
-        # Se o anúncio não tiver CEP próprio, usa o CEP do dono.
-        announcement_ceps: set[str] = set()
-
-        for announcement in announcements:
-            announcement_cep = getattr(
-                announcement,
-                "cep_id",
-                None,
-            )
-
-            if (
-                announcement_cep is None
-                and announcement.user is not None
-            ):
-                announcement_cep = getattr(
-                    announcement.user,
-                    "cep_id",
-                    None,
-                )
-
-            if announcement_cep is not None:
-                announcement_ceps.add(
-                    announcement_cep
-                    .replace("-", "")
-                    .strip()
-                )
-
-        if not announcement_ceps:
-            announcements = []
-        else:
-            stored_locations = (
-                db.query(location_models.Location)
-                .filter(
-                    location_models.Location.cep.in_(
-                        announcement_ceps
-                    )
-                )
-                .all()
-            )
-
-            locations_by_cep = {
-                stored_location.cep: stored_location
-                for stored_location in stored_locations
+        announcements_with_distance.append(
+            {
+                "announcement": announcement,
+                "distance_km": distance_km,
             }
+        )
 
-            filtered_announcements = []
+    announcements_with_distance.sort(
+        key=lambda item: (
+            item["distance_km"] is None,
+            item["distance_km"]
+            if item["distance_km"] is not None
+            else float("inf"),
+            -item["announcement"].create_date.timestamp()
+            if item["announcement"].create_date is not None
+            else 0,
+        )
+    )
 
-            for announcement in announcements:
-                # Prioriza o CEP do anúncio.
-                announcement_cep = getattr(
-                    announcement,
-                    "cep_id",
-                    None,
-                )
-
-                # Se não existir, usa o CEP do usuário dono.
-                if (
-                    announcement_cep is None
-                    and announcement.user is not None
-                ):
-                    announcement_cep = getattr(
-                        announcement.user,
-                        "cep_id",
-                        None,
-                    )
-
-                if announcement_cep is None:
-                    continue
-
-                clean_cep = (
-                    announcement_cep
-                    .replace("-", "")
-                    .strip()
-                )
-
-                announcement_location = (
-                    locations_by_cep.get(clean_cep)
-                )
-
-                if announcement_location is None:
-                    continue
-
-                if (
-                    announcement_location.lat is None
-                    or announcement_location.long is None
-                ):
-                    continue
-
-                distance_km = _calculate_distance(
-                    current_location,
-                    announcement_location,
-                )
-
-                # print(
-                #     "DISTANCE FILTER:",
-                #     {
-                #         "announcement_id": announcement.id,
-                #         "current_user_cep": current_user_cep,
-                #         "announcement_cep": clean_cep,
-                #         "distance_km": distance_km,
-                #         "max_distance_km": max_distance_km,
-                #     },
-                # )
-
-                if distance_km <= max_distance_km:
-                    filtered_announcements.append(
-                        announcement
-                    )
-
-            announcements = filtered_announcements
-
-    # Paginação aplicada depois de todos os filtros.
-    announcements = announcements[
-        offset:offset + limit
+    paginated_items = announcements_with_distance[
+        offset : offset + limit
     ]
+
+    return [
+        build_response(
+            announcement=item["announcement"],
+            distance_km=item["distance_km"],
+        )
+        for item in paginated_items
+    ]
+    
 
     responses = []
 

@@ -73,8 +73,12 @@ class FeedAnnouncementResponse(BaseModel):
     publish_year: int = Field(alias='publishYear')
     cep: str
     real_photo_url: Optional[str] = None
+    distance_km: Optional[float] = Field(default=None, alias="distanceKm")
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+    )
 
 
 class AnnouncementFilters(BaseModel):

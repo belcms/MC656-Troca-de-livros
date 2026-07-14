@@ -8,17 +8,22 @@ import 'announcement_filters.dart';
 
 import 'package:frontend/search/intermediate_search_screen.dart';
 import 'package:frontend/search/widgets/custom_search_bar.dart';
-import 'announcement_card.dart';
-import '../services/announcement_service.dart';
 
-/// The main screen of the application that displays the feed of book announcements.
+import '../services/announcement_service.dart';
+import 'announcement_card.dart';
+
+/// The main screen of the application that displays the feed of book
+/// announcements.
 ///
 /// This widget handles its own state to fetch data asynchronously via
 /// [AnnouncementService.fetchFeedAnnouncements] when it initializes.
 /// Depending on the data state, it will render a loading indicator,
-/// an [EmptyFeedState] if no books are found, or a grid of [AnnouncementCard]s.
+/// an [EmptyFeedState] if no books are found, or a grid of
+/// [AnnouncementCard]s.
 class FeedView extends StatefulWidget {
-  const FeedView({super.key});
+  const FeedView({
+    super.key,
+  });
 
   @override
   State<FeedView> createState() => _FeedViewState();
@@ -41,6 +46,9 @@ class _FeedViewState extends State<FeedView> {
   }
 
   /// Fetches the feed data from the backend and updates the UI state.
+  ///
+  /// The backend is responsible for sorting by distance. The frontend only
+  /// requests distance sorting and renders the response in the received order.
   Future<void> _loadFeed() async {
     setState(() {
       isLoading = true;
@@ -50,8 +58,8 @@ class _FeedViewState extends State<FeedView> {
         await AnnouncementService.fetchFeedAnnouncements(
       currentUserId: currentUserId,
       filters: activeFilters,
+      sortByDistance: true,
     );
-    
     if (!mounted) {
       return;
     }
@@ -180,6 +188,23 @@ class _FeedViewState extends State<FeedView> {
     return labels[value] ?? value;
   }
 
+  int _parsePublishYear(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  double? _parseDistanceKm(dynamic value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    return double.tryParse(value?.toString() ?? '');
+  }
+  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -244,7 +269,12 @@ class _FeedViewState extends State<FeedView> {
               ),
 
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                8,
+              ),
               child: CustomSearchBar(
                 readOnly: true,
                 hintText: 'Buscar livros, autores ou editoras',
@@ -252,7 +282,8 @@ class _FeedViewState extends State<FeedView> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const IntermediateSearchScreen(),
+                      builder: (context) =>
+                          const IntermediateSearchScreen(),
                     ),
                   );
                 },
@@ -263,7 +294,9 @@ class _FeedViewState extends State<FeedView> {
             ),
             Expanded(
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(
+                      child: CircularProgressIndicator(),
+                    )
                   : announcements.isEmpty
                       ? const EmptyFeedState()
                       : RefreshIndicator(
@@ -288,7 +321,10 @@ class _FeedViewState extends State<FeedView> {
                             itemBuilder:
                                 (context, index) {
                               final ann =
-                                  announcements[index];
+                                  announcements[index] as Map;
+
+                              final announcementId =
+                                  ann['id']?.toString() ?? '';
 
                               return GestureDetector(
                                 onTap: () {
@@ -299,8 +335,7 @@ class _FeedViewState extends State<FeedView> {
                                           (context) =>
                                               AnnouncementDetailScreen(
                                         announcementId:
-                                            ann['id']
-                                                .toString(),
+                                            announcementId,
                                       ),
                                     ),
                                   );
@@ -308,14 +343,22 @@ class _FeedViewState extends State<FeedView> {
                                 child:
                                     AnnouncementCard(
                                   title:
-                                      ann['title'],
+                                      ann['title']?.toString() ??
+                                          'Livro sem título',
                                   publishYear:
-                                      ann[
-                                          'publishYear'],
+                                      _parsePublishYear(
+                                        ann[
+                                            'publishYear'],
+                                      ),
                                   photo:
-                                      ann['real_photo_url'] ??
+                                      ann['real_photo_url']?.toString() ??
                                           '',
-                                  cep: ann['cep'],
+                                  cep: ann['cep']?.toString() ??
+                                      'Localização não informada',
+                                  distanceKm:
+                                      _parseDistanceKm(
+                                        ann['distanceKm'],
+                                      ),
                                 ),
                               );
                             },
@@ -490,17 +533,25 @@ class _ActiveFiltersSection extends StatelessWidget {
 /// This widget shows a book icon and a friendly message encouraging the
 /// user to take the first step and create a book trade announcement.
 class EmptyFeedState extends StatelessWidget {
-  const EmptyFeedState({super.key});
+  const EmptyFeedState({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(
+          20.0,
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.auto_stories, size: 80.0, color: Colors.grey),
+            const Icon(
+              Icons.auto_stories,
+              size: 80.0,
+              color: Colors.grey,
+            ),
             const SizedBox(height: 24.0),
             Text(
               "O feed está vazio!",
@@ -509,10 +560,10 @@ class EmptyFeedState extends StatelessWidget {
             const SizedBox(height: 12.0),
             Text(
               "Que tal dar o primeiro passo e anunciar aquele livro que está parado na estante?",
-              textAlign: .center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Colors.grey,
+                  ),
             ),
           ],
         ),
@@ -520,4 +571,3 @@ class EmptyFeedState extends StatelessWidget {
     );
   }
 }
-
