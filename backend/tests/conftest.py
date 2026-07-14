@@ -151,6 +151,7 @@ def seed_announcement(db_session: Session) -> Callable[..., Dict[str, object]]:
             publish_year=publish_year,
             number_of_pages=123,
             language=Language.PT_br,
+            cover_photo="https://example.com/edition_cover.jpg",
         )
         db_session.add(edition)
         db_session.flush()

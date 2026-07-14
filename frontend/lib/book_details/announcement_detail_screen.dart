@@ -6,6 +6,7 @@ import 'package:frontend/offer/trade_proposal_view.dart';
 import 'package:frontend/services/offer_service.dart';
 import 'package:frontend/auth/auth_repository.dart';
 import 'package:frontend/components/badge_component.dart';
+import '../services/wishlist_service.dart';
 
 /// Screen responsible for displaying detailed information about a trade announcement.
 ///
@@ -55,6 +56,8 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   bool _isLoadingOfferStatus = true;
   String? meuUsuarioLogadoId;
   bool isLoading = true;
+  bool _isInWishlist = false;
+  bool _isLoadingWishlist = true;
 
   int _currentImageIndex = 0;
 
@@ -81,10 +84,47 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
       if (meuUsuarioLogadoId != null) {
         await _checkIfHasOffer();
       } else {
-        setState(() {
-          _isLoadingOfferStatus = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoadingOfferStatus = false;
+          });
+        }
       }
+      
+      try {
+        final data = await _future;
+        if (data?.edition?.id != null) {
+          await _checkWishlist(data!.edition!.id);
+        } else {
+          if (mounted) {
+            setState(() {
+              _isLoadingWishlist = false;
+            });
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoadingWishlist = false;
+          });
+        }
+      }
+    }
+  }
+
+  Future<void> _checkWishlist(String editionId) async {
+    if (meuUsuarioLogadoId == null) {
+      if (mounted) setState(() => _isLoadingWishlist = false);
+      return;
+    }
+    final wishlist = await WishlistService.getWishlist(meuUsuarioLogadoId!);
+    if (mounted) {
+      setState(() {
+        if (wishlist != null) {
+          _isInWishlist = wishlist.any((item) => item.editionId == editionId);
+        }
+        _isLoadingWishlist = false;
+      });
     }
   }
 
@@ -190,11 +230,12 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                         // _buildCover(data.realPhotoUrl),
                         const SizedBox(height: 16),
 
-                        /// Title, author, and condition badge
+                        /// Title, author, condition badge and wishlist button
                         _buildHeader(
                           title: book?.title,
                           author: book?.author,
                           condition: data.condition,
+                          editionId: edition?.id,
                         ),
 
                         const SizedBox(height: 16),
@@ -407,10 +448,33 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   /// - Book title
   /// - Author
   /// - Condition badge (aligned to the right)
-  Widget _buildHeader({String? title, String? author, String? condition}) {
+  /// - Wishlist heart button (aligned to the left)
+  Widget _buildHeader({String? title, String? author, String? condition, String? editionId}) {
     return Stack(
       alignment: Alignment.center,
       children: [
+        if (editionId != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _isLoadingWishlist
+                ? const Padding(
+                    padding: EdgeInsets.all(12.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2.0),
+                    ),
+                  )
+                : IconButton(
+                    icon: Icon(
+                      _isInWishlist ? Icons.favorite : Icons.favorite_border,
+                      color: _isInWishlist ? Colors.red : Colors.grey,
+                      size: 28,
+                    ),
+                    onPressed: () => _toggleWishlist(editionId),
+                  ),
+          ),
+
         Column(
           children: [
             Text(
@@ -433,6 +497,26 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
           ),
       ],
     );
+  }
+
+  Future<void> _toggleWishlist(String editionId) async {
+    if (meuUsuarioLogadoId == null) return;
+
+    if (_isInWishlist) {
+      final success = await WishlistService.removeFromWishlist(meuUsuarioLogadoId!, editionId);
+      if (success && mounted) {
+        setState(() {
+          _isInWishlist = false;
+        });
+      }
+    } else {
+      final success = await WishlistService.addToWishlist(meuUsuarioLogadoId!, editionId);
+      if (success && mounted) {
+        setState(() {
+          _isInWishlist = true;
+        });
+      }
+    }
   }
 
   /// Builds the section with user and edition information.

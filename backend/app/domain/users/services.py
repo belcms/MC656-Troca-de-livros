@@ -72,3 +72,36 @@ def get_user_announcements(db: Session, user_id: str, status_filter: Optional[St
         })
         
     return cards
+
+def add_to_wishlist(db: Session, user_id: str, edition_id: str):
+    # Check if it already exists
+    existing = db.query(models.Wishlist).filter(
+        models.Wishlist.user_id == user_id,
+        models.Wishlist.edition_id == edition_id
+    ).first()
+    
+    if existing:
+        return existing
+        
+    wishlist_item = models.Wishlist(user_id=user_id, edition_id=edition_id)
+    db.add(wishlist_item)
+    db.commit()
+    db.refresh(wishlist_item)
+    return wishlist_item
+
+def remove_from_wishlist(db: Session, user_id: str, edition_id: str):
+    existing = db.query(models.Wishlist).filter(
+        models.Wishlist.user_id == user_id,
+        models.Wishlist.edition_id == edition_id
+    ).first()
+    
+    if existing:
+        db.delete(existing)
+        db.commit()
+        return True
+    return False
+
+def get_user_wishlist(db: Session, user_id: str):
+    return db.query(models.Wishlist).options(
+        joinedload(models.Wishlist.edition).joinedload(Edition.book)
+    ).filter(models.Wishlist.user_id == user_id).all()
