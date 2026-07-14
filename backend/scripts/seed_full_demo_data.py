@@ -28,7 +28,7 @@ from app.domain.books.models import (  # noqa: E402
     Genre,
     Language,
 )
-from app.domain.locations.models import location as Location  # noqa: E402
+from app.domain.locations.models import Location as Location  # noqa: E402
 from app.domain.offer.models import (  # noqa: E402
     Offer,
     OfferedAnnouncements,

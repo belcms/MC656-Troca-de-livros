@@ -1,12 +1,10 @@
-import uuid
-import enum
-from sqlalchemy import Enum as SQLAlchemyEnum, Column, Float, String, ForeignKey
+from sqlalchemy import Column, Float, String
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from pydantic import BaseModel
 
 
-class location(Base):
+class Location(Base):
     __tablename__ = "locations"
 
     cep = Column(String(8), primary_key=True)
@@ -17,11 +15,17 @@ class location(Base):
     lat = Column(Float)
     long = Column(Float)
 
-    # Relacionamentos reversos
-    users = relationship("User", back_populates="location")
-    announcements = relationship("TradeAnnouncement", back_populates="location")
+    users = relationship(
+        "User",
+        back_populates="location",
+    )
 
-#pydantic
+    announcements = relationship(
+        "TradeAnnouncement",
+        back_populates="location",
+    )
+
+
 class LocationPydantic(BaseModel):
     city: str
     state: str

@@ -81,6 +81,33 @@ class FeedAnnouncementResponse(BaseModel):
     )
 
 
+class AnnouncementFilters(BaseModel):
+    """Filters supported by the announcements feed."""
+
+    start_year: int | None = Field(
+        default=None,
+        ge=1000,
+        le=2100,
+    )
+
+    end_year: int | None = Field(
+        default=None,
+        ge=1000,
+        le=2100,
+    )
+
+    conditions: list[str] = Field(
+        default_factory=list,
+    )
+
+    genres: list[str] = Field(
+        default_factory=list,
+    )
+
+    max_distance_km: float | None = Field(
+        default=None,
+        gt=0,
+    )
 class SearchAnnouncementsResponse(BaseModel):
     """Envelope returned by the announcement search endpoint.
 

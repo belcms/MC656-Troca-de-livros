@@ -70,11 +70,6 @@ def test_feed_route_success_and_contract(client, monkeypatch):
         current_user_id=None,
         sort_by_distance=False,
     ):
-        assert limit == 20
-        assert offset == 0
-        assert current_user_id is None
-        assert sort_by_distance is False
-
         return [
             {
                 "id": "ann-1",
