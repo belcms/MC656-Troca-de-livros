@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Float, String
 from sqlalchemy.orm import relationship
 from app.core.database import Base
-from pydantic import BaseModel
 
 
 class Location(Base):
@@ -15,21 +14,6 @@ class Location(Base):
     lat = Column(Float)
     long = Column(Float)
 
-    users = relationship(
-        "User",
-        back_populates="location",
-    )
-
-    announcements = relationship(
-        "TradeAnnouncement",
-        back_populates="location",
-    )
-
-
-class LocationPydantic(BaseModel):
-    city: str
-    state: str
-    country: str
-    district: str
-    lat: float
-    long: float
+    # Relacionamentos reversos
+    users = relationship("User", back_populates="location")
+    announcements = relationship("TradeAnnouncement", back_populates="location")

@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, Query, UploadFile, File, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.domain.auth.security import get_current_user
+from app.domain.users.models import User
 
 from app.api.v1.announcements.schemas import FeedAnnouncementResponse, SearchAnnouncementsResponse
 import app.domain.announcements.schemas as announcements_schemas
@@ -108,9 +110,9 @@ def feed_announcements_route(
     max_distance_km=max_distance_km,
 )
 
-@router.post("/{user_id}", status_code=201)
-def create_announcement_route(user_id: str, body: announcements_schemas.TradeAnnouncementPydantic, db: Session = Depends(get_db)):
-    #Create a new trade announcement for a specific user.
+@router.post("", status_code=201)
+def create_announcement_route(body: announcements_schemas.TradeAnnouncementPydantic, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Create a new trade announcement for a specific user."""
 
     #The endpoint delegates to the announcements service to persist a new
     #announcement associated with the given user ID.
@@ -122,7 +124,7 @@ def create_announcement_route(user_id: str, body: announcements_schemas.TradeAnn
 
     # Returns:
        # The created announcement payload with HTTP 201 status.
-    return service_create_announcement(user_id, body, db)
+    return service_create_announcement(current_user.id, body, db)
 
 
 @router.post("/{announcement_id}/photos", response_model=PhotoResponse, status_code=status.HTTP_201_CREATED)
@@ -146,8 +148,6 @@ def upload_announcement_photo_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"Erro ao salvar foto: {str(e)}"
         )
-    
-
 
 @router.delete("/{announcement_id}/photos")
 def delete_announcement_photo(

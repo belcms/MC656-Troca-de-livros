@@ -675,6 +675,7 @@ def update_book(
     id: str,
     body: dict = Body(...),
     db: Session = Depends(get_db),
+    owner_id: str | None = None,
 ):
     """
     Update the details of an existing book, edition, and announcement.
@@ -687,10 +688,9 @@ def update_book(
     )
 
     if not announcement:
-        raise HTTPException(
-            status_code=404,
-            detail="Announcement not found",
-        )
+        raise HTTPException(status_code=404, detail="Announcement not found")
+    if owner_id is not None and announcement.user_id != owner_id:
+        raise HTTPException(status_code=403, detail="Acesso negado")
 
     edition = announcement.edition
     book = edition.book
@@ -829,8 +829,77 @@ def create_announcement(
     db.add(announcement)
     db.commit()
     db.refresh(announcement)
+    return {"data": announcement, "message": "Announcement created successfully"}
+
+def get_book_details(id: str, db: Session = Depends(get_db)):
+    announcement = (
+        db.query(announcements_models.TradeAnnouncement)
+        .filter(announcements_models.TradeAnnouncement.id == id)
+        .first()
+    )
+
+    if not announcement:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+
+    edition = announcement.edition
+    book = edition.book
 
     return {
-        "data": announcement,
-        "message": "Announcement created successfully",
+        "id": announcement.id,
+        "title": book.title,
+        "author": book.author,
+        "publisher": edition.publisher,
+        "genre": book.genre.value,
+        "language": edition.language.value,
+        "publishYear": edition.publish_year,
+        "pages": edition.number_of_pages,
+        "synopsis": book.synopsis,
+        "description": announcement.description,
+        "status": announcement.status.value,
+        "condition": announcement.condition.value,
+        "real_photo_url": announcement.real_photo_url,
     }
+
+
+def update_book(
+    id: str,
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    owner_id: str | None = None,
+):
+    announcement = (
+        db.query(announcements_models.TradeAnnouncement)
+        .filter(announcements_models.TradeAnnouncement.id == id)
+        .first()
+    )
+
+    if not announcement:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+    if owner_id is not None and announcement.user_id != owner_id:
+        raise HTTPException(status_code=403, detail="Acesso negado")
+
+    edition = announcement.edition
+    book = edition.book
+
+    book.title = body.get("title", book.title)
+    book.author = body.get("author", book.author)
+    book.synopsis = body.get("synopsis", book.synopsis)
+    book.genre = map_genre(body.get("genre", book.genre.value))
+
+    edition.publisher = body.get("publisher", edition.publisher)
+    edition.language = map_language(body.get("language", edition.language.value))
+
+    if body.get("publishYear"):
+        edition.publish_year = int(body["publishYear"])
+
+    if body.get("pages"):
+        edition.number_of_pages = int(body["pages"])
+
+    announcement.description = body.get("description", announcement.description)
+    announcement.real_photo_url = body.get("real_photo_url", announcement.real_photo_url)
+    announcement.status = map_status(body.get("status", announcement.status.value))
+    announcement.condition = map_condition(body.get("condition", announcement.condition.value))
+
+    db.commit()
+
+    return {"message": "Book updated successfully"}

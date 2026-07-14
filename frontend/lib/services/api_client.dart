@@ -1,30 +1,41 @@
+import 'package:http/http.dart' as http;
+import '../auth/auth_repository.dart';
+
 class ApiClient {
   // Use '127.0.0.1' ou 'localhost' se estiver testando no Simulador iOS ou Web. O memso para o simulador Android.
   // Use '10.0.2.2' se estiver testando no Emulador Android.
   // Use o IP da sua máquina (ex: 192.168.1.15) se testar no celular físico.
-  // static const String baseUrl = 'http://10.0.2.2:8000';
-  // static const String baseUrl = 'http://192.168.15.65:8000';
-  // }
-  // Use API_BASE_URL para alternar entre emulador, web, iOS ou celular físico
-  // sem alterar o código.
-  //
-  // Android Emulator:
-  // flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
-  //
-  // Web/Desktop/iOS Simulator:
-  // flutter run --dart-define=API_BASE_URL=http://localhost:8000
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000',
-  );
+  static const String baseUrl = 'http://10.0.2.2:8000';
 
-  // Enquanto não houver autenticação integrada, o usuário atual vem por
-  // dart-define. Se estiver vazio, o feed mantém o comportamento antigo.
-  //
-  // Exemplo:
-  // flutter run --dart-define=CURRENT_USER_ID=<id-do-usuario>
-  static const String currentUserId = String.fromEnvironment(
-    'CURRENT_USER_ID',
-    defaultValue: '',
-  );
+  static Future<http.Response> get(String path) => _send('GET', path);
+  static Future<http.Response> post(String path, {String? body}) =>
+      _send('POST', path, body: body);
+  static Future<http.Response> put(String path, {String? body}) =>
+      _send('PUT', path, body: body);
+
+  static Future<http.Response> _send(
+    String method,
+    String path, {
+    String? body,
+    bool retry = true,
+  }) async {
+    final token = AuthRepository.instance.accessToken;
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (token != null) headers['Authorization'] = 'Bearer $token';
+    final uri = Uri.parse('$baseUrl$path');
+    late http.Response response;
+    if (method == 'POST') {
+      response = await http.post(uri, headers: headers, body: body);
+    } else if (method == 'PUT') {
+      response = await http.put(uri, headers: headers, body: body);
+    } else {
+      response = await http.get(uri, headers: headers);
+    }
+    if (response.statusCode == 401 &&
+        retry &&
+        await AuthRepository.instance.refresh()) {
+      return _send(method, path, body: body, retry: false);
+    }
+    return response;
+  }
 }

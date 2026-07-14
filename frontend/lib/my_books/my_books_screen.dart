@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import '../book_details/announcement_detail_screen.dart';
 
 import '../services/my_books_service.dart';
-import '../services/user_service.dart';
 import 'my_book_card.dart';
 import 'my_books_model.dart';
 import '../book_edition/book_edition_screen.dart';
-
 
 /// Main page for the My Books feature.
 ///
@@ -31,17 +29,8 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
 
   /// Loads initial books for the screen.
   ///
-  /// Current strategy uses the first user returned by [UserService.fetchUsers]
-  /// as a temporary replacement for an authenticated session user id.
   Future<List<MyBooksModel>> _loadInitialBooks() async {
-    // Busca o primeiro usuário do banco como substituto para um ID de sessão autenticado
-    final users = await UserService.fetchUsers();
-    if (users != null && users.isNotEmpty) {
-      final firstUserId = users.first['id'];
-      final books = await MyBooksService.fetchUserBooks(firstUserId);
-      return books ?? [];
-    }
-    return [];
+    return await MyBooksService.fetchMyBooks() ?? [];
   }
 
   /// Builds the top title row with back navigation.
@@ -155,9 +144,7 @@ class _MyBooksScreenState extends State<MyBooksScreen> {
                       final updated = await Navigator.push<bool>(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => BookEditionPage(
-                            id: book.id,
-                          ),
+                          builder: (_) => BookEditionPage(id: book.id),
                         ),
                       );
 

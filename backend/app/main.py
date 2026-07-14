@@ -16,6 +16,7 @@ from app.api.v1.announcements.router import router as announcements_router
 from app.core.database import engine, Base, get_db, ensure_schema_compatibility
 from app.api.v1.users.router import router as users_router
 from app.api.v1.books.router import router as books_router
+from app.api.v1.auth.router import router as auth_router
 from app.api.v1.offer.router import router_offer as offer_router
 from app.api.v1.offer.router import router_offer_announcement as offer_announcement_router
 from app.api.v1.locations.router import router as locations_router
@@ -25,7 +26,7 @@ from app.api.v1.locations.router import router as locations_router
 # announcements_models.Base.metadata.create_all(bind=engine)
 # offer_models.Base.metadata.create_all(bind=engine)
 
-#location_model.Base.metadata.create_all(bind=engine)
+#
 
 # Base.metadata.create_all(bind=engine)
 
@@ -36,7 +37,7 @@ async def lifespan(app: FastAPI):
     users_models.Base.metadata.create_all(bind=engine)
     announcements_models.Base.metadata.create_all(bind=engine)
     offer_models.Base.metadata.create_all(bind=engine)
-
+    location_model.Base.metadata.create_all(bind=engine)
 
     Base.metadata.create_all(bind=engine)
 
@@ -60,6 +61,7 @@ app.add_middleware(
 app.include_router(announcements_router)
 app.include_router(users_router)
 app.include_router(books_router)
+app.include_router(auth_router)
 app.include_router(offer_announcement_router)
 app.include_router(offer_router)
 app.include_router(locations_router)

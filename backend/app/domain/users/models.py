@@ -1,5 +1,7 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship
+from datetime import datetime
+from sqlalchemy import Column, Date, DateTime, ForeignKey, String
+
+from sqlalchemy.orm import relationship, synonym
 from app.core.database import Base
 import uuid
 
@@ -8,23 +10,31 @@ class User(Base):
     
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     username = Column(String, unique=True, index=True)
+    username_normalized = Column(String, unique=True, index=True, nullable=True)
     email = Column(String, unique=True, index=True)
+    email_normalized = Column(String, unique=True, index=True, nullable=True)
     full_name = Column(String, index=True)
-    cep_id = Column(String(8), ForeignKey("locations.cep"))
+    password_hash = Column(String, nullable=True)
+    birth_date = Column(Date, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    cep_id = Column(String(8), ForeignKey("locations.cep"), index=True)
+    cep = synonym("cep_id")
 
     announcements = relationship("TradeAnnouncement", back_populates="user")
     location = relationship("Location", back_populates="users")
+    sessions = relationship("AuthSession", back_populates="user", cascade="all, delete-orphan")
 
-    def __init__(self, **kwargs):
-        cep = kwargs.pop("cep", None)
-        super().__init__(**kwargs)
-        if cep is not None and self.cep_id is None:
-            self.cep_id = cep
 
-    @property
-    def cep(self):
-        return self.cep_id
+class AuthSession(Base):
+    __tablename__ = "auth_sessions"
 
-    @cep.setter
-    def cep(self, value):
-        self.cep_id = value
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    refresh_token_hash = Column(String(64), unique=True, nullable=False, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    revoked_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="sessions")

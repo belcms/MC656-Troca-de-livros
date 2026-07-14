@@ -1,26 +1,11 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'api_client.dart'; // Importa a configuração base
 
 class UserService {
-  // Usa o baseUrl do ApiClient
-  static final String _usersUrl = '${ApiClient.baseUrl}/api/v1/users';
-
-
-  // Fetch users from the API.
-  static Future<List<dynamic>?> fetchUsers() async {
-    try {
-      final response = await http.get(Uri.parse(_usersUrl));
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body); // Retorna os dados brutos
-      } else {
-        print('Erro: ${response.statusCode}');
-        return null;
-      }
-    } catch (e) {
-      print('Erro de conexão: $e');
-      return null;
-    }
+  static Future<Map<String, dynamic>?> fetchMe() async {
+    final response = await ApiClient.get('/api/v1/users/me');
+    if (response.statusCode == 200)
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    return null;
   }
 }

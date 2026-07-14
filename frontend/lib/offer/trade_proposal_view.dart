@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/book_creation/book_creation_screen.dart';
+import 'package:frontend/auth/auth_repository.dart';
 import 'offer_proposal_view_model.dart';
 import 'offer_book_model.dart';
-import 'package:frontend/services/user_service.dart';
 
 class TradeProposalScreen extends StatefulWidget {
   final String targetAnnouncementId; // ID real do anúncio alvo
@@ -44,18 +44,11 @@ class _TradeProposalScreenState extends State<TradeProposalScreen> {
 
   // Novo método assíncrono para lidar com o carregamento
   Future<void> _initData() async {
-    final users = await UserService.fetchUsers();
+    _firstUserId = AuthRepository.instance.user?.id;
 
-    // Declara a variável fora do if/else para poder usar depois
-
-    if (users != null && users.isNotEmpty) {
-      _firstUserId = users.first['id'];
-    } else {
-      _firstUserId =
-          "f3f4e2d6-02b7-44d9-afc0-d9e8341ca2f4"; // <-- Faltava o ponto e vírgula aqui
+    if (_firstUserId != null) {
+      await _viewModel.loadEligibleBooks(_firstUserId!);
     }
-
-    _viewModel.loadEligibleBooks(_firstUserId!);
   }
 
   @override
@@ -305,7 +298,7 @@ class _TradeProposalScreenState extends State<TradeProposalScreen> {
       padding: const EdgeInsets.all(20),
       color: const Color(0xFFFFF8F0),
       child: ElevatedButton(
-        onPressed: _viewModel.canSubmit
+        onPressed: _viewModel.canSubmit && _firstUserId != null
             ? () async {
                 final success = await _viewModel.submitProposal(
                   widget.targetAnnouncementId,

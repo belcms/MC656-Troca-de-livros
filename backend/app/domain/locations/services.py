@@ -64,13 +64,23 @@ def get_or_create_location_by_cep(cep: str | None, db: Session) -> location_mode
         return existing_location
 
     url = f"https://cep.awesomeapi.com.br/json/{clean_cep}"
-    with httpx.Client(timeout=5.0) as client:
-        response = client.get(url)
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            response = client.get(url)
+    except httpx.RequestError:
+        raise HTTPException(status_code=503, detail="Location service unavailable")
 
+    if response.status_code >= 500:
+        raise HTTPException(status_code=503, detail="Location service unavailable")
     if response.status_code != 200:
         raise HTTPException(status_code=404, detail="Location not found for CEP")
 
-    new_location = _location_from_api_data(response.json(), clean_cep)
+    try:
+        data = response.json()
+    except ValueError:
+        raise HTTPException(status_code=503, detail="Location service unavailable")
+
+    new_location = _location_from_api_data(data, clean_cep)
     db.add(new_location)
     db.commit()
     db.refresh(new_location)

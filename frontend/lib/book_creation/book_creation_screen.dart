@@ -1,17 +1,15 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'book_creation_viewmodel.dart';
-import '../services/user_service.dart';
 import 'package:flutter/cupertino.dart';
+import '../auth/auth_repository.dart';
 import '../services/location_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:frontend/services/upload_service.dart';
 import 'package:frontend/components/photo_carousel_picker.dart';
 
 class BookCreationPage extends StatefulWidget {
-  final String? userId; // A página será carrega com o ID do usuário logado
-
-  const BookCreationPage({super.key, this.userId});
+  const BookCreationPage({super.key});
 
   @override
   State<BookCreationPage> createState() => _BookCreationPageState();
@@ -46,6 +44,7 @@ class _BookCreationPageState extends State<BookCreationPage> {
       return;
     }
 
+    // Pega o CEP do usuário atual e faz a busca inicial
     // Permite que o usuário selecione várias imagens de uma vez na galeria
     final List<XFile> images = await _picker.pickMultiImage(
       imageQuality: 80, // Comprime levemente para o upload ser mais rápido
@@ -72,14 +71,10 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
   // Pega o CEP do usuário atual e faz a busca inicial
   Future<void> _carregarUsuarioLogado() async {
-    final users = await UserService.fetchUsers();
-    if (users != null && users.isNotEmpty) {
-      final user = users.first;
-      final cepUser = user['cep_id'];
-      if (cepUser != null && cepUser.toString().isNotEmpty) {
-        vm.cepController.text = cepUser.toString();
-        await _buscarLocalizacao(cepUser.toString());
-      }
+    final cep = AuthRepository.instance.user?.cep?.trim();
+    if (cep != null && cep.isNotEmpty) {
+      vm.cepController.text = cep;
+      await _buscarLocalizacao(cep);
     }
   }
 
@@ -281,28 +276,8 @@ class _BookCreationPageState extends State<BookCreationPage> {
       isSaving = true;
     });
     // Caso não tenha userId, busca o primeiro usuário.
-    String? currentUserId = widget.userId;
-    if (currentUserId == null) {
-      final users = await UserService.fetchUsers();
-      if (users != null && users.isNotEmpty) {
-        currentUserId = users.first['id'];
-      } else {
-        setState(() {
-          isSaving = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erro: Nenhum usuário encontrado no banco de dados.'),
-          ),
-        );
-        return;
-      }
-    }
 
-    final String? announcementId = await vm.submit(
-      _imagemCapaUrl,
-      currentUserId!,
-    );
+    final String? announcementId = await vm.submit(_imagemCapaUrl);
 
     bool uploadSuccess = true;
 
@@ -853,7 +828,7 @@ class _BookCreationPageState extends State<BookCreationPage> {
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
         ],
       ),
-      child: Material(color: Colors.transparent, child: child),
+      child: Material(type: MaterialType.transparency, child: child),
     );
   }
 

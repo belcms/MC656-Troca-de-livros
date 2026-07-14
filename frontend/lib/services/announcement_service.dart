@@ -74,9 +74,8 @@ class AnnouncementService {
       print('UPDATE URL: $url');
       print('UPDATE BODY: ${jsonEncode(body)}');
 
-      final response = await http.put(
-        url,
-        headers: {'Content-Type': 'application/json'},
+      final response = await ApiClient.put(
+        '/api/v1/books/$id',
         body: jsonEncode(body),
       );
 
@@ -98,19 +97,28 @@ class AnnouncementService {
   /// - the backend returns the feed already ordered by distance.
 
   static Future<List<dynamic>?> fetchFeedAnnouncements({
-    required String currentUserId,
+    required String? currentUserId,
     int limit = 20,
     int offset = 0,
     AnnouncementFilters filters = const AnnouncementFilters(),
     bool sortByDistance = false,
+    http.Client? client,
   }) async {
     try {
       final queryParameters = <String, dynamic>{
         'limit': limit.toString(),
         'offset': offset.toString(),
-        'current_user_id': currentUserId,
-        'sort_by_distance': sortByDistance.toString(),
       };
+
+      final normalizedCurrentUserId = currentUserId?.trim();
+      final hasCurrentUser = normalizedCurrentUserId?.isNotEmpty ?? false;
+
+      if (hasCurrentUser) {
+        queryParameters['current_user_id'] = normalizedCurrentUserId!;
+        if (sortByDistance) {
+          queryParameters['sort_by_distance'] = 'true';
+        }
+      }
 
       if (filters.hasYearFilter) {
         queryParameters['start_year'] = filters.startYear.toString();
@@ -126,7 +134,7 @@ class AnnouncementService {
         queryParameters['genre'] = filters.genres;
       }
 
-      if (filters.maxDistanceKm != null) {
+      if (hasCurrentUser && filters.maxDistanceKm != null) {
         queryParameters['max_distance_km'] = filters.maxDistanceKm.toString();
       }
 
@@ -134,7 +142,9 @@ class AnnouncementService {
         '${ApiClient.baseUrl}/api/v1/announcements/feed',
       ).replace(queryParameters: queryParameters);
 
-      final response = await http.get(url);
+      final response = client == null
+          ? await http.get(url)
+          : await client.get(url);
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as List<dynamic>;
@@ -181,28 +191,20 @@ class AnnouncementService {
 
   static Future<String?> createAnnouncement({
     required Map<String, dynamic> body,
-    required String userId,
   }) async {
     try {
       final requestBody = Map<String, dynamic>.from(body);
 
-      final bookUrl = Uri.parse('${ApiClient.baseUrl}/api/v1/books');
-
-      final bookResponse = await http.post(
-        bookUrl,
-        headers: {'Content-Type': 'application/json'},
+      final bookResponse = await ApiClient.post(
+        '/api/v1/books',
         body: jsonEncode(requestBody),
       );
       if (bookResponse.statusCode != 201 && bookResponse.statusCode != 200) {
-        return null; // Retorna null em vez de false
+        return null;
       }
 
       print('CREATE BOOK STATUS: ${bookResponse.statusCode}');
       print('CREATE BOOK RESPONSE: ${bookResponse.body}');
-
-      if (bookResponse.statusCode != 200 && bookResponse.statusCode != 201) {
-        return null;
-      }
 
       final bookData = jsonDecode(bookResponse.body) as Map<String, dynamic>;
 
@@ -213,27 +215,17 @@ class AnnouncementService {
         return null;
       }
 
-      final editionUrl = Uri.parse(
-        '${ApiClient.baseUrl}/api/v1/editions/$bookId',
-      );
-
-      final editionResponse = await http.post(
-        editionUrl,
-        headers: {'Content-Type': 'application/json'},
+      final editionResponse = await ApiClient.post(
+        '/api/v1/editions/$bookId',
         body: jsonEncode(requestBody),
       );
       if (editionResponse.statusCode != 201 &&
           editionResponse.statusCode != 200) {
-        return null; // Retorna null em vez de false
+        return null;
       }
 
       print('CREATE EDITION STATUS: ${editionResponse.statusCode}');
       print('CREATE EDITION RESPONSE: ${editionResponse.body}');
-
-      if (editionResponse.statusCode != 200 &&
-          editionResponse.statusCode != 201) {
-        return null;
-      }
 
       final editionData =
           jsonDecode(editionResponse.body) as Map<String, dynamic>;
@@ -247,19 +239,14 @@ class AnnouncementService {
 
       requestBody['editionId'] = editionId;
 
-      final announcementUrl = Uri.parse(
-        '${ApiClient.baseUrl}/api/v1/announcements/$userId',
-      );
-
-      final announcementResponse = await http.post(
-        announcementUrl,
-        headers: {'Content-Type': 'application/json'},
+      final announcementResponse = await ApiClient.post(
+        '/api/v1/announcements',
         body: jsonEncode(requestBody),
       );
 
       if (announcementResponse.statusCode != 201 &&
           announcementResponse.statusCode != 200) {
-        return null; // Retorna null em vez de false
+        return null;
       }
 
       // SUCESSO! Pega a resposta do backend e extrai o ID gerado.
@@ -272,9 +259,6 @@ class AnnouncementService {
         print("ALERTA: O anúncio foi criado, mas não achei o ID no JSON!");
       }
 
-      // NOTA: Se o seu backend FastAPI retorna o ID com um nome diferente de "id"
-      // (como "announcement_id" ou "announcementId"), ajuste a chave abaixo:
-      // return responseBody["id"]?.toString();
       return extractedId;
     } catch (e) {
       print('CREATE ERROR: $e');

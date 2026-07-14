@@ -65,7 +65,18 @@ Com o `(venv)` ativado, instale as bibliotecas que o projeto precisa (FastAPI, S
 pip install -r requirements.txt
 ```
 
-### 5\. Ligar o Servidor
+### 5\. Criar/atualizar as tabelas do banco
+
+Com o PostgreSQL ligado e o ambiente virtual ativado, aplique as migrações:
+
+```bash
+alembic upgrade head
+```
+
+Esse passo é obrigatório antes do primeiro cadastro. Também deve ser repetido
+sempre que o projeto receber uma nova migração.
+
+### 6\. Ligar o Servidor
 
 Por fim, inicie a API com o comando:
 
@@ -75,7 +86,7 @@ uvicorn app.main:app --reload
 
 *(O `--reload` faz com que o servidor reinicie sozinho sempre que você salvar um arquivo).*
 
-### 6\. Rodar os Testes Automatizados
+### 7\. Rodar os Testes Automatizados
 
 Com o ambiente virtual ativado, execute:
 
@@ -91,7 +102,7 @@ Os testes de "meus livros" estão na pasta `tests/` e usam banco em memória (SQ
 
 O FastAPI gera a documentação da API.
 Com o servidor rodando, abra o seu navegador e acesse:
-**[http://localhost:8000/docs](https://www.google.com/search?q=http://localhost:8000/docs)**
+**http://localhost:8000/docs**
 
 -----
 

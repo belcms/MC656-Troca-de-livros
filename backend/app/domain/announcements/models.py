@@ -32,7 +32,7 @@ class TradeAnnouncement(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String(36), ForeignKey("users.id"))
     edition_id = Column(String(36), ForeignKey("editions.id"))
-    cep_id = Column(String(8), ForeignKey("locations.cep"))
+    cep_id = Column(String(8), ForeignKey("locations.cep"), index=True)
     real_photo_url = Column(String)
     condition = Column(SQLAlchemyEnum(Condition))
     description = Column(String)
@@ -44,8 +44,6 @@ class TradeAnnouncement(Base):
     edition = relationship("Edition", back_populates="announcements")
     location = relationship("Location", back_populates="announcements")
     photos = relationship("PhotoTradeAnnouncement", back_populates="announcement", cascade="all, delete-orphan")
-
-
 
 class PhotoTradeAnnouncement(Base):
     __tablename__ = "photo_trade_announcements"
