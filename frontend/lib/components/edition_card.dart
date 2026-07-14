@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Reusable UI card for an Edition (used in Wishlist and similar places).
 ///
-/// Displays a compact card with a 3:4 cover, title, and author.
+/// Displays a compact card with an edge-to-edge cover, title, and author.
 class EditionCard extends StatelessWidget {
   final String title;
   final String author;
@@ -17,22 +17,79 @@ class EditionCard extends StatelessWidget {
     this.onTap,
   });
 
-  /// Renders the cover image in a fixed 3:4 frame.
-  Widget _buildCoverImage() {
-    return AspectRatio(
-      aspectRatio: 3 / 4,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: coverPhoto != null && coverPhoto!.isNotEmpty
-            ? Image.network(
-                coverPhoto!,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _buildPlaceholder();
-                },
-              )
-            : _buildPlaceholder(),
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 170, // width for horizontal carousel (matches MyBookCard)
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(255, 248, 247, 247),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.transparent, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(10),
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: coverPhoto != null && coverPhoto!.isNotEmpty
+                        ? Image.network(
+                            coverPhoto!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                _buildPlaceholder(),
+                          )
+                        : _buildPlaceholder(),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        fontFamily: 'Inter',
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      author,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontSize: 12,
+                        fontFamily: 'Inter',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -44,66 +101,5 @@ class EditionCard extends StatelessWidget {
       child: const Icon(Icons.menu_book, size: 36, color: Colors.grey),
     );
   }
-
-  /// Renders the textual metadata section.
-  Widget _buildMetadata(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          height: 48, // Fix height so 1line vs 2lines titles take same space
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          author,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.black54,
-              ),
-        ),
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 150, // slightly narrower than my_book_card
-      child: Card(
-        elevation: 0,
-        color: const Color(0xFFF8F8F8), // Design guide color
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: Color(0xFFD9D9D9), width: 1), // Stroke
-        ),
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-        clipBehavior: Clip.antiAlias, // ensure inkwell ripple respects border
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildCoverImage(),
-                const SizedBox(height: 10),
-                _buildMetadata(context),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
+

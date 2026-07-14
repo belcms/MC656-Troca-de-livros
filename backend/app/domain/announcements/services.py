@@ -336,14 +336,16 @@ async def create_dummy_data(db: Session = Depends(get_db)):
         publisher="Secker & Warburg",
         publish_year=1949,
         number_of_pages=328,
-        language=books_models.Language.En
+        language=books_models.Language.En,
+        cover_photo="https://m.media-amazon.com/images/I/91g5gcjTxsL._SY522_.jpg"
     )
     edition2 = books_models.Edition(
         book_id=book2.id,
         publisher="Chilton Books",
         publish_year=1965,
         number_of_pages=412,
-        language=books_models.Language.En
+        language=books_models.Language.En,
+        cover_photo="https://m.media-amazon.com/images/I/81zN7udGRUL._SL1500_.jpg"
     )
     db.add_all([edition1, edition2])
     db.commit()
