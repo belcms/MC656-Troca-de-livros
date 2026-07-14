@@ -1,6 +1,6 @@
 from fastapi.params import Body, Depends
 from sqlalchemy.orm import Session, joinedload
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from app.domain.announcements import models
 from app.domain.announcements.models import Status
 from app.api.v1.announcements.schemas import FeedAnnouncementResponse
@@ -12,6 +12,11 @@ from app.domain.users import models as users_models
 from app.core.database import get_db
 import app.domain.books.schemas as books_schemas
 import app.domain.announcements.schemas as announcements_schemas
+
+import math
+
+
+
 
 #excluir, não ideal (apenas para create_dummy_data/teste)
 import app.domain.locations.services as locations_services
@@ -111,54 +116,201 @@ def get_announcement_details(db: Session, id: str):
     
     return text
 
-def get_feed_announcements(db: Session, limit: int = 20, offset: int = 0):
+def get_feed_announcements(
+    db: Session,
+    limit: int = 20,
+    offset: int = 0,
+    current_user_id: str | None = None,
+    sort_by_distance: bool = False,
+):
     """
     Retrieves a paginated list of available trade announcements for the feed.
 
-    This function queries the database for announcements with an 'Available' status, 
-    ordering them from newest to oldest. It uses eager loading (joinedload) to 
-    fetch related Edition, Book, and User data in a single query, preventing N+1 
-    performance issues.
+    Default behavior:
+    - returns available announcements ordered from newest to oldest.
 
-    Args:
-        db (Session): The active SQLAlchemy database session.
-        limit (int, optional): The maximum number of records to return. Defaults to 20.
-        offset (int, optional): The number of records to skip for pagination. Defaults to 0.
-
-    Returns:
-        list[FeedAnnouncementResponse]: A list of mapped announcement objects 
-        containing the necessary data for the feed UI.
+    Distance behavior:
+    - when sort_by_distance=True and current_user_id is provided,
+      announcements are ordered by distance from the current user.
+    - announcements without a calculable distance are placed at the end.
+    - create_date is used as a tiebreaker, with newer announcements first.
+    - pagination is applied after distance ordering.
     """
-    
-    announcements = db.query(models.TradeAnnouncement).options(
-        joinedload(models.TradeAnnouncement.edition).joinedload(Edition.book),
-        joinedload(models.TradeAnnouncement.user),
-        joinedload(models.TradeAnnouncement.location)
-    ).filter(models.TradeAnnouncement.status == Status.Available).order_by(models.TradeAnnouncement.create_date.desc()).limit(limit).offset(offset).all()
 
+    base_query = (
+        db.query(models.TradeAnnouncement)
+        .options(
+            joinedload(models.TradeAnnouncement.edition).joinedload(
+                Edition.book
+            ),
+            joinedload(models.TradeAnnouncement.user),
+            joinedload(models.TradeAnnouncement.location),
+        )
+        .filter(models.TradeAnnouncement.status == Status.Available)
+    )
 
-    return [
-        FeedAnnouncementResponse(
-            id=ann.id,
-            title=ann.edition.book.title,
-            real_photo_url=ann.real_photo_url,
-            publishYear=ann.edition.publish_year,
-            cep=(
-                f'{ann.location.city} - {ann.location.state}'
-                if getattr(ann, "location", None)
-                else (
-                    getattr(ann, "cep_id", None)
-                    or getattr(ann.user, "cep_id", None)
-                    or getattr(ann.user, "cep", None)
-                    or "Localização não informada"
-                )
+    def build_location_label(announcement):
+        if getattr(announcement, "location", None):
+            city = getattr(announcement.location, "city", None)
+            state = getattr(announcement.location, "state", None)
+
+            if city and state:
+                return f"{city} - {state}"
+
+            if city:
+                return city
+
+            if state:
+                return state
+
+        return (
+            getattr(announcement, "cep_id", None)
+            or getattr(announcement.user, "cep_id", None)
+            or getattr(announcement.user, "cep", None)
+            or "Localização não informada"
+        )
+
+    def build_response(announcement, distance_km: float | None = None):
+        return FeedAnnouncementResponse(
+            id=announcement.id,
+            title=announcement.edition.book.title,
+            real_photo_url=announcement.real_photo_url,
+            publishYear=announcement.edition.publish_year,
+            cep=build_location_label(announcement),
+            distanceKm=(
+                round(distance_km, 1)
+                if distance_km is not None
+                else None
             ),
         )
-        for ann in announcements
+
+    def has_coordinates(location) -> bool:
+        return (
+            location is not None
+            and getattr(location, "lat", None) is not None
+            and getattr(location, "long", None) is not None
+        )
+
+    def calculate_distance_km(origin_location, target_location) -> float:
+        earth_radius_km = 6371.0
+
+        origin_lat = math.radians(float(origin_location.lat))
+        origin_long = math.radians(float(origin_location.long))
+        target_lat = math.radians(float(target_location.lat))
+        target_long = math.radians(float(target_location.long))
+
+        delta_lat = target_lat - origin_lat
+        delta_long = target_long - origin_long
+
+        haversine_value = (
+            math.sin(delta_lat / 2) ** 2
+            + math.cos(origin_lat)
+            * math.cos(target_lat)
+            * math.sin(delta_long / 2) ** 2
+        )
+
+        angular_distance = 2 * math.atan2(
+            math.sqrt(haversine_value),
+            math.sqrt(1 - haversine_value),
+        )
+
+        return earth_radius_km * angular_distance
+
+    if not sort_by_distance or not current_user_id:
+        announcements = (
+            base_query.order_by(
+                models.TradeAnnouncement.create_date.desc()
+            )
+            .limit(limit)
+            .offset(offset)
+            .all()
+        )
+
+        return [
+            build_response(announcement)
+            for announcement in announcements
+        ]
+
+    current_user = (
+        db.query(User)
+        .options(joinedload(User.location))
+        .filter(User.id == current_user_id)
+        .first()
+    )
+
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuário não encontrado.",
+        )
+
+    user_location = getattr(current_user, "location", None)
+
+    if not has_coordinates(user_location):
+        announcements = (
+            base_query.order_by(
+                models.TradeAnnouncement.create_date.desc()
+            )
+            .limit(limit)
+            .offset(offset)
+            .all()
+        )
+
+        return [
+            build_response(announcement)
+            for announcement in announcements
+        ]
+
+    announcements = base_query.all()
+
+    announcements_with_distance = []
+
+    for announcement in announcements:
+        announcement_location = getattr(
+            announcement,
+            "location",
+            None,
+        )
+
+        distance_km = None
+
+        if has_coordinates(announcement_location):
+            distance_km = calculate_distance_km(
+                origin_location=user_location,
+                target_location=announcement_location,
+            )
+
+        announcements_with_distance.append(
+            {
+                "announcement": announcement,
+                "distance_km": distance_km,
+            }
+        )
+
+    announcements_with_distance.sort(
+        key=lambda item: (
+            item["distance_km"] is None,
+            item["distance_km"]
+            if item["distance_km"] is not None
+            else float("inf"),
+            -item["announcement"].create_date.timestamp()
+            if item["announcement"].create_date is not None
+            else 0,
+        )
+    )
+
+    paginated_items = announcements_with_distance[
+        offset : offset + limit
+    ]
+
+    return [
+        build_response(
+            announcement=item["announcement"],
+            distance_km=item["distance_km"],
+        )
+        for item in paginated_items
     ]
     
-
-
 
 def map_genre(value: str):
     """

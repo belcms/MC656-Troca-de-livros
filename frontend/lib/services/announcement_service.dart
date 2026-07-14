@@ -1,10 +1,13 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
+
 import 'api_client.dart';
 import '../book_details/announcement_detail_model.dart';
 import '../search/announcement_search_models.dart';
 
-/// A service class responsible for handling HTTP requests related to book announcements.
+/// A service class responsible for handling HTTP requests related to book
+/// announcements.
 ///
 /// This class acts as the bridge between the Flutter application and the
 /// backend API, abstracting away the network logic and JSON decoding.
@@ -14,13 +17,14 @@ class AnnouncementService {
   /// Makes a GET request to the `/api/v1/announcements/details/{id}` endpoint.
   ///
   /// The [id] parameter is the unique identifier of the announcement.
-  /// Returns an [AnnouncementDetail] object if the request is successful (HTTP 200),
-  /// or `null` if the request fails, the network drops, or the announcement is not found.
+  /// Returns an [AnnouncementDetail] object if the request is successful
+  /// (HTTP 200), or throws an exception when the request fails.
   static Future<AnnouncementDetail?> fetchAnnouncementDetails(String id) async {
     try {
       final url = Uri.parse(
         '${ApiClient.baseUrl}/api/v1/announcements/details/$id',
       );
+
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -34,16 +38,18 @@ class AnnouncementService {
         );
       }
     } catch (e) {
-      throw Exception('Erro de conexão: Não foi possível acessar o servidor.');
+      throw Exception(
+        'Erro de conexão: Não foi possível acessar o servidor.',
+      );
     }
   }
 
-  // Fetches the detailed information of a specific announcement.
-  //
-  // Makes a GET request to the `/api/v1/announcements/details/{id}` endpoint.
-  //
-  // The [id] parameter is the unique identifier of the announcement.
-  // Returns an [AnnouncementDetail] object if the request is successful (HTTP 200),
+  /// Fetches the detailed information of a specific announcement as raw JSON.
+  ///
+  /// Makes a GET request to the `/api/v1/announcements/details/{id}` endpoint.
+  ///
+  /// The [id] parameter is the unique identifier of the announcement.
+  /// Returns the decoded JSON map if successful.
   static Future<Map<String, dynamic>?> fetchAnnouncementDetailsRaw(
     String id,
   ) async {
@@ -51,6 +57,7 @@ class AnnouncementService {
       final url = Uri.parse(
         '${ApiClient.baseUrl}/api/v1/announcements/details/$id',
       );
+
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -63,20 +70,21 @@ class AnnouncementService {
         );
       }
     } catch (e) {
-      throw Exception('Erro de conexão: Não foi possível acessar o servidor.');
+      throw Exception(
+        'Erro de conexão: Não foi possível acessar o servidor.',
+      );
     }
   }
 
-  // Updates an announcement.
-  //
-  // Makes a PUT request to the `/api/v1/announcements/{id}` endpoint.
-  //
-  // The [id] parameter is the unique identifier of the announcement.
-  // The [body] parameter contains the updated data for the announcement.
-  //
+  /// Updates an announcement.
+  ///
+  /// Makes a PUT request to the `/api/v1/books/{id}` endpoint.
+  ///
+  /// The [id] parameter is the unique identifier of the announcement.
+  /// The [body] parameter contains the updated data for the announcement.
   static Future<bool> updateAnnouncement({
     required String id,
-    required Map<String, dynamic> body,
+    required Map body,
   }) async {
     try {
       final url = Uri.parse('${ApiClient.baseUrl}/api/v1/books/$id');
@@ -102,30 +110,46 @@ class AnnouncementService {
 
   /// Fetches a paginated list of available announcements for the main feed.
   ///
-  /// Makes a GET request to the `/api/v1/announcements/feed` endpoint.
+  /// Default behavior:
+  /// - sends only [limit] and [offset], preserving the old feed behavior.
   ///
-  /// The [limit] parameter defines the maximum number of items to return (defaults to 20).
-  /// The [offset] parameter defines the number of items to skip for pagination (defaults to 0).
-  ///
-  /// Returns a `List<dynamic>` containing the decoded JSON data if successful,
-  /// or `null` if the request encounters an error.
-
+  /// Distance behavior:
+  /// - when [sortByDistance] is true and a non-empty [currentUserId] exists,
+  ///   sends `current_user_id` and `sort_by_distance=true`.
+  /// - the backend returns the feed already ordered by distance.
   static Future<List<dynamic>?> fetchFeedAnnouncements({
     int limit = 20,
     int offset = 0,
+    String? currentUserId,
+    bool sortByDistance = false,
   }) async {
     try {
-      final url = Uri.parse('${ApiClient.baseUrl}/api/v1/announcements/feed')
-          .replace(
-            queryParameters: {
-              'limit': limit.toString(),
-              'offset': offset.toString(),
-            },
-          );
+      final resolvedCurrentUserId =
+          currentUserId ?? ApiClient.currentUserId;
+
+      final queryParameters = <String, String>{
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+      };
+
+      if (resolvedCurrentUserId.isNotEmpty) {
+        queryParameters['current_user_id'] = resolvedCurrentUserId;
+        queryParameters['sort_by_distance'] =
+            sortByDistance.toString();
+      }
+
+      final url = Uri.parse(
+        '${ApiClient.baseUrl}/api/v1/announcements/feed',
+      ).replace(
+        queryParameters: queryParameters,
+      );
+
       final response = await http.get(url);
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as List<dynamic>;
       }
+
       return null;
     } catch (e) {
       return null;
@@ -142,14 +166,15 @@ class AnnouncementService {
     int offset = 0,
   }) async {
     try {
-      final url = Uri.parse('${ApiClient.baseUrl}/api/v1/announcements/search')
-          .replace(
-            queryParameters: {
-              'query': query,
-              'limit': limit.toString(),
-              'offset': offset.toString(),
-            },
-          );
+      final url = Uri.parse(
+        '${ApiClient.baseUrl}/api/v1/announcements/search',
+      ).replace(
+        queryParameters: {
+          'query': query,
+          'limit': limit.toString(),
+          'offset': offset.toString(),
+        },
+      );
 
       final response = await http.get(url);
 
@@ -162,69 +187,83 @@ class AnnouncementService {
         'Falha ao buscar anúncios (Erro ${response.statusCode}).',
       );
     } catch (e) {
-      throw Exception('Erro de conexão: Não foi possível acessar a busca.');
+      throw Exception(
+        'Erro de conexão: Não foi possível acessar a busca.',
+      );
     }
   }
 
-  //  Creates an announcement.
-  //
-  //  Makes a POST request to the `/api/v1/announcements/{userId}` endpoint.
-  //
-  //  The [body] parameter contains the data for the announcement.
-  //  The [userId] parameter is the unique identifier of the user creating the announcement.
+  /// Creates an announcement.
+  ///
+  /// Makes a POST request to the `/api/v1/announcements/{userId}` endpoint.
+  /// The [body] parameter contains the data for the announcement.
+  /// The [userId] parameter is the unique identifier of the user creating the
+  /// announcement.
   static Future<bool> createAnnouncement({
-    required Map<String, dynamic> body,
+    required Map body,
     required String userId,
   }) async {
     try {
-      // cria book
       final bookUrl = Uri.parse('${ApiClient.baseUrl}/api/v1/books');
+
       final bookResponse = await http.post(
         bookUrl,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
-      if (bookResponse.statusCode != 201 && bookResponse.statusCode != 200)
-        return false;
 
-      // cria edition
+      if (bookResponse.statusCode != 201 &&
+          bookResponse.statusCode != 200) {
+        return false;
+      }
+
       final editionUrl = Uri.parse(
-        '${ApiClient.baseUrl}/api/v1/editions/${jsonDecode(bookResponse.body)["bookId"]}',
+        '${ApiClient.baseUrl}/api/v1/editions/'
+        '${jsonDecode(bookResponse.body)["bookId"]}',
       );
+
       final editionResponse = await http.post(
         editionUrl,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
-      if (editionResponse.statusCode != 201 &&
-          editionResponse.statusCode != 200)
-        return false;
 
-      // cria announcement
+      if (editionResponse.statusCode != 201 &&
+          editionResponse.statusCode != 200) {
+        return false;
+      }
+
       final announcementUrl = Uri.parse(
         '${ApiClient.baseUrl}/api/v1/announcements/$userId',
       );
 
-      body["editionId"] = jsonDecode(editionResponse.body)["editionId"];
+      body["editionId"] = jsonDecode(
+        editionResponse.body,
+      )["editionId"];
+
       final announcementResponse = await http.post(
         announcementUrl,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
+
       if (announcementResponse.statusCode != 201 &&
-          announcementResponse.statusCode != 200)
+          announcementResponse.statusCode != 200) {
         return false;
+      }
     } catch (e) {
       print('CREATE ERROR: $e');
       return false;
     }
+
     return true;
   }
 
-  // Sets dummy data in the backend.
+  /// Sets dummy data in the backend.
   static Future<bool> setDummyData() async {
     try {
       final url = Uri.parse('${ApiClient.baseUrl}/create-dummy-data');
+
       final response = await http.post(url);
 
       print('DUMMY STATUS: ${response.statusCode}');

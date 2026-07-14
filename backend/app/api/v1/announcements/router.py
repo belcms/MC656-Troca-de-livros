@@ -52,7 +52,9 @@ def get_book_details_route(id: str, db: Session = Depends(get_db)):
 def feed_announcements_route(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db)
+    current_user_id: str | None = Query(None),
+    sort_by_distance: bool = Query(False),
+    db: Session = Depends(get_db),
 ):
     """Return the feed list used by the main announcements timeline.
 
@@ -62,12 +64,20 @@ def feed_announcements_route(
     Args:
         limit: Maximum number of announcements to return. Constrained between 1 and 100.
         offset: Number of announcements to skip for pagination.
+        current_user_id: ID of the currently authenticated user.
+        sort_by_distance: Whether to sort announcements by distance.
         db: SQLAlchemy session injected by FastAPI.
 
     Returns:
         list[FeedAnnouncementResponse]: A list of announcements for the feed.
     """
-    return get_feed_announcements(db, limit=limit, offset=offset)
+    return get_feed_announcements(
+        db,
+        limit=limit,
+        offset=offset,
+        current_user_id=current_user_id,
+        sort_by_distance=sort_by_distance
+    )
 
 @router.post("/{user_id}", status_code=201)
 def create_announcement_route(user_id: str, body: announcements_schemas.TradeAnnouncementPydantic, db: Session = Depends(get_db)):
