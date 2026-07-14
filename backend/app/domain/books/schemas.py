@@ -24,6 +24,7 @@ class EditionPydantic(BaseModel):
     publish_year: int = Field(alias="year")
     number_of_pages: int = Field(alias="pages")
     language: Language
+    cover_photo: Optional[str] = None
 
     class Config:
         from_attributes = True 

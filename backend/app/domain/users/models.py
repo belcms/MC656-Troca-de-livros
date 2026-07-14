@@ -24,6 +24,7 @@ class User(Base):
 
     announcements = relationship("TradeAnnouncement", back_populates="user")
     location = relationship("Location", back_populates="users")
+    wishlist = relationship("Wishlist", back_populates="user", cascade="all, delete-orphan")
     sessions = relationship("AuthSession", back_populates="user", cascade="all, delete-orphan")
 
 
@@ -38,3 +39,13 @@ class AuthSession(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     user = relationship("User", back_populates="sessions")
+
+class Wishlist(Base):
+    __tablename__ = "wishlist"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"))
+    edition_id = Column(String(36), ForeignKey("editions.id"))
+
+    user = relationship("User", back_populates="wishlist")
+    edition = relationship("Edition", back_populates="wishlisted_by")
