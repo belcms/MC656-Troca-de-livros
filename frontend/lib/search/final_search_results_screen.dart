@@ -292,7 +292,7 @@ class _FinalSearchResultsScreenState extends State<FinalSearchResultsScreen> {
                             publishYear: result.publishYear,
                             photo: result.coverPhoto ?? '',
                             // photo: result.realPhotoUrl ?? '',
-                            location: result.cep,
+                            cep: result.cep,
                             condition: result.condition,
                           ),
                         );

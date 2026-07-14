@@ -5,7 +5,8 @@ import '../my_books/my_books_model.dart';
 import '../services/my_books_service.dart';
 import '../services/user_service.dart';
 import '../services/wishlist_service.dart';
-
+import '../auth/auth_controller.dart';
+import '../auth/auth_repository.dart';
 import '../book_details/announcement_detail_screen.dart';
 import '../book_edition/book_edition_screen.dart';
 import '../my_books/my_book_card.dart';
@@ -32,10 +33,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   Future<List<WishlistItem>> _loadWishlist() async {
-    final users = await UserService.fetchUsers();
-    if (users != null && users.isNotEmpty) {
-      final firstUserId = users.first['id'];
-      final items = await WishlistService.getWishlist(firstUserId);
+    final userId = AuthRepository.instance.user?.id;
+    if (userId != null) {
+      final items = await WishlistService.getWishlist(userId);
       return items ?? [];
     }
     return [];
@@ -43,27 +43,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Future<List<MyBooksModel>> _loadInitialBooks() async {
     // Mesma lógica de busca utilizada na tela MyBooksScreen
-    final users = await UserService.fetchUsers();
-    if (users != null && users.isNotEmpty) {
-      final firstUserId = users.first['id'];
-      final books = await MyBooksService.fetchUserBooks(firstUserId);
-      return books ?? [];
-    }
-    return [];
+    return await MyBooksService.fetchMyBooks() ?? [];
   }
 
-  Future<void> _openEditBook(String id) async {
-    final updated = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => BookEditionPage(id: id)),
-    );
 
-    if (updated == true) {
-      setState(() {
-        _booksFuture = _loadInitialBooks();
-      });
-    }
-  }
 
   Widget _buildTopHeader() {
     return Padding(
@@ -81,17 +64,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return Column(
       children: [
         const Center(
-          child: CircleAvatar(
-            radius: 70,
-            backgroundImage: NetworkImage(
-              'https://s2-ge.glbimg.com/6T3XhKm41eL0LIRR7twlOLzIKYA=/1280x0/filters:format(jpeg)/https://s01.video.glbimg.com/x720/4064848.jpg',
-            ),
-          ),
+          child: CircleAvatar(radius: 70, child: Icon(Icons.person, size: 70)),
         ),
         const SizedBox(height: 16),
         Center(
           child: Text(
-            'Neymar',
+            AuthScope.of(context).repository.user?.fullName ?? '',
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
@@ -101,7 +79,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15),
           child: RichText(
-            text: const TextSpan(
+            text: TextSpan(
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.black87,
@@ -110,12 +88,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ),
               children: [
                 TextSpan(
-                  text: 'Sobre mim: ',
+                  text: 'Nickname: ',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 TextSpan(
-                  text:
-                      'Ancelotti me odeia :c, mas toma ai tentando ser convocado pra copa de 2026. Fé',
+                  text: AuthScope.of(context).repository.user?.nickname ?? '',
                 ),
               ],
             ),
@@ -295,7 +272,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => EditionDetailsScreen(editionId: item.editionId),
+                      builder: (context) =>
+                          EditionDetailsScreen(editionId: item.editionId),
                     ),
                   ).then((_) {
                     setState(() {
@@ -323,6 +301,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTopHeader(),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => AuthScope.of(context).logout(),
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Sair'),
+                  ),
+                ),
                 const SizedBox(height: 30),
                 _buildProfileInfo(),
                 const SizedBox(height: 30),

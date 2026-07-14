@@ -23,7 +23,7 @@ def normalize_cep(cep: str | None) -> str | None:
     return clean_cep
 
 
-def _location_from_api_data(data: dict, fallback_cep: str) -> location_model.location:
+def _location_from_api_data(data: dict, fallback_cep: str) -> location_model.Location:
     cep = normalize_cep(data.get("cep") or fallback_cep)
     city = data.get("city")
     state = data.get("state")
@@ -39,7 +39,7 @@ def _location_from_api_data(data: dict, fallback_cep: str) -> location_model.loc
     except (TypeError, ValueError):
         raise HTTPException(status_code=404, detail="Location not found for CEP")
 
-    return location_model.location(
+    return location_model.Location(
         cep=cep,
         city=city,
         state=state,
@@ -50,27 +50,37 @@ def _location_from_api_data(data: dict, fallback_cep: str) -> location_model.loc
     )
 
 
-def get_or_create_location_by_cep(cep: str | None, db: Session) -> location_model.location:
+def get_or_create_location_by_cep(cep: str | None, db: Session) -> location_model.Location:
     clean_cep = normalize_cep(cep)
     if clean_cep is None:
         raise HTTPException(status_code=400, detail="CEP is required")
 
     existing_location = (
-        db.query(location_model.location)
-        .filter(location_model.location.cep == clean_cep)
+        db.query(location_model.Location)
+        .filter(location_model.Location.cep == clean_cep)
         .first()
     )
     if existing_location:
         return existing_location
 
     url = f"https://cep.awesomeapi.com.br/json/{clean_cep}"
-    with httpx.Client(timeout=5.0) as client:
-        response = client.get(url)
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            response = client.get(url)
+    except httpx.RequestError:
+        raise HTTPException(status_code=503, detail="Location service unavailable")
 
+    if response.status_code >= 500:
+        raise HTTPException(status_code=503, detail="Location service unavailable")
     if response.status_code != 200:
         raise HTTPException(status_code=404, detail="Location not found for CEP")
 
-    new_location = _location_from_api_data(response.json(), clean_cep)
+    try:
+        data = response.json()
+    except ValueError:
+        raise HTTPException(status_code=503, detail="Location service unavailable")
+
+    new_location = _location_from_api_data(data, clean_cep)
     db.add(new_location)
     db.commit()
     db.refresh(new_location)
@@ -96,7 +106,7 @@ def _calculate_distance(location_a: LocationPydantic, location_b: LocationPydant
     return radius_km * c
 
 
-async def get_location_by_cep(cep: str, db: Session) -> location_model.location:
+async def get_location_by_cep(cep: str, db: Session) -> location_model.Location:
     """Fetch location data from the local DB or from the external CEP API."""
     return get_or_create_location_by_cep(cep, db)
 

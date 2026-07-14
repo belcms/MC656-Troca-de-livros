@@ -4,7 +4,7 @@ from sqlalchemy.orm import joinedload
 
 from typing import Optional
 from . import models
-from app.domain.locations.models import location as LocationModel
+from app.domain.locations.models import Location as LocationModel
 from app.domain.announcements.models import TradeAnnouncement, Status
 from app.domain.books.models import Edition, Book
 from app.domain.users.models import User

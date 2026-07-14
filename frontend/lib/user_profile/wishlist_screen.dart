@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../components/edition_card.dart';
 import '../services/wishlist_service.dart';
-import '../services/user_service.dart';
+import '../auth/auth_repository.dart';
 import '../book_details/edition_details_screen.dart';
-import '../components/edition_card.dart';
 // import '../book_details/edition_details_screen.dart'; // To be implemented in Task 9
 
 /// Expanded Wishlist page.
@@ -24,10 +23,9 @@ class _WishlistScreenState extends State<WishlistScreen> {
   }
 
   Future<List<WishlistItem>> _loadWishlist() async {
-    final users = await UserService.fetchUsers();
-    if (users != null && users.isNotEmpty) {
-      final firstUserId = users.first['id'];
-      final items = await WishlistService.getWishlist(firstUserId);
+    final userId = AuthRepository.instance.user?.id;
+    if (userId != null) {
+      final items = await WishlistService.getWishlist(userId);
       return items ?? [];
     }
     return [];

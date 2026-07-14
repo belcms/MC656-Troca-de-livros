@@ -38,7 +38,7 @@ void main() {
               title: mockTitle,
               publishYear: mockYear,
               photo: mockPhotoUrl,
-              location: mockCep,
+              cep: mockCep,
               condition: "New",
             ),
           ),

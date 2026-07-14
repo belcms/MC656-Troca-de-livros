@@ -22,13 +22,15 @@ def _mock_query_chain_first(db, first_result):
 
 def _mock_feed_chain_all(db, all_result):
     query_obj = db.query.return_value
-    options_obj = query_obj.options.return_value
-    # Adicionando os mocks para o filter e order_by que faltavam:
-    filter_obj = options_obj.filter.return_value
-    order_by_obj = filter_obj.order_by.return_value
-    limit_obj = order_by_obj.limit.return_value
-    offset_obj = limit_obj.offset.return_value
-    offset_obj.all.return_value = all_result
+
+    query_obj.join.return_value = query_obj
+    query_obj.outerjoin.return_value = query_obj
+    query_obj.options.return_value = query_obj
+    query_obj.filter.return_value = query_obj
+    query_obj.order_by.return_value = query_obj
+    query_obj.limit.return_value = query_obj
+    query_obj.offset.return_value = query_obj
+    query_obj.all.return_value = all_result
 
 
 def test_get_announcement_details_success(mocker):
@@ -130,9 +132,14 @@ def test_get_feed_announcements_success(mocker):
             publish_year=1965,
             book=_obj(title="Dune"),
         ),
-        user=_obj(cep="87654321"),
         photos=[],
+        user=_obj(
+            cep="87654321",
+            cep_id="87654321",
+        ),
+        cep_id="87654321",
     )
+
     ann2 = _obj(
         id="ann-2",
         real_photo_url=None,
@@ -141,8 +148,12 @@ def test_get_feed_announcements_success(mocker):
             publish_year=1949,
             book=_obj(title="1984"),
         ),
-        user=_obj(cep="12345678"),
         photos=[],
+        user=_obj(
+            cep="12345678",
+            cep_id="12345678",
+        ),
+        cep_id="12345678",
     )
 
     _mock_feed_chain_all(db, [ann1, ann2])

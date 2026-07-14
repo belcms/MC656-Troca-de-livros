@@ -3,18 +3,15 @@ import 'package:frontend/book_creation/book_creation_viewmodel.dart';
 
 // 1. Criamos um serviço Falso que intercepta os dados em vez de mandar para a API
 class FakeCreationService implements CreationServiceInterface {
-  String? createResponse = 'fake_id_12345';
-  String? lastUserId;
+  String? createResponse = 'announcement-123';
   Map<String, dynamic>? lastBody;
 
   @override
   Future<String?> createAnnouncement({
     required Map<String, dynamic> body,
-    required String userId,
   }) async {
-    lastUserId = userId;
     lastBody = body;
-    return createResponse; // Simula que a API deu 201 Created
+    return createResponse;
   }
 }
 
@@ -42,19 +39,11 @@ void main() {
       vm.status = "Disponível";
       vm.condition = "Muito bom";
 
-      // Disparando a função do botão (agora retorna o ID em vez de bool)
-      final createdId = await vm.submit(
-        "http://minhacapa.com/duna.jpg",
-        "user_999",
-      );
+      // Disparando a função do botão
+      final announcementId = await vm.submit("http://minhacapa.com/duna.jpg");
 
-      // 👇 Verificações corrigidas!
-      expect(
-        createdId,
-        isNotNull,
-        reason: 'O submit deveria retornar uma String com o ID criado',
-      );
-      expect(fakeService.lastUserId, "user_999");
+      // Verificações
+      expect(announcementId, 'announcement-123');
 
       // Valida se os campos de texto foram passados corretamente
       expect(fakeService.lastBody?["title"], "Duna");
@@ -82,17 +71,11 @@ void main() {
       final vm = BookCreationViewModel(service: fakeService);
 
       // Dispara o submit com a foto nula
-      final createdId = await vm.submit(null, "user_999");
-
-      // 👇 Verificação corrigida!
-      expect(
-        createdId,
-        isNotNull,
-        reason: 'Mesmo sem capa, deveria criar e retornar o ID',
-      );
+      final announcementId = await vm.submit(null);
 
       // O ViewModel deveria enviar uma String vazia "" quando a imagem é nula
       expect(fakeService.lastBody?["coverUrl"], "");
+      expect(announcementId, 'announcement-123');
 
       vm.dispose();
     });

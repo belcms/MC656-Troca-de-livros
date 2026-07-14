@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/edition_service.dart';
 import '../services/wishlist_service.dart';
-import '../services/user_service.dart';
+import '../auth/auth_repository.dart';
 
 class EditionDetailsScreen extends StatefulWidget {
   final String editionId;
@@ -24,10 +24,8 @@ class _EditionDetailsScreenState extends State<EditionDetailsScreen> {
   }
 
   Future<EditionDetailsModel?> _loadData() async {
-    final users = await UserService.fetchUsers();
-    if (users != null && users.isNotEmpty) {
-      _currentUserId = users.first['id'];
-      
+    _currentUserId = AuthRepository.instance.user?.id;
+    if (_currentUserId != null) {
       // Checa se está na wishlist
       final wishlist = await WishlistService.getWishlist(_currentUserId!);
       if (wishlist != null) {
