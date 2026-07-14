@@ -45,6 +45,7 @@ class Edition(Base):
     
     book = relationship("Book", back_populates="editions")
     announcements = relationship("TradeAnnouncement", back_populates="edition")
+    wishlisted_by = relationship("Wishlist", back_populates="edition", cascade="all, delete-orphan")
 
 
 
