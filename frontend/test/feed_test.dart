@@ -51,7 +51,7 @@ void main() {
       expect(find.text('2001'), findsOneWidget);
       expect(find.text(mockCep), findsOneWidget);
 
-      expect(find.byIcon(Icons.broken_image), findsOneWidget);
+      expect(find.byIcon(Icons.broken_image_outlined), findsOneWidget);
     });
   });
 }

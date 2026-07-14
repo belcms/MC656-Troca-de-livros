@@ -131,3 +131,5 @@ def delete_announcement_photo(
     except Exception as e:
         # Vai estourar erro 500 se qualquer um dos dois falhar
         raise HTTPException(status_code=500, detail=f"Erro ao deletar foto: {str(e)}")
+    
+

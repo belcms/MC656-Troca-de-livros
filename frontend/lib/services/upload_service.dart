@@ -7,6 +7,9 @@ import 'dart:convert';
 class UploadService {
   final String baseUrl = ApiClient.baseUrl;
 
+  final http.Client client;
+  UploadService({http.Client? client}) : client = client ?? http.Client();
+
   Future<bool> uploadBookPhoto(String announcementId, XFile imageFile) async {
     try {
       var uri = Uri.parse(
@@ -30,7 +33,8 @@ class UploadService {
 
       request.files.add(multipartFile);
 
-      var response = await request.send();
+      // var response = await request.send();
+      var response = await client.send(request);
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return true;
