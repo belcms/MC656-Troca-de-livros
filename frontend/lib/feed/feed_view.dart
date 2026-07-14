@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/book_details/announcement_detail_screen.dart';
 
+import '../auth/auth_repository.dart';
 import '../services/announcement_service.dart';
 import 'announcement_card.dart';
 import 'announcement_filter_sheet.dart';
@@ -8,10 +9,6 @@ import 'announcement_filters.dart';
 
 import 'package:frontend/search/intermediate_search_screen.dart';
 import 'package:frontend/search/widgets/custom_search_bar.dart';
-
-import '../services/announcement_service.dart';
-import 'announcement_card.dart';
-import 'auth/auth_controller.dart'; 
 
 /// The main screen of the application that displays the feed of book
 /// announcements.
@@ -49,10 +46,13 @@ class _FeedViewState extends State<FeedView> {
       isLoading = true;
     });
 
+    final currentUserId = AuthRepository.instance.user?.id;
+    final hasCurrentUser = currentUserId?.trim().isNotEmpty ?? false;
+
     final data = await AnnouncementService.fetchFeedAnnouncements(
       currentUserId: currentUserId,
       filters: activeFilters,
-      sortByDistance: true,
+      sortByDistance: hasCurrentUser,
     );
     if (!mounted) {
       return;
@@ -181,9 +181,6 @@ class _FeedViewState extends State<FeedView> {
 
   @override
   Widget build(BuildContext context) {
-  final auth = AuthScope.of(context);
-  final currentUserId = auth.repository.user?.id;
-
     return Scaffold(
       body: SafeArea(
         child: Column(
