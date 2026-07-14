@@ -4,12 +4,14 @@ import '../my_books/my_books_screen.dart';
 import '../my_books/my_books_model.dart';
 import '../services/my_books_service.dart';
 import '../services/user_service.dart';
+import '../services/wishlist_service.dart';
 
 import '../book_details/announcement_detail_screen.dart';
 import '../book_edition/book_edition_screen.dart';
 import '../my_books/my_book_card.dart';
 import '../components/edition_card.dart';
 import 'wishlist_screen.dart';
+import '../book_details/edition_details_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -20,11 +22,23 @@ class UserProfileScreen extends StatefulWidget {
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
   late Future<List<MyBooksModel>> _booksFuture;
+  late Future<List<WishlistItem>> _wishlistFuture;
 
   @override
   void initState() {
     super.initState();
     _booksFuture = _loadInitialBooks();
+    _wishlistFuture = _loadWishlist();
+  }
+
+  Future<List<WishlistItem>> _loadWishlist() async {
+    final users = await UserService.fetchUsers();
+    if (users != null && users.isNotEmpty) {
+      final firstUserId = users.first['id'];
+      final items = await WishlistService.getWishlist(firstUserId);
+      return items ?? [];
+    }
+    return [];
   }
 
   Future<List<MyBooksModel>> _loadInitialBooks() async {
@@ -243,47 +257,57 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   Widget _buildWishlistCarousel() {
-    // Dados mockados
-    final mockWishlist = [
-      {
-        'title': 'O Senhor dos Anéis',
-        'author': 'J.R.R. Tolkien',
-        'photo': 'https://m.media-amazon.com/images/I/81hCVEC0ExL._SL1500_.jpg',
-      },
-      {
-        'title': '1984',
-        'author': 'George Orwell',
-        'photo':
-            'https://m.media-amazon.com/images/I/71kXa1qcBPL._AC_UF1000,1000_QL80_.jpg',
-      },
-      {
-        'title': 'O Pequeno Príncipe',
-        'author': 'Antoine de Saint-Exupéry',
-        'photo':
-            'https://m.media-amazon.com/images/I/81B4W1hZc0L._AC_UF1000,1000_QL80_.jpg',
-      },
-    ];
-
-    return SizedBox(
-      height:
-          290, // Altura suficiente para a imagem (4:3 de 150=200) + textos + paddings
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        scrollDirection: Axis.horizontal,
-        itemCount: mockWishlist.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 14),
-        itemBuilder: (context, index) {
-          final item = mockWishlist[index];
-          return EditionCard(
-            title: item['title']!,
-            author: item['author']!,
-            coverPhoto: item['photo'],
-            onTap: () {
-              // TODO: Task 9 - Abrir detalhes da edição
-            },
+    return FutureBuilder<List<WishlistItem>>(
+      future: _wishlistFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 290,
+            child: Center(child: CircularProgressIndicator()),
           );
-        },
-      ),
+        } else if (snapshot.hasError) {
+          return SizedBox(
+            height: 290,
+            child: Center(child: Text('Erro: ${snapshot.error}')),
+          );
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox(
+            height: 290,
+            child: Center(child: Text('Nenhum livro encontrado na wishlist.')),
+          );
+        }
+
+        final items = snapshot.data!;
+        return SizedBox(
+          height: 290,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            scrollDirection: Axis.horizontal,
+            itemCount: items.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 14),
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return EditionCard(
+                title: item.title,
+                author: item.author,
+                coverPhoto: item.coverPhoto,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditionDetailsScreen(editionId: item.editionId),
+                    ),
+                  ).then((_) {
+                    setState(() {
+                      _wishlistFuture = _loadWishlist();
+                    });
+                  });
+                },
+              );
+            },
+          ),
+        );
+      },
     );
   }
 

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../components/edition_card.dart';
+import '../services/wishlist_service.dart';
+import '../services/user_service.dart';
+import '../book_details/edition_details_screen.dart';
+import '../components/edition_card.dart';
 // import '../book_details/edition_details_screen.dart'; // To be implemented in Task 9
 
 /// Expanded Wishlist page.
@@ -11,24 +15,23 @@ class WishlistScreen extends StatefulWidget {
 }
 
 class _WishlistScreenState extends State<WishlistScreen> {
-  // Dados mockados temporariamente
-  final List<Map<String, String>> mockWishlist = [
-    {
-      'title': 'O Senhor dos Anéis', 
-      'author': 'J.R.R. Tolkien', 
-      'photo': 'https://m.media-amazon.com/images/I/71ZWs4hjVLL._AC_UF1000,1000_QL80_.jpg'
-    },
-    {
-      'title': '1984', 
-      'author': 'George Orwell', 
-      'photo': 'https://m.media-amazon.com/images/I/71kXa1qcBPL._AC_UF1000,1000_QL80_.jpg'
-    },
-    {
-      'title': 'O Pequeno Príncipe', 
-      'author': 'Antoine de Saint-Exupéry', 
-      'photo': 'https://m.media-amazon.com/images/I/81B4W1hZc0L._AC_UF1000,1000_QL80_.jpg'
-    },
-  ];
+  late Future<List<WishlistItem>> _wishlistFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _wishlistFuture = _loadWishlist();
+  }
+
+  Future<List<WishlistItem>> _loadWishlist() async {
+    final users = await UserService.fetchUsers();
+    if (users != null && users.isNotEmpty) {
+      final firstUserId = users.first['id'];
+      final items = await WishlistService.getWishlist(firstUserId);
+      return items ?? [];
+    }
+    return [];
+  }
 
   Widget _buildHeader(BuildContext context) {
     return Row(
@@ -44,37 +47,52 @@ class _WishlistScreenState extends State<WishlistScreen> {
   }
 
   Widget _buildGrid(BuildContext context, double cardExtent) {
-    if (mockWishlist.isEmpty) {
-      return const Expanded(
-        child: Center(child: Text('Nenhum livro desejado encontrado.')),
-      );
-    }
-
     return Expanded(
-      child: GridView.builder(
-        padding: EdgeInsets.zero,
-        itemCount: mockWishlist.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 14,
-          mainAxisExtent: cardExtent, // Altura do EditionCard
-        ),
-        itemBuilder: (context, index) {
-          final item = mockWishlist[index];
-          return Align(
-            alignment: Alignment.topCenter,
-            child: EditionCard(
-              title: item['title']!,
-              author: item['author']!,
-              coverPhoto: item['photo'],
-              onTap: () {
-                // TODO: Navegar para detalhes da edição
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Abrir detalhes da edição')),
-                );
-              },
+      child: FutureBuilder<List<WishlistItem>>(
+        future: _wishlistFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Erro: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('Nenhum livro desejado encontrado.'));
+          }
+
+          final items = snapshot.data!;
+          return GridView.builder(
+            padding: EdgeInsets.zero,
+            itemCount: items.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 14,
+              mainAxisExtent: cardExtent, // Altura do EditionCard
             ),
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return Align(
+                alignment: Alignment.topCenter,
+                child: EditionCard(
+                  title: item.title,
+                  author: item.author,
+                  coverPhoto: item.coverPhoto,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditionDetailsScreen(editionId: item.editionId),
+                      ),
+                    ).then((_) {
+                      // Recarrega a wishlist ao voltar, caso tenha removido
+                      setState(() {
+                        _wishlistFuture = _loadWishlist();
+                      });
+                    });
+                  },
+                ),
+              );
+            },
           );
         },
       ),
