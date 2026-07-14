@@ -1,25 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/components/badge_component.dart';
 
-/// A visual card that displays the summarized information of an announcement in the feed.
+/// A visual card that displays the summarized information of an announcement
+/// in the feed.
 ///
 /// This widget displays the book cover, title, publication year, location (CEP),
-/// and the physical condition of the book.
+/// the physical condition of the book, and,
+/// when available, the distance from the current user.
 class AnnouncementCard extends StatelessWidget {
-  /// Title of the book. It will be automatically truncated if it exceeds 2 lines.
+  /// Title of the book. It will be automatically truncated if it exceeds
+  /// 2 lines.
   final String title;
 
-  /// Publish Year of the Edition.
+  /// Publish year of the edition.
   final int publishYear;
 
   /// The URL to fetch the book's image added by the advertiser.
   final String photo;
 
   /// The postal code (CEP) or city from the advertiser.
-  final String location;
+  // final String location;
 
   /// The physical condition of the book (e.g., Novo, Usado).
   final String condition;
+
+  /// The postal code or formatted location from the advertiser.
+  final String cep;
+
+  /// Distance from the current user to the announcement, in kilometers.
+  final double? distanceKm;
 
   /// Creates a new announcement card.
   const AnnouncementCard({
@@ -27,16 +36,34 @@ class AnnouncementCard extends StatelessWidget {
     required this.title,
     required this.publishYear,
     required this.photo,
-    required this.location,
+    // required this.location,
     required this.condition,
+    required this.cep,
+    this.distanceKm,
   });
+
+  String get _distanceLabel {
+    final distance = distanceKm;
+
+    if (distance == null) {
+      return '';
+    }
+
+    if (distance < 1) {
+      return '${(distance * 1000).round()} m de você';
+    }
+
+    return '${distance.toStringAsFixed(1)} km de você';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final distanceLabel = _distanceLabel;
+
     return SizedBox(
       width: 180,
       height:
-          360, // Aumentado levemente para evitar overflow com os novos itens
+          400, // Aumentado levemente para evitar overflow com os novos itens
       child: Card(
         elevation: 4.0,
         color: Colors.white,
@@ -44,9 +71,9 @@ class AnnouncementCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(10.0),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12.0),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Center(child: _buildCoverImage()),
@@ -63,8 +90,11 @@ class AnnouncementCard extends StatelessWidget {
               ),
 
               // Ano
+              // const SizedBox(height: 2),
               Text(
                 '$publishYear',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w400,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -74,26 +104,52 @@ class AnnouncementCard extends StatelessWidget {
               const SizedBox(height: 4),
 
               // Localização com Ícone de Pino
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start, // Alinha os itens à esquerda
                 children: [
-                  Icon(
-                    Icons.location_on,
-                    size: 14,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  // 1. O Ícone e o CEP na mesma linha (Row)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          cep,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w400,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      location,
+
+                  // 2. O distanceLabel logo abaixo (em Column), se houver
+                  if (distanceLabel.isNotEmpty) ...[
+                    const SizedBox(
+                      height: 4,
+                    ), // Espaçamento vertical entre o CEP e a distância
+                    Text(
+                      distanceLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w400,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF416956),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
 

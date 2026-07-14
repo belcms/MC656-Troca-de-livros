@@ -77,10 +77,42 @@ class FeedAnnouncementResponse(BaseModel):
     cep: str
     real_photo_url: Optional[str] = None
     condition: Condition
-    model_config = ConfigDict(from_attributes=True)
     cover_photo: str = ""
+    distance_km: Optional[float] = Field(default=None, alias="distanceKm")
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+    )
 
 
+class AnnouncementFilters(BaseModel):
+    """Filters supported by the announcements feed."""
+
+    start_year: int | None = Field(
+        default=None,
+        ge=1000,
+        le=2100,
+    )
+
+    end_year: int | None = Field(
+        default=None,
+        ge=1000,
+        le=2100,
+    )
+
+    conditions: list[str] = Field(
+        default_factory=list,
+    )
+
+    genres: list[str] = Field(
+        default_factory=list,
+    )
+
+    max_distance_km: float | None = Field(
+        default=None,
+        gt=0,
+    )
 class SearchAnnouncementsResponse(BaseModel):
     """Envelope returned by the announcement search endpoint.
 

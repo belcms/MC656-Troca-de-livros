@@ -1,49 +1,42 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
+
 import 'api_client.dart';
 import '../book_details/announcement_detail_model.dart';
+import '../feed/announcement_filters.dart';
 import '../search/announcement_search_models.dart';
 
-/// A service class responsible for handling HTTP requests related to book announcements.
-///
-/// This class acts as the bridge between the Flutter application and the
-/// backend API, abstracting away the network logic and JSON decoding.
+/// Service responsible for handling HTTP requests related to announcements.
 class AnnouncementService {
-  /// Fetches the detailed information of a specific announcement.
-  ///
-  /// Makes a GET request to the `/api/v1/announcements/details/{id}` endpoint.
-  ///
-  /// The [id] parameter is the unique identifier of the announcement.
-  /// Returns an [AnnouncementDetail] object if the request is successful (HTTP 200),
-  /// or `null` if the request fails, the network drops, or the announcement is not found.
+  /// Fetches the details of a specific announcement.
   static Future<AnnouncementDetail?> fetchAnnouncementDetails(String id) async {
     try {
       final url = Uri.parse(
         '${ApiClient.baseUrl}/api/v1/announcements/details/$id',
       );
+
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return AnnouncementDetail.fromJson(data);
-      } else if (response.statusCode == 404) {
-        throw Exception('Anúncio não encontrado.');
-      } else {
-        throw Exception(
-          'Falha ao carregar anúncio (Erro ${response.statusCode}).',
-        );
       }
+
+      if (response.statusCode == 404) {
+        throw Exception('Anúncio não encontrado.');
+      }
+
+      throw Exception(
+        'Falha ao carregar anúncio (Erro ${response.statusCode}).',
+      );
     } catch (e) {
       throw Exception('Erro de conexão: Não foi possível acessar o servidor.');
     }
   }
 
-  // Fetches the detailed information of a specific announcement.
-  //
-  // Makes a GET request to the `/api/v1/announcements/details/{id}` endpoint.
-  //
-  // The [id] parameter is the unique identifier of the announcement.
-  // Returns an [AnnouncementDetail] object if the request is successful (HTTP 200),
+  /// Fetches the details of an announcement as raw JSON.
+
   static Future<Map<String, dynamic>?> fetchAnnouncementDetailsRaw(
     String id,
   ) async {
@@ -55,28 +48,25 @@ class AnnouncementService {
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
-      } else if (response.statusCode == 404) {
-        throw Exception('Anúncio não encontrado.');
-      } else {
-        throw Exception(
-          'Falha ao carregar anúncio (Erro ${response.statusCode}).',
-        );
       }
+
+      throw Exception(
+        'Falha ao carregar anúncio (Erro ${response.statusCode}).',
+      );
     } catch (e) {
       throw Exception('Erro de conexão: Não foi possível acessar o servidor.');
     }
   }
 
-  // Updates an announcement.
-  //
-  // Makes a PUT request to the `/api/v1/announcements/{id}` endpoint.
-  //
-  // The [id] parameter is the unique identifier of the announcement.
-  // The [body] parameter contains the updated data for the announcement.
-  //
+  /// Updates an announcement.
+  ///
+  /// Makes a PUT request to the `/api/v1/books/{id}` endpoint.
+  ///
+  /// The [id] parameter is the unique identifier of the announcement.
+  /// The [body] parameter contains the updated data for the announcement.
   static Future<bool> updateAnnouncement({
     required String id,
-    required Map<String, dynamic> body,
+    required Map body,
   }) async {
     try {
       final url = Uri.parse('${ApiClient.baseUrl}/api/v1/books/$id');
@@ -95,47 +85,69 @@ class AnnouncementService {
 
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
-      print('UPDATE ERROR: $e');
       return false;
     }
   }
 
-  /// Fetches a paginated list of available announcements for the main feed.
+  /// Default behavior:
+  /// - sends only [limit] and [offset], preserving the old feed behavior.
   ///
-  /// Makes a GET request to the `/api/v1/announcements/feed` endpoint.
-  ///
-  /// The [limit] parameter defines the maximum number of items to return (defaults to 20).
-  /// The [offset] parameter defines the number of items to skip for pagination (defaults to 0).
-  ///
-  /// Returns a `List<dynamic>` containing the decoded JSON data if successful,
-  /// or `null` if the request encounters an error.
+  /// Distance behavior:
+  /// - when [sortByDistance] is true and a non-empty [currentUserId] exists,
+  ///   sends `current_user_id` and `sort_by_distance=true`.
+  /// - the backend returns the feed already ordered by distance.
 
   static Future<List<dynamic>?> fetchFeedAnnouncements({
+    required String currentUserId,
     int limit = 20,
     int offset = 0,
+    AnnouncementFilters filters = const AnnouncementFilters(),
+    bool sortByDistance = false,
   }) async {
     try {
-      final url = Uri.parse('${ApiClient.baseUrl}/api/v1/announcements/feed')
-          .replace(
-            queryParameters: {
-              'limit': limit.toString(),
-              'offset': offset.toString(),
-            },
-          );
+      final queryParameters = <String, dynamic>{
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+        'current_user_id': currentUserId,
+        'sort_by_distance': sortByDistance.toString(),
+      };
+
+      if (filters.hasYearFilter) {
+        queryParameters['start_year'] = filters.startYear.toString();
+
+        queryParameters['end_year'] = filters.endYear.toString();
+      }
+
+      if (filters.conditions.isNotEmpty) {
+        queryParameters['condition'] = filters.conditions;
+      }
+
+      if (filters.genres.isNotEmpty) {
+        queryParameters['genre'] = filters.genres;
+      }
+
+      if (filters.maxDistanceKm != null) {
+        queryParameters['max_distance_km'] = filters.maxDistanceKm.toString();
+      }
+
+      final url = Uri.parse(
+        '${ApiClient.baseUrl}/api/v1/announcements/feed',
+      ).replace(queryParameters: queryParameters);
+
       final response = await http.get(url);
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as List<dynamic>;
       }
+
       return null;
     } catch (e) {
+      print('FEED ERROR: $e');
       return null;
     }
   }
 
-  /// Searches announcements by a text query.
-  ///
-  /// Makes a GET request to `/api/v1/announcements/search` with `query`,
-  /// `limit`, and `offset` query parameters.
+  /// Searches announcements using a text query.
   static Future<AnnouncementSearchResponse> fetchSearchAnnouncements({
     required String query,
     int limit = 4,
@@ -155,6 +167,7 @@ class AnnouncementService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
+
         return AnnouncementSearchResponse.fromJson(data);
       }
 
@@ -166,101 +179,82 @@ class AnnouncementService {
     }
   }
 
-  //  Creates an announcement.
-  //
-  //  Makes a POST request to the `/api/v1/announcements/{userId}` endpoint.
-  //
-  //  The [body] parameter contains the data for the announcement.
-  //  The [userId] parameter is the unique identifier of the user creating the announcement.
-  // static Future<bool> createAnnouncement({
-  //   required Map<String, dynamic> body,
-  //   required String userId,
-  // }) async {
-  //   try {
-  //     // cria book
-  //     final bookUrl = Uri.parse('${ApiClient.baseUrl}/api/v1/books');
-  //     final bookResponse = await http.post(
-  //       bookUrl,
-  //       headers: {'Content-Type': 'application/json'},
-  //       body: jsonEncode(body),
-  //     );
-  //     if (bookResponse.statusCode != 201 && bookResponse.statusCode != 200)
-  //       return false;
-
-  //     // cria edition
-  //     final editionUrl = Uri.parse(
-  //       '${ApiClient.baseUrl}/api/v1/editions/${jsonDecode(bookResponse.body)["bookId"]}',
-  //     );
-  //     final editionResponse = await http.post(
-  //       editionUrl,
-  //       headers: {'Content-Type': 'application/json'},
-  //       body: jsonEncode(body),
-  //     );
-  //     if (editionResponse.statusCode != 201 &&
-  //         editionResponse.statusCode != 200)
-  //       return false;
-
-  //     // cria announcement
-  //     final announcementUrl = Uri.parse(
-  //       '${ApiClient.baseUrl}/api/v1/announcements/$userId',
-  //     );
-
-  //     body["editionId"] = jsonDecode(editionResponse.body)["editionId"];
-  //     final announcementResponse = await http.post(
-  //       announcementUrl,
-  //       headers: {'Content-Type': 'application/json'},
-  //       body: jsonEncode(body),
-  //     );
-  //     if (announcementResponse.statusCode != 201 &&
-  //         announcementResponse.statusCode != 200)
-  //       return false;
-  //   } catch (e) {
-  //     print('CREATE ERROR: $e');
-  //     return false;
-  //   }
-  //   return true;
-  // }
-
   static Future<String?> createAnnouncement({
     required Map<String, dynamic> body,
     required String userId,
   }) async {
     try {
-      // cria book
+      final requestBody = Map<String, dynamic>.from(body);
+
       final bookUrl = Uri.parse('${ApiClient.baseUrl}/api/v1/books');
+
       final bookResponse = await http.post(
         bookUrl,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
+        body: jsonEncode(requestBody),
       );
       if (bookResponse.statusCode != 201 && bookResponse.statusCode != 200) {
         return null; // Retorna null em vez de false
       }
 
-      // cria edition
+      print('CREATE BOOK STATUS: ${bookResponse.statusCode}');
+      print('CREATE BOOK RESPONSE: ${bookResponse.body}');
+
+      if (bookResponse.statusCode != 200 && bookResponse.statusCode != 201) {
+        return null;
+      }
+
+      final bookData = jsonDecode(bookResponse.body) as Map<String, dynamic>;
+
+      final bookId = bookData['bookId'] ?? bookData['id'];
+
+      if (bookId == null) {
+        print('CREATE ERROR: bookId não retornado pelo backend.');
+        return null;
+      }
+
       final editionUrl = Uri.parse(
-        '${ApiClient.baseUrl}/api/v1/editions/${jsonDecode(bookResponse.body)["bookId"]}',
+        '${ApiClient.baseUrl}/api/v1/editions/$bookId',
       );
+
       final editionResponse = await http.post(
         editionUrl,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
+        body: jsonEncode(requestBody),
       );
       if (editionResponse.statusCode != 201 &&
           editionResponse.statusCode != 200) {
         return null; // Retorna null em vez de false
       }
 
-      // cria announcement
+      print('CREATE EDITION STATUS: ${editionResponse.statusCode}');
+      print('CREATE EDITION RESPONSE: ${editionResponse.body}');
+
+      if (editionResponse.statusCode != 200 &&
+          editionResponse.statusCode != 201) {
+        return null;
+      }
+
+      final editionData =
+          jsonDecode(editionResponse.body) as Map<String, dynamic>;
+
+      final editionId = editionData['editionId'] ?? editionData['id'];
+
+      if (editionId == null) {
+        print('CREATE ERROR: editionId não retornado pelo backend.');
+        return null;
+      }
+
+      requestBody['editionId'] = editionId;
+
       final announcementUrl = Uri.parse(
         '${ApiClient.baseUrl}/api/v1/announcements/$userId',
       );
 
-      body["editionId"] = jsonDecode(editionResponse.body)["editionId"];
       final announcementResponse = await http.post(
         announcementUrl,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
+        body: jsonEncode(requestBody),
       );
 
       if (announcementResponse.statusCode != 201 &&
@@ -288,10 +282,11 @@ class AnnouncementService {
     }
   }
 
-  // Sets dummy data in the backend.
+  /// Requests the backend to create dummy data.
   static Future<bool> setDummyData() async {
     try {
       final url = Uri.parse('${ApiClient.baseUrl}/create-dummy-data');
+
       final response = await http.post(url);
 
       print('DUMMY STATUS: ${response.statusCode}');

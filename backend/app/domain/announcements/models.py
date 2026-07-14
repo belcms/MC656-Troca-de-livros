@@ -42,7 +42,7 @@ class TradeAnnouncement(Base):
     # ORM relationships for navigation between entities.
     user = relationship("User", back_populates="announcements")
     edition = relationship("Edition", back_populates="announcements")
-    location = relationship("location", back_populates="announcements")
+    location = relationship("Location", back_populates="announcements")
     photos = relationship("PhotoTradeAnnouncement", back_populates="announcement", cascade="all, delete-orphan")
 
 

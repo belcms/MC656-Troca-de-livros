@@ -51,43 +51,79 @@ def get_book_details_route(id: str, db: Session = Depends(get_db)):
     """
     return get_announcement_details(db, id)
 
-@router.get("/feed", response_model=list[FeedAnnouncementResponse])
+@router.get(
+    "/feed",
+    response_model=list[FeedAnnouncementResponse],
+)
 def feed_announcements_route(
-    limit: int = Query(20, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db)
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+    ),
+    offset: int = Query(
+        default=0,
+        ge=0,
+    ),
+    start_year: int | None = Query(
+        default=None,
+        ge=1000,
+        le=2100,
+    ),
+    end_year: int | None = Query(
+        default=None,
+        ge=1000,
+        le=2100,
+    ),
+    condition: list[str] | None = Query(
+        default=None,
+    ),
+    genre: list[str] | None = Query(
+        default=None,
+    ),
+    max_distance_km: float | None = Query(
+        default=None,
+        gt=0,
+    ),
+    current_user_id: str | None = Query(
+        default=None,
+    ),
+    sort_by_distance: bool = Query(
+        default=False,
+    ),
+    db: Session = Depends(get_db),
 ):
-    """Return the feed list used by the main announcements timeline.
+    """Return the filtered announcements feed."""
 
-    The endpoint delegates to the announcements service to retrieve a paginated
-    list of announcements for the general feed.
-
-    Args:
-        limit: Maximum number of announcements to return. Constrained between 1 and 100.
-        offset: Number of announcements to skip for pagination.
-        db: SQLAlchemy session injected by FastAPI.
-
-    Returns:
-        list[FeedAnnouncementResponse]: A list of announcements for the feed.
-    """
-    return get_feed_announcements(db, limit=limit, offset=offset)
+    return get_feed_announcements(
+    db=db,
+    limit=limit,
+    offset=offset,
+    start_year=start_year,
+    end_year=end_year,
+    conditions=condition,
+    genres=genre,
+    current_user_id=current_user_id,
+    sort_by_distance=sort_by_distance,
+    max_distance_km=max_distance_km,
+)
 
 @router.post("/{user_id}", status_code=201)
 def create_announcement_route(user_id: str, body: announcements_schemas.TradeAnnouncementPydantic, db: Session = Depends(get_db)):
-    """Create a new trade announcement for a specific user.
+    #Create a new trade announcement for a specific user.
 
-    The endpoint delegates to the announcements service to persist a new
-    announcement associated with the given user ID.
+    #The endpoint delegates to the announcements service to persist a new
+    #announcement associated with the given user ID.
 
-    Args:
-        user_id: User identifier from path parameters.
-        body: The payload containing the trade announcement details.
-        db: SQLAlchemy session injected by FastAPI.
+    #Args:
+    #    user_id: User identifier from path parameters.
+    #    body: The payload containing the trade announcement details.
+     #   db: SQLAlchemy session injected by FastAPI.
 
-    Returns:
-        The created announcement payload with HTTP 201 status.
-    """
+    # Returns:
+       # The created announcement payload with HTTP 201 status.
     return service_create_announcement(user_id, body, db)
+
 
 @router.post("/{announcement_id}/photos", response_model=PhotoResponse, status_code=status.HTTP_201_CREATED)
 def upload_announcement_photo_endpoint(

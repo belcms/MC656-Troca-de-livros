@@ -13,7 +13,7 @@ class User(Base):
     cep_id = Column(String(8), ForeignKey("locations.cep"))
 
     announcements = relationship("TradeAnnouncement", back_populates="user")
-    location = relationship("location", back_populates="users")
+    location = relationship("Location", back_populates="users")
 
     def __init__(self, **kwargs):
         cep = kwargs.pop("cep", None)

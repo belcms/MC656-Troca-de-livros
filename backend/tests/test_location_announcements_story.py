@@ -6,7 +6,7 @@ from app.domain.announcements import services as announcement_services
 from app.domain.announcements.models import Condition, Status, TradeAnnouncement
 from app.domain.announcements.schemas import TradeAnnouncementPydantic
 from app.domain.books.models import Book, Edition, Genre, Language
-from app.domain.locations.models import location as Location
+from app.domain.locations.models import Location as Location
 from app.domain.locations.schemas import LocationPydantic
 from app.domain.locations import services as location_services
 from app.domain.users.models import User
