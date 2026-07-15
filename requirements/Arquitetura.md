@@ -2,7 +2,11 @@
 
 ## Diagrama C4
 
-![arquitetura](assets/Untitled%20(3).png)
+![Container C4](assets/containerC4.png)
+![Contexto C4](assets/contextoC4.png)
+![Componentes C4](assets/componentesC4.png)
+
+
 
 
 ## Descrição
