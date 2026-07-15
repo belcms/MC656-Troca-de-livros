@@ -70,15 +70,13 @@ class AuthScope extends InheritedNotifier<AuthController> {
     super.key,
     required AuthController controller,
     required super.child,
-  }) : super(
-          notifier: controller,
-        );
+  }) : super(notifier: controller);
 
-  static AuthController of(
-    BuildContext context,
-  ) {
-    return context
-        .dependOnInheritedWidgetOfExactType<AuthScope>()!
-        .notifier!;
+  static AuthController of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<AuthScope>();
+
+    assert(scope != null, 'AuthScope não encontrado na árvore de widgets.');
+
+    return scope!.notifier!;
   }
 }

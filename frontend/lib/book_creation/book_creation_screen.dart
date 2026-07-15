@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'book_creation_viewmodel.dart';
 import 'package:flutter/cupertino.dart';
-import '../auth/auth_repository.dart';
+import '../auth/auth_controller.dart';
 import '../services/location_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:frontend/services/upload_service.dart';
@@ -27,8 +27,13 @@ class _BookCreationPageState extends State<BookCreationPage> {
   @override
   void initState() {
     super.initState();
-    _carregarUsuarioLogado();
-  }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _carregarUsuarioLogado();
+      }
+    });
+}
 
   // Função para abrir a galeria e escolher as fotos
   Future<void> _pickImages() async {
@@ -68,7 +73,7 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
   // Pega o CEP do usuário atual e faz a busca inicial
   Future<void> _carregarUsuarioLogado() async {
-    final cep = AuthRepository.instance.user?.cep?.trim();
+    final cep = AuthScope.of(context).repository.user?.cep?.trim();
     if (cep != null && cep.isNotEmpty) {
       vm.cepController.text = cep;
       await _buscarLocalizacao(cep);
