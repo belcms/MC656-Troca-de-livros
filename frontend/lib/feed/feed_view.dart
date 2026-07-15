@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/book_details/announcement_detail_screen.dart';
 
-import '../auth/auth_repository.dart';
+import '../auth/auth_controller.dart';
 import '../services/announcement_service.dart';
 import 'announcement_card.dart';
 import 'announcement_filter_sheet.dart';
@@ -35,8 +35,13 @@ class _FeedViewState extends State<FeedView> {
   @override
   void initState() {
     super.initState();
-    _loadFeed();
-  }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadFeed();
+      }
+    });
+}
 
   /// Fetches the feed data from the backend and updates the UI state.
   ///
@@ -47,7 +52,7 @@ class _FeedViewState extends State<FeedView> {
       isLoading = true;
     });
 
-    final currentUserId = AuthRepository.instance.user?.id;
+    final currentUserId = AuthScope.of(context).repository.user?.id;
     final hasCurrentUser = currentUserId?.trim().isNotEmpty ?? false;
 
     final data = await AnnouncementService.fetchFeedAnnouncements(
