@@ -7,35 +7,70 @@ class ApiClient {
   // Use o IP da sua máquina (ex: 192.168.1.15) se testar no celular físico.
   static const String baseUrl = 'http://10.0.2.2:8000';
 
-  static Future<http.Response> get(String path) => _send('GET', path);
-  static Future<http.Response> post(String path, {String? body}) =>
-      _send('POST', path, body: body);
-  static Future<http.Response> put(String path, {String? body}) =>
-      _send('PUT', path, body: body);
+  static Future<http.Response> get(String path, {http.Client? client}) =>
+      _send('GET', path, client: client);
+
+  static Future<http.Response> post(
+    String path, {
+    String? body,
+    http.Client? client,
+  }) => _send('POST', path, body: body, client: client);
+
+  static Future<http.Response> put(
+    String path, {
+    String? body,
+    http.Client? client,
+  }) => _send('PUT', path, body: body, client: client);
+
+  static Future<http.Response> patch(
+    String path, {
+    String? body,
+    http.Client? client,
+  }) => _send('PATCH', path, body: body, client: client);
 
   static Future<http.Response> _send(
     String method,
     String path, {
     String? body,
     bool retry = true,
+    http.Client? client,
   }) async {
+    final requestClient = client ?? http.Client();
+    final ownsClient = client == null;
     final token = AuthRepository.instance.accessToken;
-    final headers = <String, String>{'Content-Type': 'application/json'};
+    final headers = <String, String>{
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
     if (token != null) headers['Authorization'] = 'Bearer $token';
     final uri = Uri.parse('$baseUrl$path');
-    late http.Response response;
-    if (method == 'POST') {
-      response = await http.post(uri, headers: headers, body: body);
-    } else if (method == 'PUT') {
-      response = await http.put(uri, headers: headers, body: body);
-    } else {
-      response = await http.get(uri, headers: headers);
+    try {
+      late http.Response response;
+      if (method == 'POST') {
+        response = await requestClient.post(uri, headers: headers, body: body);
+      } else if (method == 'PUT') {
+        response = await requestClient.put(uri, headers: headers, body: body);
+      } else if (method == 'PATCH') {
+        response = await requestClient.patch(uri, headers: headers, body: body);
+      } else {
+        response = await requestClient.get(uri, headers: headers);
+      }
+      if (response.statusCode == 401 &&
+          retry &&
+          await AuthRepository.instance.refresh()) {
+        return _send(
+          method,
+          path,
+          body: body,
+          retry: false,
+          client: requestClient,
+        );
+      }
+      return response;
+    } finally {
+      if (ownsClient) {
+        requestClient.close();
+      }
     }
-    if (response.statusCode == 401 &&
-        retry &&
-        await AuthRepository.instance.refresh()) {
-      return _send(method, path, body: body, retry: false);
-    }
-    return response;
   }
 }

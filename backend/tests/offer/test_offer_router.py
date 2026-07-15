@@ -1,16 +1,33 @@
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.domain.announcements.models import Status, TradeAnnouncement
 from app.domain.offer.models import Offer, StatusOffer
+from app.domain.users.models import User
 
 
-def test_received_endpoint_requires_owner_user_id(
+def _authenticate(client: TestClient, user: User) -> None:
+    client.app.state.current_user = user
+
+
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [
+        ("GET", "/api/v1/offers/received"),
+        ("GET", "/api/v1/offers/offer-1"),
+        ("PATCH", "/api/v1/offers/offer-1/accept"),
+        ("PATCH", "/api/v1/offers/offer-1/reject"),
+    ],
+)
+def test_received_offer_endpoints_require_authentication(
     offer_client: TestClient,
+    method: str,
+    path: str,
 ):
-    response = offer_client.get("/api/v1/offers/received")
+    response = offer_client.request(method, path)
 
-    assert response.status_code == 422
+    assert response.status_code == 401
 
 
 def test_received_endpoint_returns_owner_requests_with_flutter_contract(
@@ -18,11 +35,9 @@ def test_received_endpoint_returns_owner_requests_with_flutter_contract(
     seed_offer_scenario,
 ):
     data = seed_offer_scenario()
+    _authenticate(offer_client, data["owner"])
 
-    response = offer_client.get(
-        "/api/v1/offers/received",
-        params={"owner_user_id": data["owner"].id},
-    )
+    response = offer_client.get("/api/v1/offers/received")
 
     assert response.status_code == 200
     payload = response.json()
@@ -54,11 +69,9 @@ def test_received_endpoint_does_not_treat_received_as_offer_id(
 ):
     """Garante que a rota fixa /received vem antes de /{offer_id}."""
     data = seed_offer_scenario()
+    _authenticate(offer_client, data["owner"])
 
-    response = offer_client.get(
-        "/api/v1/offers/received",
-        params={"owner_user_id": data["owner"].id},
-    )
+    response = offer_client.get("/api/v1/offers/received")
 
     assert response.status_code == 200
     assert isinstance(response.json(), list)
@@ -69,10 +82,10 @@ def test_details_endpoint_returns_offer(
     seed_offer_scenario,
 ):
     data = seed_offer_scenario()
+    _authenticate(offer_client, data["owner"])
 
     response = offer_client.get(
         f"/api/v1/offers/{data['main_offer'].id}",
-        params={"owner_user_id": data["owner"].id},
     )
 
     assert response.status_code == 200
@@ -86,15 +99,16 @@ def test_details_endpoint_returns_offer(
     )
 
 
-def test_details_endpoint_returns_404_for_wrong_owner(
+def test_details_endpoint_ignores_forged_owner_id(
     offer_client: TestClient,
     seed_offer_scenario,
 ):
     data = seed_offer_scenario()
+    _authenticate(offer_client, data["outsider"])
 
     response = offer_client.get(
         f"/api/v1/offers/{data['main_offer'].id}",
-        params={"owner_user_id": data["outsider"].id},
+        params={"owner_user_id": data["owner"].id},
     )
 
     assert response.status_code == 404
@@ -108,11 +122,9 @@ def test_details_endpoint_returns_404_for_unknown_offer(
     seed_offer_scenario,
 ):
     data = seed_offer_scenario()
+    _authenticate(offer_client, data["owner"])
 
-    response = offer_client.get(
-        "/api/v1/offers/offer-inexistente",
-        params={"owner_user_id": data["owner"].id},
-    )
+    response = offer_client.get("/api/v1/offers/offer-inexistente")
 
     assert response.status_code == 404
 
@@ -123,10 +135,10 @@ def test_accept_endpoint_applies_all_business_rules(
     seed_offer_scenario,
 ):
     data = seed_offer_scenario()
+    _authenticate(offer_client, data["owner"])
 
     response = offer_client.patch(
         f"/api/v1/offers/{data['main_offer'].id}/accept",
-        params={"owner_user_id": data["owner"].id},
     )
 
     assert response.status_code == 200
@@ -153,11 +165,11 @@ def test_accept_endpoint_returns_409_when_called_twice(
     seed_offer_scenario,
 ):
     data = seed_offer_scenario()
+    _authenticate(offer_client, data["owner"])
     url = f"/api/v1/offers/{data['main_offer'].id}/accept"
-    params = {"owner_user_id": data["owner"].id}
 
-    first = offer_client.patch(url, params=params)
-    second = offer_client.patch(url, params=params)
+    first = offer_client.patch(url)
+    second = offer_client.patch(url)
 
     assert first.status_code == 200
     assert second.status_code == 409
@@ -172,12 +184,12 @@ def test_accept_endpoint_returns_409_when_book_is_unavailable(
     seed_offer_scenario,
 ):
     data = seed_offer_scenario()
+    _authenticate(offer_client, data["owner"])
     data["target"].status = Status.Reserved
     db_session.commit()
 
     response = offer_client.patch(
         f"/api/v1/offers/{data['main_offer'].id}/accept",
-        params={"owner_user_id": data["owner"].id},
     )
 
     assert response.status_code == 409
@@ -189,10 +201,10 @@ def test_accept_endpoint_returns_404_for_wrong_owner(
     seed_offer_scenario,
 ):
     data = seed_offer_scenario()
+    _authenticate(offer_client, data["outsider"])
 
     response = offer_client.patch(
         f"/api/v1/offers/{data['main_offer'].id}/accept",
-        params={"owner_user_id": data["outsider"].id},
     )
 
     assert response.status_code == 404
@@ -204,10 +216,10 @@ def test_reject_endpoint_rejects_pending_offer_without_reserving_books(
     seed_offer_scenario,
 ):
     data = seed_offer_scenario()
+    _authenticate(offer_client, data["owner"])
 
     response = offer_client.patch(
         f"/api/v1/offers/{data['main_offer'].id}/reject",
-        params={"owner_user_id": data["owner"].id},
     )
 
     assert response.status_code == 200
@@ -237,10 +249,10 @@ def test_reject_endpoint_returns_409_for_already_rejected_offer(
     seed_offer_scenario,
 ):
     data = seed_offer_scenario()
+    _authenticate(offer_client, data["owner"])
 
     response = offer_client.patch(
         f"/api/v1/offers/{data['rejected_offer'].id}/reject",
-        params={"owner_user_id": data["owner"].id},
     )
 
     assert response.status_code == 409
@@ -254,10 +266,10 @@ def test_reject_endpoint_returns_404_for_wrong_owner(
     seed_offer_scenario,
 ):
     data = seed_offer_scenario()
+    _authenticate(offer_client, data["outsider"])
 
     response = offer_client.patch(
         f"/api/v1/offers/{data['main_offer'].id}/reject",
-        params={"owner_user_id": data["outsider"].id},
     )
 
     assert response.status_code == 404

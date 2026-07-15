@@ -19,7 +19,7 @@ class OfferBookModel {
       title: json['title'] ?? '',
       publishYear:
           (json['publishYear'] ?? json['publish_year'])?.toString() ?? '',
-      realPhotoUrl: json['real_photo_url'] ?? json['realPhotoUrl'] ?? '',
+      realPhotoUrl: json['cover_photo'] ?? json['cover_url'] ?? '',
       location:
           json['status'] ?? json['location'] ?? 'Localização não informada',
     );
