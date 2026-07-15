@@ -442,8 +442,21 @@ def map_condition(value: str):
 
 async def create_dummy_data(db: Session = Depends(get_db)):
     """
-    Populate the database with initial dummy data for testing purposes.
+    Populate the database with comprehensive dummy data for demonstration.
+
+    Creates a fully populated scenario with:
+    - 5 locations across Brazilian cities (varying distances)
+    - 5 users, each in a different city
+    - 10 books with real Amazon cover images
+    - 10 editions (one per book)
+    - 15 announcements (3 per user) with varied conditions/statuses
+    - Photo records for announcements
+    - Wishlist entries for cross-user interest
+    - Example trade offers between users
     """
+    from datetime import timedelta
+    from app.domain.locations import models as locations_models
+    from app.domain.offer.models import Offer, OfferedAnnouncements, StatusOffer
 
     existing = db.query(
         announcements_models.TradeAnnouncement
@@ -462,116 +475,544 @@ async def create_dummy_data(db: Session = Depends(get_db)):
             ],
         }
 
-    loc1 = await locations_services.get_location_by_cep(
-        "07115000",
-        db,
-    )
-    loc2 = await locations_services.get_location_by_cep(
-        "07115000",
-        db,
-    )
+    # ──────────────────────────────────────────────────────────
+    # 1. LOCATIONS — 5 cidades brasileiras com coordenadas reais
+    #    Distâncias aproximadas a partir de Campinas:
+    #    - São Paulo:       ~90 km
+    #    - Rio de Janeiro:  ~500 km
+    #    - Belo Horizonte:  ~580 km
+    #    - Curitiba:        ~530 km
+    # ──────────────────────────────────────────────────────────
+    locations = [
+        locations_models.Location(
+            cep="13083970",
+            city="Campinas",
+            state="SP",
+            country="Brasil",
+            district="Cidade Universitária",
+            lat=-22.8179,
+            long=-47.0695,
+        ),
+        locations_models.Location(
+            cep="01310200",
+            city="São Paulo",
+            state="SP",
+            country="Brasil",
+            district="Bela Vista",
+            lat=-23.5614,
+            long=-46.6559,
+        ),
+        locations_models.Location(
+            cep="22070002",
+            city="Rio de Janeiro",
+            state="RJ",
+            country="Brasil",
+            district="Copacabana",
+            lat=-22.9711,
+            long=-43.1822,
+        ),
+        locations_models.Location(
+            cep="30140010",
+            city="Belo Horizonte",
+            state="MG",
+            country="Brasil",
+            district="Savassi",
+            lat=-19.9320,
+            long=-43.9378,
+        ),
+        locations_models.Location(
+            cep="80060000",
+            city="Curitiba",
+            state="PR",
+            country="Brasil",
+            district="Centro",
+            lat=-25.4284,
+            long=-49.2671,
+        ),
+    ]
 
+    db.add_all(locations)
+    db.commit()
+
+    # ──────────────────────────────────────────────────────────
+    # 2. USERS — 5 usuários, um por cidade
+    # ──────────────────────────────────────────────────────────
     user1 = users_models.User(
-        username="rafael",
-        email="rafael@example.com",
-        full_name="Rafael Feltrin",
-        cep_id=loc1.cep,
+        username="ana_campinas",
+        email="ana.campinas@example.com",
+        full_name="Ana Beatriz Souza",
+        cep_id="13083970",
     )
     user2 = users_models.User(
-        username="Neymar",
-        email="neymar@example.com",
-        full_name="Neymar Jr.",
-        cep_id=loc2.cep,
+        username="bruno_sp",
+        email="bruno.sp@example.com",
+        full_name="Bruno Oliveira",
+        cep_id="01310200",
+    )
+    user3 = users_models.User(
+        username="carla_rio",
+        email="carla.rio@example.com",
+        full_name="Carla Mendes",
+        cep_id="22070002",
+    )
+    user4 = users_models.User(
+        username="diego_bh",
+        email="diego.bh@example.com",
+        full_name="Diego Ferreira",
+        cep_id="30140010",
+    )
+    user5 = users_models.User(
+        username="eva_curitiba",
+        email="eva.curitiba@example.com",
+        full_name="Eva Santos",
+        cep_id="80060000",
     )
 
-    db.add_all([user1, user2])
+    all_users = [user1, user2, user3, user4, user5]
+    db.add_all(all_users)
     db.commit()
-    db.refresh(user1)
-    db.refresh(user2)
+    for u in all_users:
+        db.refresh(u)
 
-    book1 = books_models.Book(
-        title="1984",
-        author="George Orwell",
-        genre=books_models.Genre.Sci_fic,
-        synopsis=(
-            "Dystopian social science fiction novel and cautionary tale."
-        ),
-    )
-    book2 = books_models.Book(
-        title="Dune",
-        author="Frank Herbert",
-        genre=books_models.Genre.Sci_fic,
-        synopsis="A mythic and emotionally charged hero's journey.",
-    )
+    # ──────────────────────────────────────────────────────────
+    # 3. BOOKS + EDITIONS — 10 livros reais com capas da Amazon
+    #
+    #    As URLs de cover_photo foram verificadas e retornam
+    #    imagens válidas renderizáveis no app.
+    # ──────────────────────────────────────────────────────────
+    books_data = [
+        {
+            "title": "1984",
+            "author": "George Orwell",
+            "genre": books_models.Genre.Sci_fic,
+            "synopsis": "Romance distópico que retrata um regime totalitário onde o Grande Irmão controla todos os aspectos da vida. Winston Smith luta para manter sua individualidade em um mundo de vigilância constante e manipulação da verdade.",
+            "publisher": "Companhia das Letras",
+            "year": 2009,
+            "pages": 416,
+            "language": books_models.Language.PT_br,
+            "cover": "https://m.media-amazon.com/images/I/91g5gcjTxsL._SY522_.jpg",
+        },
+        {
+            "title": "Dune",
+            "author": "Frank Herbert",
+            "genre": books_models.Genre.Sci_fic,
+            "synopsis": "Uma jornada épica de ficção científica ambientada no deserto de Arrakis, onde política, ecologia, religião e poder se entrelaçam. Paul Atreides precisa sobreviver à traição e liderar uma revolução para cumprir seu destino.",
+            "publisher": "Aleph",
+            "year": 2017,
+            "pages": 680,
+            "language": books_models.Language.PT_br,
+            "cover": "https://m.media-amazon.com/images/I/81zN7udGRUL._SL1500_.jpg",
+        },
+        {
+            "title": "Dom Casmurro",
+            "author": "Machado de Assis",
+            "genre": books_models.Genre.Romance,
+            "synopsis": "Um dos maiores clássicos da literatura brasileira. Bentinho narra sua história com Capitu, uma relação marcada por ciúme, dúvida e ambiguidade. O leitor deve julgar se houve ou não traição.",
+            "publisher": "Penguin-Companhia",
+            "year": 2016,
+            "pages": 256,
+            "language": books_models.Language.PT_br,
+            "cover": "https://m.media-amazon.com/images/I/81gepf1eMqL._SY522_.jpg",
+        },
+        {
+            "title": "O Pequeno Príncipe",
+            "author": "Antoine de Saint-Exupéry",
+            "genre": books_models.Genre.Romance,
+            "synopsis": "Fábula poética sobre um príncipe que viaja de planeta em planeta, encontrando personagens que representam aspectos da natureza humana. Uma reflexão atemporal sobre amizade, amor e o que realmente importa na vida.",
+            "publisher": "HarperCollins",
+            "year": 2018,
+            "pages": 96,
+            "language": books_models.Language.PT_br,
+            "cover": "https://m.media-amazon.com/images/I/81OthjkJBuL._SY522_.jpg",
+        },
+        {
+            "title": "Harry Potter e a Pedra Filosofal",
+            "author": "J.K. Rowling",
+            "genre": books_models.Genre.Fantasy,
+            "synopsis": "Harry Potter descobre que é um bruxo no dia do seu aniversário de 11 anos e é convidado para estudar na Escola de Magia e Bruxaria de Hogwarts. Lá, ele encontra amigos, mistérios e perigos que mudarão sua vida para sempre.",
+            "publisher": "Rocco",
+            "year": 2017,
+            "pages": 208,
+            "language": books_models.Language.PT_br,
+            "cover": "https://m.media-amazon.com/images/I/91VokXkn8hL._SY522_.jpg",
+        },
+        {
+            "title": "O Senhor dos Anéis: A Sociedade do Anel",
+            "author": "J.R.R. Tolkien",
+            "genre": books_models.Genre.Fantasy,
+            "synopsis": "O hobbit Frodo Bolseiro herda o Um Anel e parte em uma jornada épica pela Terra-média para destruí-lo. A Sociedade do Anel é formada para protegê-lo nesta missão que decidirá o destino de todos os povos livres.",
+            "publisher": "HarperCollins",
+            "year": 2019,
+            "pages": 576,
+            "language": books_models.Language.PT_br,
+            "cover": "https://m.media-amazon.com/images/I/91ocU8970hL._SY522_.jpg",
+        },
+        {
+            "title": "Grande Sertão: Veredas",
+            "author": "João Guimarães Rosa",
+            "genre": books_models.Genre.Romance,
+            "synopsis": "O ex-jagunço Riobaldo relembra seus amores, suas lutas e o pacto que talvez tenha feito com o diabo, em uma narrativa magistral sobre a alma humana e o sertão brasileiro.",
+            "publisher": "Nova Fronteira",
+            "year": 2001,
+            "pages": 624,
+            "language": books_models.Language.PT_br,
+            "cover": "https://m.media-amazon.com/images/I/51b5YG6Y1rL._SY445_SX342_.jpg",
+        },
+        {
+            "title": "A Revolução dos Bichos",
+            "author": "George Orwell",
+            "genre": books_models.Genre.Sci_fic,
+            "synopsis": "Fábula satírica onde os animais de uma fazenda se rebelam contra o fazendeiro humano e tomam o controle. Porém, os porcos gradualmente se tornam tão tirânicos quanto os humanos que substituíram.",
+            "publisher": "Companhia das Letras",
+            "year": 2007,
+            "pages": 152,
+            "language": books_models.Language.PT_br,
+            "cover": "https://m.media-amazon.com/images/I/61R1s5S-h4L._SY522_.jpg",
+        },
+        {
+            "title": "O Hobbit",
+            "author": "J.R.R. Tolkien",
+            "genre": books_models.Genre.Fantasy,
+            "synopsis": "Bilbo Bolseiro, um hobbit pacato, é inesperadamente recrutado pelo mago Gandalf para uma aventura com treze anões. Juntos, partem para recuperar o tesouro guardado pelo dragão Smaug na Montanha Solitária.",
+            "publisher": "HarperCollins",
+            "year": 2019,
+            "pages": 336,
+            "language": books_models.Language.PT_br,
+            "cover": "https://m.media-amazon.com/images/I/81xL1P-QZGL._SY522_.jpg",
+        },
+        {
+            "title": "Clean Code",
+            "author": "Robert C. Martin",
+            "genre": books_models.Genre.Education,
+            "synopsis": "Guia essencial sobre boas práticas de programação. Ensina como escrever código limpo, legível e manutenível. Aborda nomes significativos, funções pequenas, formatação consistente e a arte de refatorar.",
+            "publisher": "Alta Books",
+            "year": 2011,
+            "pages": 456,
+            "language": books_models.Language.PT_br,
+            "cover": "https://m.media-amazon.com/images/I/71T7aUQnbfL._SY522_.jpg",
+        },
+    ]
 
-    db.add_all([book1, book2])
+    all_books = []
+    all_editions = []
+
+    for bd in books_data:
+        book = books_models.Book(
+            title=bd["title"],
+            author=bd["author"],
+            genre=bd["genre"],
+            synopsis=bd["synopsis"],
+        )
+        db.add(book)
+        db.flush()
+
+        edition = books_models.Edition(
+            book_id=book.id,
+            publisher=bd["publisher"],
+            publish_year=bd["year"],
+            number_of_pages=bd["pages"],
+            language=bd["language"],
+            cover_photo=bd["cover"],
+        )
+        db.add(edition)
+        db.flush()
+
+        all_books.append(book)
+        all_editions.append(edition)
+
     db.commit()
-    db.refresh(book1)
-    db.refresh(book2)
+    for b in all_books:
+        db.refresh(b)
+    for e in all_editions:
+        db.refresh(e)
 
-    edition1 = books_models.Edition(
-        book_id=book1.id,
-        publisher="Secker & Warburg",
-        publish_year=1949,
-        number_of_pages=328,
-        language=books_models.Language.En,
-        cover_photo="https://m.media-amazon.com/images/I/91g5gcjTxsL._SY522_.jpg"
-    )
-    edition2 = books_models.Edition(
-        book_id=book2.id,
-        publisher="Chilton Books",
-        publish_year=1965,
-        number_of_pages=412,
-        language=books_models.Language.En,
-        cover_photo="https://m.media-amazon.com/images/I/81zN7udGRUL._SL1500_.jpg"
-    )
+    # ──────────────────────────────────────────────────────────
+    # 4. ANNOUNCEMENTS — 15 no total, 3 por usuário
+    #
+    #    Cada anúncio usa a cover_photo da edition como
+    #    real_photo_url, simulando fotos reais do livro.
+    # ──────────────────────────────────────────────────────────
+    from datetime import datetime
 
-    db.add_all([edition1, edition2])
+    announcements_data = [
+        # --- Ana (Campinas) - 3 anúncios ---
+        {
+            "user": user1,
+            "edition": all_editions[0],  # 1984
+            "cep_id": "13083970",
+            "condition": announcements_models.Condition.Good,
+            "description": "Exemplar bem conservado, com poucas marcas de leitura. Capa em ótimo estado.",
+            "status": announcements_models.Status.Available,
+            "days_ago": 2,
+        },
+        {
+            "user": user1,
+            "edition": all_editions[2],  # Dom Casmurro
+            "cep_id": "13083970",
+            "condition": announcements_models.Condition.Used,
+            "description": "Livro usado mas legível. Algumas anotações a lápis nas margens. Clássico que todo mundo deveria ler!",
+            "status": announcements_models.Status.Available,
+            "days_ago": 5,
+        },
+        {
+            "user": user1,
+            "edition": all_editions[3],  # O Pequeno Príncipe
+            "cep_id": "13083970",
+            "condition": announcements_models.Condition.New,
+            "description": "Edição nova, nunca foi lida. Presente que ganhei em duplicata. Capa dura linda!",
+            "status": announcements_models.Status.Available,
+            "days_ago": 1,
+        },
+        # --- Bruno (São Paulo) - 3 anúncios ---
+        {
+            "user": user2,
+            "edition": all_editions[1],  # Dune
+            "cep_id": "01310200",
+            "condition": announcements_models.Condition.Good,
+            "description": "Edição em ótimo estado. Lombada sem vincos, páginas limpas. Imperdível para fãs de ficção científica!",
+            "status": announcements_models.Status.Available,
+            "days_ago": 3,
+        },
+        {
+            "user": user2,
+            "edition": all_editions[4],  # Harry Potter
+            "cep_id": "01310200",
+            "condition": announcements_models.Condition.Good,
+            "description": "Meu exemplar de infância. Muito bem cuidado, com capa protetora. Magia pura!",
+            "status": announcements_models.Status.Available,
+            "days_ago": 7,
+        },
+        {
+            "user": user2,
+            "edition": all_editions[9],  # Clean Code
+            "cep_id": "01310200",
+            "condition": announcements_models.Condition.New,
+            "description": "Comprei para um curso e já tenho a versão digital. Livro novo, sem uso.",
+            "status": announcements_models.Status.Available,
+            "days_ago": 4,
+        },
+        # --- Carla (Rio de Janeiro) - 3 anúncios ---
+        {
+            "user": user3,
+            "edition": all_editions[5],  # Senhor dos Anéis
+            "cep_id": "22070002",
+            "condition": announcements_models.Condition.Good,
+            "description": "Edição linda da HarperCollins. Li uma vez e guardei com carinho. Sem marcas!",
+            "status": announcements_models.Status.Available,
+            "days_ago": 6,
+        },
+        {
+            "user": user3,
+            "edition": all_editions[6],  # Grande Sertão
+            "cep_id": "22070002",
+            "condition": announcements_models.Condition.Used,
+            "description": "Livro que viajou comigo pelo Brasil. Tem marcas de uso, mas está inteiro e legível.",
+            "status": announcements_models.Status.Available,
+            "days_ago": 10,
+        },
+        {
+            "user": user3,
+            "edition": all_editions[7],  # Revolução dos Bichos
+            "cep_id": "22070002",
+            "condition": announcements_models.Condition.Good,
+            "description": "Acabei de terminar e quero trocar por algo novo. Muito bom estado!",
+            "status": announcements_models.Status.Reserved,
+            "days_ago": 8,
+        },
+        # --- Diego (Belo Horizonte) - 3 anúncios ---
+        {
+            "user": user4,
+            "edition": all_editions[8],  # O Hobbit
+            "cep_id": "30140010",
+            "condition": announcements_models.Condition.New,
+            "description": "Ganhei dois exemplares de aniversário. Este está lacrado, nunca aberto!",
+            "status": announcements_models.Status.Available,
+            "days_ago": 3,
+        },
+        {
+            "user": user4,
+            "edition": all_editions[0],  # 1984 (segunda edição)
+            "cep_id": "30140010",
+            "condition": announcements_models.Condition.Worn,
+            "description": "Edição antiga que já foi lida várias vezes. Capa com desgaste, mas o conteúdo é incrível. Para quem não liga para estética.",
+            "status": announcements_models.Status.Available,
+            "days_ago": 15,
+        },
+        {
+            "user": user4,
+            "edition": all_editions[4],  # Harry Potter (outro exemplar)
+            "cep_id": "30140010",
+            "condition": announcements_models.Condition.Good,
+            "description": "Versão brasileira da Rocco em bom estado. Li e quero passar pra frente!",
+            "status": announcements_models.Status.Available,
+            "days_ago": 9,
+        },
+        # --- Eva (Curitiba) - 3 anúncios ---
+        {
+            "user": user5,
+            "edition": all_editions[6],  # Grande Sertão (outro exemplar)
+            "cep_id": "80060000",
+            "condition": announcements_models.Condition.Good,
+            "description": "Leitura transformadora. Exemplar em excelente estado, capa perfeita.",
+            "status": announcements_models.Status.Available,
+            "days_ago": 4,
+        },
+        {
+            "user": user5,
+            "edition": all_editions[1],  # Dune (outro exemplar)
+            "cep_id": "80060000",
+            "condition": announcements_models.Condition.Used,
+            "description": "Li antes de assistir o filme. Está com a lombada um pouco marcada mas tudo legível.",
+            "status": announcements_models.Status.Traded,
+            "days_ago": 20,
+        },
+        {
+            "user": user5,
+            "edition": all_editions[5],  # Senhor dos Anéis (outro exemplar)
+            "cep_id": "80060000",
+            "condition": announcements_models.Condition.New,
+            "description": "Edição especial novinha em folha. Presente de Natal que já tenho. Perfeito para colecionadores!",
+            "status": announcements_models.Status.Available,
+            "days_ago": 2,
+        },
+    ]
+
+    all_announcements = []
+    for ad in announcements_data:
+        announcement = announcements_models.TradeAnnouncement(
+            user_id=ad["user"].id,
+            edition_id=ad["edition"].id,
+            cep_id=ad["cep_id"],
+            real_photo_url=ad["edition"].cover_photo,
+            condition=ad["condition"],
+            description=ad["description"],
+            status=ad["status"],
+            create_date=datetime.utcnow() - timedelta(days=ad["days_ago"]),
+        )
+        db.add(announcement)
+        db.flush()
+        all_announcements.append(announcement)
+
     db.commit()
-    db.refresh(edition1)
-    db.refresh(edition2)
+    for a in all_announcements:
+        db.refresh(a)
 
-    announcement1 = announcements_models.TradeAnnouncement(
-        user_id=user1.id,
-        edition_id=edition1.id,
-        cep_id=loc1.cep,
-        real_photo_url=(
-            "https://m.media-amazon.com/images/I/"
-            "91g5gcjTxsL._SY522_.jpg"
-        ),
-        condition=announcements_models.Condition.Good,
-        description="Muito muito bom, cuido muito bem",
-        status=announcements_models.Status.Available,
-    )
-    announcement2 = announcements_models.TradeAnnouncement(
+    # ──────────────────────────────────────────────────────────
+    # 5. PHOTOS — Uma foto por anúncio na tabela PhotoTradeAnnouncement
+    #
+    #    Usa a mesma URL da cover como foto do post.
+    #    Como o frontend renderiza via Image.network(url),
+    #    qualquer URL pública de imagem funciona — não precisa
+    #    ser do Supabase para o dummy data.
+    # ──────────────────────────────────────────────────────────
+    all_photos = []
+    for ann in all_announcements:
+        if ann.real_photo_url:
+            photo = announcements_models.PhotoTradeAnnouncement(
+                trade_announcement_id=ann.id,
+                photo_url=ann.real_photo_url,
+            )
+            db.add(photo)
+            all_photos.append(photo)
+
+    db.commit()
+
+    # ──────────────────────────────────────────────────────────
+    # 6. WISHLIST — Interesses cruzados entre usuários
+    # ──────────────────────────────────────────────────────────
+    wishlist_entries = [
+        # Ana quer Dune e Harry Potter
+        users_models.Wishlist(user_id=user1.id, edition_id=all_editions[1].id),
+        users_models.Wishlist(user_id=user1.id, edition_id=all_editions[4].id),
+        # Bruno quer Dom Casmurro e O Hobbit
+        users_models.Wishlist(user_id=user2.id, edition_id=all_editions[2].id),
+        users_models.Wishlist(user_id=user2.id, edition_id=all_editions[8].id),
+        # Carla quer 1984 e Clean Code
+        users_models.Wishlist(user_id=user3.id, edition_id=all_editions[0].id),
+        users_models.Wishlist(user_id=user3.id, edition_id=all_editions[9].id),
+        # Diego quer O Pequeno Príncipe e Senhor dos Anéis
+        users_models.Wishlist(user_id=user4.id, edition_id=all_editions[3].id),
+        users_models.Wishlist(user_id=user4.id, edition_id=all_editions[5].id),
+        # Eva quer Dom Casmurro e A Revolução dos Bichos
+        users_models.Wishlist(user_id=user5.id, edition_id=all_editions[2].id),
+        users_models.Wishlist(user_id=user5.id, edition_id=all_editions[7].id),
+    ]
+    db.add_all(wishlist_entries)
+    db.commit()
+
+    # ──────────────────────────────────────────────────────────
+    # 7. OFFERS — Propostas de troca entre usuários
+    #
+    #    Cenário:
+    #    - Bruno quer o 1984 da Ana, oferecendo seu Dune
+    #    - Carla quer o Pequeno Príncipe da Ana, oferecendo O Alquimista
+    #    - Diego quer o Harry Potter do Bruno, oferecendo O Hobbit
+    # ──────────────────────────────────────────────────────────
+    offer1 = Offer(
         user_id=user2.id,
-        edition_id=edition2.id,
-        cep_id=loc2.cep,
-        real_photo_url=(
-            "https://m.media-amazon.com/images/I/"
-            "81zN7udGRUL._SL1500_.jpg"
-        ),
-        condition=announcements_models.Condition.New,
-        description="Nunca nem abri essa bomba",
-        status=announcements_models.Status.Available,
+        target_announcement_id=all_announcements[0].id,  # Ana: 1984
+        status_offer=StatusOffer.Pending,
     )
+    db.add(offer1)
+    db.flush()
 
-    db.add_all([announcement1, announcement2])
-    db.commit()
-    db.refresh(announcement1)
-    db.refresh(announcement2)
+    db.add(OfferedAnnouncements(
+        offer_id=offer1.id,
+        offered_announcement_id=all_announcements[3].id,  # Bruno: Dune
+    ))
 
-    wishlist1 = users_models.Wishlist(user_id=user1.id, edition_id=edition2.id)
-    wishlist2 = users_models.Wishlist(user_id=user2.id, edition_id=edition1.id)
-    wishlist3 = users_models.Wishlist(user_id=user1.id, edition_id=edition1.id)
-    db.add_all([wishlist1, wishlist2, wishlist3])
+    offer2 = Offer(
+        user_id=user3.id,
+        target_announcement_id=all_announcements[2].id,  # Ana: Pequeno Príncipe
+        status_offer=StatusOffer.Pending,
+    )
+    db.add(offer2)
+    db.flush()
+
+    db.add(OfferedAnnouncements(
+        offer_id=offer2.id,
+        offered_announcement_id=all_announcements[7].id,  # Carla: Grande Sertão
+    ))
+
+    offer3 = Offer(
+        user_id=user4.id,
+        target_announcement_id=all_announcements[4].id,  # Bruno: Harry Potter
+        status_offer=StatusOffer.Pending,
+    )
+    db.add(offer3)
+    db.flush()
+
+    db.add(OfferedAnnouncements(
+        offer_id=offer3.id,
+        offered_announcement_id=all_announcements[9].id,  # Diego: O Hobbit
+    ))
+
     db.commit()
 
     return {
         "message": "Dummy data created successfully!",
+        "summary": {
+            "locations": 5,
+            "users": 5,
+            "books": 10,
+            "editions": 10,
+            "announcements": 15,
+            "photos": len(all_photos),
+            "wishlist_entries": len(wishlist_entries),
+            "offers": 3,
+        },
+        "users": [
+            {
+                "id": u.id,
+                "username": u.username,
+                "full_name": u.full_name,
+                "city": u.location.city if u.location else None,
+            }
+            for u in all_users
+        ],
         "announcement_ids": [
-            announcement1.id,
-            announcement2.id,
+            announcement.id
+            for announcement in all_announcements
         ],
     }
 
