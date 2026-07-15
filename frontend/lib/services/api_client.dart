@@ -7,15 +7,8 @@ class ApiClient {
 
   static AuthTokenProvider? authTokenProvider;
 
-  static Future<http.Response> get(
-    String path, {
-    http.Client? client,
-  }) {
-    return _send(
-      'GET',
-      path,
-      client: client,
-    );
+  static Future<http.Response> get(String path, {http.Client? client}) {
+    return _send('GET', path, client: client);
   }
 
   static Future<http.Response> post(
@@ -23,12 +16,7 @@ class ApiClient {
     String? body,
     http.Client? client,
   }) {
-    return _send(
-      'POST',
-      path,
-      body: body,
-      client: client,
-    );
+    return _send('POST', path, body: body, client: client);
   }
 
   static Future<http.Response> put(
@@ -36,12 +24,7 @@ class ApiClient {
     String? body,
     http.Client? client,
   }) {
-    return _send(
-      'PUT',
-      path,
-      body: body,
-      client: client,
-    );
+    return _send('PUT', path, body: body, client: client);
   }
 
   static Future<http.Response> patch(
@@ -49,12 +32,15 @@ class ApiClient {
     String? body,
     http.Client? client,
   }) {
-    return _send(
-      'PATCH',
-      path,
-      body: body,
-      client: client,
-    );
+    return _send('PATCH', path, body: body, client: client);
+  }
+
+  static Future<http.Response> delete(
+    String path, {
+    String? body,
+    http.Client? client,
+  }) {
+    return _send('DELETE', path, body: body, client: client);
   }
 
   static Future<http.Response> _send(
@@ -75,37 +61,39 @@ class ApiClient {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    final uri = Uri.parse(
-      '$baseUrl$path',
-    );
+    final uri = Uri.parse('$baseUrl$path');
 
     late http.Response response;
 
     if (method == 'POST') {
-      response = await (client?.post(uri, headers: headers, body: body) ?? http.post(uri, headers: headers, body: body));
+      response =
+          await (client?.post(uri, headers: headers, body: body) ??
+              http.post(uri, headers: headers, body: body));
     } else if (method == 'PUT') {
-      response = await (client?.put(uri, headers: headers, body: body) ?? http.put(uri, headers: headers, body: body));
+      response =
+          await (client?.put(uri, headers: headers, body: body) ??
+              http.put(uri, headers: headers, body: body));
     } else if (method == 'PATCH') {
-      response = await (client?.patch(uri, headers: headers, body: body) ?? http.patch(uri, headers: headers, body: body));
+      response =
+          await (client?.patch(uri, headers: headers, body: body) ??
+              http.patch(uri, headers: headers, body: body));
+    } else if (method == 'DELETE') {
+      response =
+          await (client?.delete(uri, headers: headers, body: body) ??
+              http.delete(uri, headers: headers, body: body));
     } else {
-      response = await (client?.get(uri, headers: headers) ?? http.get(uri, headers: headers));
+      response =
+          await (client?.get(uri, headers: headers) ??
+              http.get(uri, headers: headers));
     }
 
     final provider = authTokenProvider;
 
-    if (
-      response.statusCode == 401 &&
-      retry &&
-      provider != null &&
-      await provider.refresh()
-    ) {
-      return _send(
-        method,
-        path,
-        body: body,
-        client: client,
-        retry: false,
-      );
+    if (response.statusCode == 401 &&
+        retry &&
+        provider != null &&
+        await provider.refresh()) {
+      return _send(method, path, body: body, client: client, retry: false);
     }
 
     return response;

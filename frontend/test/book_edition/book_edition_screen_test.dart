@@ -30,6 +30,11 @@ class FakeAnnouncementService implements AnnouncementServiceInterface {
   }) async {
     return true;
   }
+
+  @override
+  Future<bool> deleteAnnouncement(String id) async {
+    return true;
+  }
 }
 
 void main() {

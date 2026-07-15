@@ -5,8 +5,10 @@ import 'package:frontend/book_edition/book_edition_viewmodel.dart';
 class FakeService implements AnnouncementServiceInterface {
   Map<String, dynamic>? detailsResponse;
   bool updateResponse = true;
-
+  bool deleteResponse = true;
   String? lastId;
+  String? lastDeletedId;
+
   Map<String, dynamic>? lastBody;
 
   /// returns mocked announcement details
@@ -24,6 +26,13 @@ class FakeService implements AnnouncementServiceInterface {
     lastId = id;
     lastBody = body;
     return updateResponse;
+  }
+
+    /// simulates deleting an announcement
+  @override
+  Future<bool> deleteAnnouncement(String id) async {
+    lastDeletedId = id;
+    return deleteResponse;
   }
 }
 
@@ -100,6 +109,35 @@ void main() {
     expect(fakeService.lastBody?["language"], "En");
     expect(fakeService.lastBody?["status"], "Available");
     expect(fakeService.lastBody?["condition"], "Good");
+
+    vm.dispose();
+  });
+  
+    /// checks if delete sends the correct announcement id
+  test('delete envia o id correto para o backend', () async {
+    final fakeService = FakeService();
+
+    final vm = BookEditionViewModel(service: fakeService);
+
+    final ok = await vm.delete("1");
+
+    expect(ok, true);
+    expect(fakeService.lastDeletedId, "1");
+
+    vm.dispose();
+  });
+
+  /// checks if delete returns false when the service fails
+  test('delete retorna false quando o backend falha', () async {
+    final fakeService = FakeService()
+      ..deleteResponse = false;
+
+    final vm = BookEditionViewModel(service: fakeService);
+
+    final ok = await vm.delete("1");
+
+    expect(ok, false);
+    expect(fakeService.lastDeletedId, "1");
 
     vm.dispose();
   });

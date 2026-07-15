@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'book_model.dart';
 import '../services/announcement_service.dart';
@@ -15,6 +14,10 @@ abstract class AnnouncementServiceInterface {
     required String id,
     required Map<String, dynamic> body,
   });
+
+  /// deletes an announcement by id
+  /// returns true if deletion works
+  Future<bool> deleteAnnouncement(String id);
 }
 
 /// adapts the real service to the interface used by the viewmodel
@@ -25,13 +28,22 @@ class AnnouncementServiceAdapter implements AnnouncementServiceInterface {
     return AnnouncementService.fetchAnnouncementDetailsRaw(id);
   }
 
+  /// calls the service method that deletes an announcement
+  @override
+  Future<bool> deleteAnnouncement(String id) {
+    return AnnouncementService.deleteAnnouncement(id);
+  }
+
   /// calls the service method that updates an announcement
   @override
   Future<bool> updateAnnouncement({
     required String id,
     required Map<String, dynamic> body,
   }) {
-    return AnnouncementService.updateAnnouncement(id: id, body: body);
+    return AnnouncementService.updateAnnouncement(
+      id: id,
+      body: body,
+    );
   }
 }
 
@@ -41,8 +53,9 @@ class BookEditionViewModel {
   final AnnouncementServiceInterface service;
 
   /// allows dependency injection for testing or custom implementations
-  BookEditionViewModel({AnnouncementServiceInterface? service})
-      : service = service ?? AnnouncementServiceAdapter();
+  BookEditionViewModel({
+    AnnouncementServiceInterface? service,
+  }) : service = service ?? AnnouncementServiceAdapter();
 
   /// controllers used to manage form field values
   final titleController = TextEditingController();
@@ -59,7 +72,7 @@ class BookEditionViewModel {
   String language = "Português";
   String status = "Disponível";
   String condition = "Novo";
-  
+
   List<String> photoUrls = [];
 
   /// loads announcement data from backend
@@ -73,21 +86,31 @@ class BookEditionViewModel {
 
     final book = Book.fromJson(data);
 
-    // Garante que se vier nulo do banco, não quebre a tela transformando em string vazia
     titleController.text = book.title ?? '';
     authorController.text = book.author ?? '';
     publisherController.text = book.publisher ?? '';
     yearController.text = book.year?.toString() ?? '';
-    pagesController.text = book.pages?.toString() ?? ''; // Garante que carrega as páginas!
+    pagesController.text = book.pages?.toString() ?? '';
     synopsisController.text = book.synopsis ?? '';
     descriptionController.text = book.description ?? '';
 
     cepController.text = (data['cep_id'] ?? '').toString();
 
-    genre = (book.genre == null || book.genre.isEmpty) ? "Romance" : book.genre;
-    language = (book.language == null || book.language.isEmpty) ? "Português" : book.language;
-    status = (book.status == null || book.status.isEmpty) ? "Disponível" : book.status;
-    condition = (book.condition == null || book.condition.isEmpty) ? "Novo" : book.condition;
+    genre = (book.genre == null || book.genre.isEmpty)
+        ? "Romance"
+        : book.genre;
+
+    language = (book.language == null || book.language.isEmpty)
+        ? "Português"
+        : book.language;
+
+    status = (book.status == null || book.status.isEmpty)
+        ? "Disponível"
+        : book.status;
+
+    condition = (book.condition == null || book.condition.isEmpty)
+        ? "Novo"
+        : book.condition;
 
     photoUrls = book.photoUrls;
 
@@ -108,6 +131,7 @@ class BookEditionViewModel {
   Book buildBook(String id) {
     return Book(
       id: id,
+
       /// trims user input before sending
       title: titleController.text.trim(),
       author: authorController.text.trim(),
@@ -120,9 +144,8 @@ class BookEditionViewModel {
       description: descriptionController.text.trim(),
       status: status,
       condition: condition,
-      photoUrls: photoUrls, // Manda a primeira foto como capa (se o book_model ainda usar isso)
+      photoUrls: photoUrls,
       cep_id: cepController.text.trim(),
-      // Se o seu book_model aceitar a lista inteira, adicione ela aqui (ex: photos: photoUrls)
     );
   }
 
@@ -131,9 +154,18 @@ class BookEditionViewModel {
   Future<bool> submit(String id) async {
     final book = buildBook(id);
 
-    final ok = await service.updateAnnouncement(id: id, body: book.toJson());
+    final ok = await service.updateAnnouncement(
+      id: id,
+      body: book.toJson(),
+    );
 
     return ok;
+  }
+
+  /// deletes the announcement from backend
+  /// returns true if deletion succeeds
+  Future<bool> delete(String id) async {
+    return service.deleteAnnouncement(id);
   }
 
   /// disposes all controllers to avoid memory leaks

@@ -44,6 +44,11 @@ class TradeAnnouncement(Base):
     edition = relationship("Edition", back_populates="announcements")
     location = relationship("Location", back_populates="announcements")
     photos = relationship("PhotoTradeAnnouncement", back_populates="announcement", cascade="all, delete-orphan")
+    offered_announcements = relationship(
+        "OfferedAnnouncements", 
+        back_populates="announcement",
+        cascade="all, delete-orphan"  
+    )
 
 class PhotoTradeAnnouncement(Base):
     __tablename__ = "photo_trade_announcements"

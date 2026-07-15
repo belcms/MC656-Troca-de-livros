@@ -43,5 +43,5 @@ class OfferedAnnouncements(Base):
     announcement = relationship(
         "TradeAnnouncement",
         foreign_keys=[offered_announcement_id],
-        backref="involved_in_offers"
+        back_populates="offered_announcements"
     )
