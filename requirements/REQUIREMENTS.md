@@ -18,36 +18,42 @@ O Troca de Livros é uma aplicação que conecta leitores para a troca colaborat
 
 #### Login
 Tem opção de entrar com facebook ou google, além da opção tradicional com email e senha.
-![[Descrição da Imagem]]([assets/troca%20de%20livros/login-troca-de-livros.png])
+![[Descrição da Imagem]](assets/troca%20de%20livros/login-troca-de-livros.png)
 
 #### Cadastro
-![[Descrição da Imagem]]([[assets/troca%20de%20livros/cadastro-troca-de-livros.png])
-
+![[Descrição da Imagem]](assets/troca%20de%20livros/cadastro-troca-de-livros.png)
 
 #### Exibição
 A página principal do site tem 3 carrosséis principais.
+![[Descrição da Imagem]](assets/troca%20de%20livros/exibicao-troca-de-livros.png)
 
 #### Possíveis estados de um livro
 Aqui, basicamente, temos 3 estados para um livro: lido, lendo e quero ler. Ao clicar em quero ler, ele nos dá a opção de quero trocar. Lido ou lendo não acionam essa opção, mantendo o padrão de “Tenho esse livro” como opção.
+![[Descrição da Imagem]](assets/troca%20de%20livros/possiveis-estados-troca.png)
 
 #### Ações possíveis na página do livro
 Nessa página temos as seguintes opções: trocar o livro, sinalizar que já possui o livro e a opção de comprar por um link na Amazon.
+![[Descrição da Imagem]](assets/troca%20de%20livros/acoes-possiveis-troca.png)
 
 #### Informações na página do livro
 Podemos acessar o título, a capa, o resumo, a quantidade de páginas, o ano e o autor. O usuário também pode adicionar um comentário ao livro. 
 
+![[Descrição da Imagem]](assets/troca%20de%20livros/info-pag-livro-troca.png)
+
 Também é possível adicionar um comentário em um livro.
 
+![[Descrição da Imagem]](assets/troca%20de%20livros/comentario-troca.png)
 #### Trocando um livro
 A primeira página que é exibida ao clicar em “Trocar livro” é composta por todos os livros disponíveis para troca. Temos o nome da pessoa, a cidade em que ela mora, seu último acesso e a chance dessa pessoa responder. 
 Em cada card existem dois botões: um para abrir um chat com a pessoa e outro para fazer a troca. 
 
 #### Chat
 Esse é o card que é exibido ao clicar no botão para abrir o chat com alguma pessoa.
-
+![[Descrição da Imagem]](assets/troca%20de%20livros/chat-troca.png)
 #### Página de troca
 Na página de troca são exibidas informações sobre a pessoa que é dona do livro. Ele exibe quantas solicitações essa pessoa já recebeu, aceitou, rejeitou e enviou. Além disso, ele também exibe a média das avaliações que essa pessoa recebeu de pessoas que trocaram livros com ela. Também é exibido nessa mesma tela um extrato mostrando quantos pontos você possui, quanto o livro “custa” e seu balanço após a troca.
 
+![[Descrição da Imagem]](assets/troca%20de%20livros/pagina-de-troca-troca.png)
 
 Nessa mesma tela é possível sinalizar como vai ser a entrega. Se o usuário selecionar que já combinou com a outra parte e vai receber pessoalmente, pode enviar a solicitação direto. Caso contrário, ele deve fornecer um endereço, como está abaixo:
 
@@ -57,30 +63,35 @@ A ideia é a pessoa que está com o livro enviar pelos correios e pagar a taxa.
 
 #### Sistema de pontos
 Os pontos do site podem ser ganhos ao trocar um livro ou comprados por meio do sistema abaixo. Ele fornece preços diferentes dependendo do seu nível no site, o qual é determinado por meio do número de trocas que você já fez.
+![[Descrição da Imagem]](assets/troca%20de%20livros/pontos-troca.png)
 
 #### Adicionando um livro que já existe no site
 Essa tela é exibida quando o usuário clica num livro que ele colocou como lido 
+![[Descrição da Imagem]](assets/troca%20de%20livros/add-livro-existente-troca.png)
 
 ##### Adicionando um livro novo ao site
-
-
+![[Descrição da Imagem]](assets/troca%20de%20livros/add-livro-novo-troca.png)
 #### Ranking
 Aqui temos um ranking das pessoas que mais trocam livros no mês corrente.
+![[Descrição da Imagem]](assets/troca%20de%20livros/ranking-troca.png)
 
 #### Busca
 Nos permite buscar livros pelo nome, autor e tag. Os resultados na página abaixo são dinâmicos, conforme a digitação. 
 
+![[Descrição da Imagem]](assets/troca%20de%20livros/busca-dinamica-troca.png)
 
 Ao pressionar “Enter”, ele direciona para a tela onde são exibidos todos os resultados.
 
+![[Descrição da Imagem]](assets/troca%20de%20livros/busca-enter-troca.png)
 
 #### FAQ
 O site possui uma seção de dúvidas frequentes.
 
+![[Descrição da Imagem]](assets/troca%20de%20livros/faq-troca.png)
 
 #### Como funciona
 Página dedicada a explicar como funciona o site. Inclui um vídeo também.
-
+![[Descrição da Imagem]](assets/troca%20de%20livros/como-funciona-troca.png)
 
 
 
