@@ -1,0 +1,14 @@
+# Arquitetura
+
+## Diagrama C4
+
+
+
+
+## Descrição
+
+
+
+
+
+## Padrão de Projeto
