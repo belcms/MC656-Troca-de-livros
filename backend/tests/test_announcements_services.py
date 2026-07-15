@@ -16,6 +16,7 @@ def _obj(**kwargs):
 
 def _mock_query_chain_first(db, first_result):
     query_obj = db.query.return_value
+    query_obj.options.return_value = query_obj
     filter_obj = query_obj.filter.return_value
     filter_obj.first.return_value = first_result
 

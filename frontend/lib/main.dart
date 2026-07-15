@@ -5,10 +5,25 @@ import 'user_profile/user_profile_screen.dart';
 import 'auth/auth_controller.dart';
 import 'auth/auth_screens.dart';
 import 'trade_requests/screens/trade_requests_screen.dart';
+import 'auth/http_auth_repository.dart';
+import 'services/api_client.dart';
 
 void main() {
-  final auth = AuthController();
-  runApp(AuthScope(controller: auth, child: const MyApp()));
+  final authRepository = HttpAuthRepository.instance;
+
+  ApiClient.authTokenProvider = authRepository;
+
+  final auth = AuthController(
+    repository: authRepository,
+  );
+
+  runApp(
+    AuthScope(
+      controller: auth,
+      child: const MyApp(),
+    ),
+  );
+
   auth.initialize();
 }
 

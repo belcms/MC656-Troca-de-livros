@@ -1,13 +1,18 @@
 import 'package:flutter/widgets.dart';
+
 import 'auth_repository.dart';
 
 class AuthController extends ChangeNotifier {
-  final repository = AuthRepository.instance;
+  final AuthRepository repository;
+
   bool initializing = true;
   bool loading = false;
+
   bool get authenticated => repository.user != null;
 
-  AuthController() {
+  AuthController({
+    required this.repository,
+  }) {
     repository.onSessionInvalidated = notifyListeners;
   }
 
@@ -17,15 +22,40 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> login(String email, String password) =>
-      _run(() => repository.login(email, password));
-  Future<void> register(Map<String, dynamic> data) =>
-      _run(() => repository.register(data));
-  Future<void> logout() => _run(repository.logout);
+  Future<void> login(
+    String email,
+    String password,
+  ) {
+    return _run(
+      () => repository.login(
+        email,
+        password,
+      ),
+    );
+  }
 
-  Future<void> _run(Future<void> Function() operation) async {
+  Future<void> register(
+    Map<String, dynamic> data,
+  ) {
+    return _run(
+      () => repository.register(
+        data,
+      ),
+    );
+  }
+
+  Future<void> logout() {
+    return _run(
+      repository.logout,
+    );
+  }
+
+  Future<void> _run(
+    Future<void> Function() operation,
+  ) async {
     loading = true;
     notifyListeners();
+
     try {
       await operation();
     } finally {
@@ -41,6 +71,12 @@ class AuthScope extends InheritedNotifier<AuthController> {
     required AuthController controller,
     required super.child,
   }) : super(notifier: controller);
-  static AuthController of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<AuthScope>()!.notifier!;
+
+  static AuthController of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<AuthScope>();
+
+    assert(scope != null, 'AuthScope não encontrado na árvore de widgets.');
+
+    return scope!.notifier!;
+  }
 }

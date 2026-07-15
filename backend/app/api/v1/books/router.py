@@ -10,7 +10,7 @@ from app.domain.announcements import services as books_services
 router = APIRouter(prefix='/api/v1', tags=['books'])
 
 @router.put("/books/{id}")
-def update_book(id: str,body: dict = Body(...),db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def update_book(id: str, payload: books_schemas.BookUpdatePayload, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Update an existing book's information.
 
     The endpoint delegates to the books service to update the properties
@@ -24,7 +24,7 @@ def update_book(id: str,body: dict = Body(...),db: Session = Depends(get_db), cu
     Returns:
         The updated book payload.
     """
-    return books_services.update_book(id, body, db, owner_id=current_user.id)
+    return books_services.update_book(id, payload, db, owner_id=current_user.id)
 
 @router.get("/books/details/{id}")
 def get_book_details(id: str, db: Session = Depends(get_db)):

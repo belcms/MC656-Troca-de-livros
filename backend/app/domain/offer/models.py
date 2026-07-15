@@ -1,12 +1,9 @@
 import uuid
 import enum
-from sqlalchemy import Enum as SQLAlchemyEnum, Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Enum as SQLAlchemyEnum, Column, String, ForeignKey, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.core.database import Base
-from datetime import datetime
-from pydantic import BaseModel
-
 
 class StatusOffer (str, enum.Enum):
     Pending = "Pending"
@@ -46,5 +43,5 @@ class OfferedAnnouncements(Base):
     announcement = relationship(
         "TradeAnnouncement",
         foreign_keys=[offered_announcement_id],
-        backref="involved_in_offers"
+        back_populates="offered_announcements"
     )

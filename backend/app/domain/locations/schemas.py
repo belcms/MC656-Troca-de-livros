@@ -1,7 +1,5 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
-from app.domain.announcements.models import Condition, Status
-from datetime import datetime
 
 class LocationPydantic(BaseModel):
     cep: str
