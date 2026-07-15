@@ -255,6 +255,8 @@ Em uma publicação, é possível ver as fotos do anúncio, título, preço, des
 
 #### Pontos negativos
 * A avaliação ser uma funcionalidade exclusiva para perfis profissionais (com planos pagos). A funcionalidade agrega confiabilidade e segurança, mas por ficar restrita a perfis pagos quase não foi vista na exploração das publicações.
+* Feed muito polúido por anúncios e bem limitado
+* 
 
 ---
 
@@ -291,8 +293,7 @@ O app possui tema escuro e claro, oque facilita a utilização dele em ambientes
 #### Descrição do livro
 A tela de um livro possui a Sinopse (em vermelho), as informações de identificação (editora, nº páginas, ISBN, etc.) em (em amarelo). Além disso, tem a seção de Leitores (em azul), com as informações do livro no site (e.g, Leram, Lendo, Quer ler, Relendo, Abandonados). Por fim, a seção de avaliações que é atualizada conforme a resenha dos usuários.
 
-Essa tela é interessante para acumular informações de uma obra específica, pode ajudar no
-sistemas de busca por livro.
+Essa tela é interessante para acumular informações de uma obra específica, pode ajudar no sistemas de busca por livro.
 
 ![[Descrição livro Skoob]](assets/skoob/descricao_1-skoob.jpg)
 ![[Descrição livro Skoob]](assets/skoob/descricao_2-skoob.jpg)
@@ -306,11 +307,13 @@ O sistema de pesquisa pode ser feito por texto (em vermelho) ou código de barra
 
 
 #### Pontos positivos
-* 
-* 
+* Configurações de acessibilidade
+* Busca de livro por código de barras
+* Seguidores e seguindo para criação de senso de comunidade literária
 
 #### Pontos negativos
-* 
+* O aplicativo obriga o login ao entrar no app, não sendo possível explorar um pouco as funcionalidades antes de criar uma conta e se logar
+* As mensagens e notificações ficam extremamente escondidas (nos 3 pontinhos dentro do perfil)
 * 
 
 ---
@@ -329,8 +332,7 @@ O processo de brainstorming ocorreu em duas etapas: primeiro, fizemos uma dinâm
 ![Brainstorm Início](assets/brainstorm/brainstorm2-inicio.png)
 ![Brainstorm organizado por similaridade](assets/brainstorm/brainstorm2-org.png)
 
-## Arquitetura C4
-![arquitetura](assets/Untitled%20(3).png)
+
 
 
 
