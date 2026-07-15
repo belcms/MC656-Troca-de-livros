@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
+from app.domain.auth.security import get_current_user
 from app.domain.offer.schemas import TradeRequestResponse
+from app.domain.users.models import User
 from app.services.offer_service import (
     accept_offer,
     get_received_offer,
@@ -81,18 +83,12 @@ def check_pending_offer(
     response_model_by_alias=True,
 )
 def received_offers(
-    owner_user_id: str = Query(
-        ...,
-        description=(
-            "ID temporário do usuário autenticado. "
-            "Deve ser removido quando a autenticação for implementada."
-        ),
-    ),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return list_received_offers(
         db=db,
-        owner_user_id=owner_user_id,
+        owner_user_id=current_user.id,
     )
 
 
@@ -103,13 +99,13 @@ def received_offers(
 )
 def offer_details(
     offer_id: str,
-    owner_user_id: str = Query(...),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return get_received_offer(
         db=db,
         offer_id=offer_id,
-        owner_user_id=owner_user_id,
+        owner_user_id=current_user.id,
     )
 
 
@@ -121,13 +117,13 @@ def offer_details(
 )
 def accept_received_offer(
     offer_id: str,
-    owner_user_id: str = Query(...),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return accept_offer(
         db=db,
         offer_id=offer_id,
-        owner_user_id=owner_user_id,
+        owner_user_id=current_user.id,
     )
 
 
@@ -139,11 +135,11 @@ def accept_received_offer(
 )
 def reject_received_offer(
     offer_id: str,
-    owner_user_id: str = Query(...),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return reject_offer(
         db=db,
         offer_id=offer_id,
-        owner_user_id=owner_user_id,
+        owner_user_id=current_user.id,
     )

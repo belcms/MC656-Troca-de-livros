@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../config/api_config.dart';
 import '../models/trade_request.dart';
 import '../services/api_trade_request_service.dart';
 import '../services/trade_request_service.dart';
@@ -8,10 +7,7 @@ import '../widgets/trade_request_card.dart';
 import 'trade_request_details_screen.dart';
 
 class TradeRequestsScreen extends StatefulWidget {
-  const TradeRequestsScreen({
-    super.key,
-    this.service,
-  });
+  const TradeRequestsScreen({super.key, this.service});
 
   final TradeRequestService? service;
 
@@ -26,11 +22,7 @@ class _TradeRequestsScreenState extends State<TradeRequestsScreen> {
   @override
   void initState() {
     super.initState();
-    _service = widget.service ??
-        ApiTradeRequestService(
-          baseUrl: ApiConfig.baseUrl,
-          currentUserId: ApiConfig.currentUserId,
-        );
+    _service = widget.service ?? ApiTradeRequestService();
     _loadRequests();
   }
 
@@ -46,10 +38,8 @@ class _TradeRequestsScreenState extends State<TradeRequestsScreen> {
   Future<void> _openDetails(TradeRequest request) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
-        builder: (_) => TradeRequestDetailsScreen(
-          requestId: request.id,
-          service: _service,
-        ),
+        builder: (_) =>
+            TradeRequestDetailsScreen(requestId: request.id, service: _service),
       ),
     );
 
@@ -61,7 +51,7 @@ class _TradeRequestsScreenState extends State<TradeRequestsScreen> {
   @override
   void dispose() {
     if (widget.service == null && _service is ApiTradeRequestService) {
-      (_service as ApiTradeRequestService).dispose();
+      _service.dispose();
     }
     super.dispose();
   }
@@ -111,7 +101,7 @@ class _TradeRequestsScreenState extends State<TradeRequestsScreen> {
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.only(bottom: 20),
                       itemCount: requests.length,
-                      separatorBuilder: (_, __) => const Divider(
+                      separatorBuilder: (_, _) => const Divider(
                         height: 3,
                         thickness: 3,
                         color: Color(0xFFFFF6EA),
@@ -168,10 +158,7 @@ class _EmptyState extends StatelessWidget {
 }
 
 class _ErrorState extends StatelessWidget {
-  const _ErrorState({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorState({required this.message, required this.onRetry});
 
   final String message;
   final VoidCallback onRetry;
@@ -186,10 +173,7 @@ class _ErrorState extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, size: 56),
             const SizedBox(height: 14),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-            ),
+            Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             OutlinedButton(
               onPressed: onRetry,

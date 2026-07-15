@@ -1,6 +1,5 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, joinedload, selectinload
-from app.api.v1.announcements.schemas import MyBooksCardResponse
 from app.domain.announcements.models import Status, TradeAnnouncement
 from app.domain.books.models import Edition
 from app.domain.offer.models import (

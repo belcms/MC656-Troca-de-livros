@@ -2,12 +2,13 @@ from datetime import datetime, timedelta
 from typing import Callable, Dict, Generator
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.api.v1.offer.router import router_offer
 from app.core.database import get_db
+from app.domain.auth.security import get_current_user
 from app.domain.announcements.models import Condition, Status, TradeAnnouncement
 from app.domain.offer.models import Offer, OfferedAnnouncements, StatusOffer
 from app.domain.users.models import User
@@ -24,7 +25,18 @@ def offer_client(
     def override_get_db():
         yield db_session
 
+    def override_get_current_user():
+        current_user = app.state.current_user
+        if current_user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Autenticação necessária",
+            )
+        return current_user
+
+    app.state.current_user = None
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = override_get_current_user
 
     try:
         with TestClient(app) as client:
