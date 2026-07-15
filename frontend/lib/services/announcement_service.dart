@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'api_client.dart';
 import '../book_details/announcement_detail_model.dart';
 import '../feed/announcement_filters.dart';
+import '../feed/feed_announcement.dart';
 import '../search/announcement_search_models.dart';
 
 /// Service responsible for handling HTTP requests related to announcements.
@@ -96,7 +97,7 @@ class AnnouncementService {
   ///   sends `current_user_id` and `sort_by_distance=true`.
   /// - the backend returns the feed already ordered by distance.
 
-  static Future<List<dynamic>?> fetchFeedAnnouncements({
+  static Future<List<FeedAnnouncement>?> fetchFeedAnnouncements({
     required String? currentUserId,
     int limit = 20,
     int offset = 0,
@@ -147,7 +148,15 @@ class AnnouncementService {
           : await client.get(url);
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as List<dynamic>;
+        final decoded = jsonDecode(response.body) as List<dynamic>;
+
+        return decoded
+            .map(
+              (item) => FeedAnnouncement.fromJson(
+                item as Map<String, dynamic>,
+              ),
+            )
+            .toList();
       }
 
       return null;

@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:frontend/offer/offer_book_model.dart';
 import 'package:http/http.dart' as http;
-import 'package:frontend/offer/offer_book_model.dart';
 import 'api_client.dart';
 
 class OfferService {
