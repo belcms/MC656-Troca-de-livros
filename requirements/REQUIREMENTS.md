@@ -252,11 +252,11 @@ Em uma publicação, é possível ver as fotos do anúncio, título, preço, des
 * Feed filtrado pela localização 
 * Ver estatísticas do usuário, porque traz credibilidade.
 * Chat separado de posts que você publicou e posts que você teve interesse
+* Favoritar posts para melhores recomendações
 
 #### Pontos negativos
 * A avaliação ser uma funcionalidade exclusiva para perfis profissionais (com planos pagos). A funcionalidade agrega confiabilidade e segurança, mas por ficar restrita a perfis pagos quase não foi vista na exploração das publicações.
 * Feed muito polúido por anúncios e bem limitado
-* 
 
 ---
 
@@ -314,7 +314,6 @@ O sistema de pesquisa pode ser feito por texto (em vermelho) ou código de barra
 #### Pontos negativos
 * O aplicativo obriga o login ao entrar no app, não sendo possível explorar um pouco as funcionalidades antes de criar uma conta e se logar
 * As mensagens e notificações ficam extremamente escondidas (nos 3 pontinhos dentro do perfil)
-* 
 
 ---
 
