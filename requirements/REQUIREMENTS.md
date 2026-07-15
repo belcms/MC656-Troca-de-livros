@@ -305,9 +305,11 @@ O sistema de pesquisa pode ser feito por texto (em vermelho) ou código de barra
 ---
 
 ### Funcionalidades de Interesse
-* 
-* 
-* 
+* Filtro por localização no feed, posts mais perto aparecerem primeiro
+* Chat
+* Instruções para o usuário acerca das funcionalidades e dicas de segurança
+* Busca por isbn e código de barras
+* Estatísticas do usuário para confiança e credibilidade
 
 ## Brainstorm
 O processo de brainstorming ocorreu em duas etapas: primeiro, fizemos uma dinâmica livre de 10 minutos para que todos pudessem expor suas ideias. Em seguida, organizamos os resultados por similaridade, o que nos ajudou a agrupar e definir os temas principais.
