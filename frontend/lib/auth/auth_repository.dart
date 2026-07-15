@@ -1,5 +1,6 @@
 import 'auth_token_provider.dart';
 import 'auth_user.dart';
+import 'http_auth_repository.dart';
 
 class AuthException implements Exception {
   final String message;
@@ -15,6 +16,8 @@ class AuthException implements Exception {
 }
 
 abstract class AuthRepository implements AuthTokenProvider {
+  static HttpAuthRepository get instance => HttpAuthRepository.instance;
+
   AuthUser? get user;
 
   set onSessionInvalidated(void Function()? callback);

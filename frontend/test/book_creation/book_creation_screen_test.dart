@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:frontend/auth/auth_controller.dart';
 import 'package:frontend/auth/auth_repository.dart';
 import 'package:frontend/auth/auth_user.dart';
 import 'package:frontend/book_creation/book_creation_screen.dart';
@@ -19,8 +20,16 @@ void main() {
   });
 
   testWidgets('renderiza a tela de criação de anúncio', (tester) async {
+    final controller = AuthController(repository: AuthRepository.instance);
+    controller.initializing = false;
+
     // Monta a tela virtualmente
-    await tester.pumpWidget(const MaterialApp(home: BookCreationPage()));
+    await tester.pumpWidget(
+      AuthScope(
+        controller: controller,
+        child: const MaterialApp(home: BookCreationPage()),
+      ),
+    );
 
     // Verifica se a página principal do widget foi desenhada
     expect(find.byType(BookCreationPage), findsOneWidget);

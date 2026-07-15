@@ -17,10 +17,12 @@ void main() {
   group('ApiTradeRequestService', () {
     setUp(() {
       AuthRepository.instance.accessToken = accessToken;
+      ApiClient.authTokenProvider = AuthRepository.instance;
     });
 
     tearDown(() {
       AuthRepository.instance.accessToken = null;
+      ApiClient.authTokenProvider = null;
     });
 
     test('GET received usa URL e autenticação corretamente', () async {

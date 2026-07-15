@@ -8,33 +8,52 @@ class ApiClient {
   static AuthTokenProvider? authTokenProvider;
 
   static Future<http.Response> get(
-    String path,
-  ) {
+    String path, {
+    http.Client? client,
+  }) {
     return _send(
       'GET',
       path,
+      client: client,
     );
   }
 
   static Future<http.Response> post(
     String path, {
     String? body,
+    http.Client? client,
   }) {
     return _send(
       'POST',
       path,
       body: body,
+      client: client,
     );
   }
 
   static Future<http.Response> put(
     String path, {
     String? body,
+    http.Client? client,
   }) {
     return _send(
       'PUT',
       path,
       body: body,
+      client: client,
+    );
+  }
+
+  static Future<http.Response> patch(
+    String path, {
+    String? body,
+    http.Client? client,
+  }) {
+    return _send(
+      'PATCH',
+      path,
+      body: body,
+      client: client,
     );
   }
 
@@ -42,12 +61,14 @@ class ApiClient {
     String method,
     String path, {
     String? body,
+    http.Client? client,
     bool retry = true,
   }) async {
     final token = authTokenProvider?.accessToken;
 
     final headers = {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     };
 
     if (token != null) {
@@ -61,22 +82,13 @@ class ApiClient {
     late http.Response response;
 
     if (method == 'POST') {
-      response = await http.post(
-        uri,
-        headers: headers,
-        body: body,
-      );
+      response = await (client?.post(uri, headers: headers, body: body) ?? http.post(uri, headers: headers, body: body));
     } else if (method == 'PUT') {
-      response = await http.put(
-        uri,
-        headers: headers,
-        body: body,
-      );
+      response = await (client?.put(uri, headers: headers, body: body) ?? http.put(uri, headers: headers, body: body));
+    } else if (method == 'PATCH') {
+      response = await (client?.patch(uri, headers: headers, body: body) ?? http.patch(uri, headers: headers, body: body));
     } else {
-      response = await http.get(
-        uri,
-        headers: headers,
-      );
+      response = await (client?.get(uri, headers: headers) ?? http.get(uri, headers: headers));
     }
 
     final provider = authTokenProvider;
@@ -91,6 +103,7 @@ class ApiClient {
         method,
         path,
         body: body,
+        client: client,
         retry: false,
       );
     }
