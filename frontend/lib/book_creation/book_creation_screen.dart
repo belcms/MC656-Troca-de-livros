@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'book_creation_viewmodel.dart';
 import 'package:flutter/cupertino.dart';
@@ -24,8 +23,6 @@ class _BookCreationPageState extends State<BookCreationPage> {
   String? _imagemCapaUrl;
   final ImagePicker _picker = ImagePicker();
   List<XFile> _selectedImages = [];
-  // Controller temporário só para o pop-up de colar o link
-  final _urlCapaController = TextEditingController();
 
   @override
   void initState() {
@@ -100,43 +97,6 @@ class _BookCreationPageState extends State<BookCreationPage> {
         _locationInfo = "CEP não encontrado ou inválido.";
       }
     });
-  }
-
-  /// Displays an alert dialog prompting the user to paste a URL for the book cover image.
-  /// Updates the state with the provided URL upon confirmation.
-  void _pedirUrlDaImagem() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("URL da Capa"),
-          content: TextField(
-            controller: _urlCapaController,
-            decoration: const InputDecoration(
-              hintText: "Cole o link da imagem aqui...",
-              filled: true,
-              fillColor: Color(0xFFF5F5F5),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text("Cancelar"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  // Atualiza a tela com o novo link digitado
-                  _imagemCapaUrl = _urlCapaController.text;
-                });
-                Navigator.of(context).pop(); // Fecha o pop-up
-              },
-              child: const Text("Confirmar"),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   /// Displays a bottom sheet with a CupertinoPicker (roulette) for year selection.
@@ -581,31 +541,6 @@ class _BookCreationPageState extends State<BookCreationPage> {
 
           const SizedBox(height: 30),
 
-          // /// BOTÃO SALVAR
-          // SizedBox(
-          //   width: double.infinity,
-          //   child: ElevatedButton(
-          //     style: ElevatedButton.styleFrom(
-          //       backgroundColor: const Color(0xFF416956),
-          //       foregroundColor: Colors.white,
-          //       padding: const EdgeInsets.symmetric(vertical: 16),
-          //     ),
-          //     onPressed: isSaving
-          //         ? null
-          //         : _saveBook, //o isSaving desabilita o botão e mostra o loading enquanto salva
-          //     child: isSaving
-          //         ? const SizedBox(
-          //             width: 20,
-          //             height: 20,
-          //             child: CircularProgressIndicator(
-          //               strokeWidth: 2,
-          //               color: Colors.white,
-          //             ),
-          //           )
-          //         : const Text("Criar anúncio"),
-          //   ),
-          // ),
-
           /// BOTÃO SALVAR
           ListenableBuilder(
             // Escuta as mudanças de todos os campos obrigatórios simultaneamente
@@ -874,197 +809,4 @@ class _BookCreationPageState extends State<BookCreationPage> {
         return const Color(0xFF24523C);
     }
   }
-
-  // Widget _buildPhotoGallery() {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       const Text(
-  //         'Fotos do Livro (Mínimo 1, Máximo 5)',
-  //         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-  //       ),
-  //       const SizedBox(height: 12),
-  //       Center(
-
-  //         child: Wrap(
-  //         spacing: 12.0, // Espaçamento horizontal entre as fotos
-  //         runSpacing: 12.0, // Espaçamento vertical se pular de linha
-  //         children: [
-  //           // Renderiza as fotos selecionadas
-  //           ...List.generate(_selectedImages.length, (index) {
-  //             return Stack(
-  //               clipBehavior: Clip.none,
-  //               children: [
-  //                 Container(
-  //                   width: 120, // Força a dimensão quadrada
-  //                   height: 160, // Força a dimensão quadrada
-  //                   decoration: BoxDecoration(
-  //                     borderRadius: BorderRadius.circular(8),
-  //                     border: Border.all(color: Colors.grey.shade300),
-  //                   ),
-  //                   clipBehavior: Clip.antiAlias,
-  //                   child: Image.file(
-  //                     File(_selectedImages[index].path),
-  //                     fit: BoxFit
-  //                         .cover, // Preenche todo o quadrado cortando as sobras
-  //                   ),
-  //                 ),
-  //                 // Botãozinho vermelho para excluir a foto
-  //                 Positioned(
-  //                   right: -10,
-  //                   top: -10,
-  //                   child: GestureDetector(
-  //                     onTap: () => _removeImage(index),
-  //                     child: Container(
-  //                       decoration: const BoxDecoration(
-  //                         shape: BoxShape.circle,
-  //                         color: Colors.white,
-  //                       ),
-  //                       child: const Icon(
-  //                         Icons.remove_circle,
-  //                         color: Colors.red,
-  //                         size: 28,
-  //                       ),
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ],
-  //             );
-  //           }),
-
-  //           // Renderiza o botão de "Adicionar" apenas se tiver menos de 5 fotos
-  //           if (_selectedImages.length < 5)
-  //             GestureDetector(
-  //               onTap: _pickImages,
-  //               child: Container(
-  //                 width:
-  //                     120, // O slot de adição mantém as exatas proporções quadradas
-  //                 height: 160,
-  //                 decoration: BoxDecoration(
-  //                   color: Colors.grey.shade100,
-  //                   borderRadius: BorderRadius.circular(8),
-  //                   border: Border.all(color: Colors.grey.shade400),
-  //                 ),
-  //                 child: const Center(
-  //                   child: Icon(
-  //                     Icons.add_a_photo,
-  //                     color: Colors.grey,
-  //                     size: 32,
-  //                   ),
-  //                 ),
-  //               ),
-  //             ),
-  //         ],
-  //       ),
-  //       )
-  //     ],
-  //   );
-  // }
-
-  Widget _buildPhotoGallery() {
-    return SizedBox(
-      width: double
-          .infinity, // 1. Força a ocupar a tela toda para o centro funcionar
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.center, // 2. Centraliza o texto e o carrossel
-        children: [
-          const Text(
-            'Fotos do Livro',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-
-          // Carrossel Horizontal
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            clipBehavior: Clip.none,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 12, bottom: 8),
-              child: Row(
-                children: [
-                  // Renderiza as fotos selecionadas
-                  ...List.generate(_selectedImages.length, (index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(
-                        right: 12.0,
-                      ), // Espaço entre as fotos
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            width: 120,
-                            height: 160,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: Image.file(
-                              File(_selectedImages[index].path),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          // Botãozinho vermelho para excluir a foto
-                          Positioned(
-                            right: -10,
-                            top: -10,
-                            child: GestureDetector(
-                              onTap: () => _removeImage(index),
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white,
-                                ),
-                                child: const Icon(
-                                  Icons.remove_circle,
-                                  color: Colors.red,
-                                  size: 28,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-
-                  // Renderiza o botão de "Adicionar" apenas se tiver menos de 5 fotos
-                  if (_selectedImages.length < 5)
-                    GestureDetector(
-                      onTap: _pickImages,
-                      child: Container(
-                        width: 120,
-                        height: 160,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade400),
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.add_a_photo,
-                            color: Colors.grey,
-                            size: 32,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-
-          // Contador "pítico" centralizado embaixo
-          Text(
-            '${_selectedImages.length}/5',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade600,
-            ),
-          ),
-        ],
-      ),
-    );
   }
-}

@@ -134,13 +134,6 @@ class BookCreationViewModel {
       "cep": cepController.text.trim().isNotEmpty ? cepController.text.trim() : null,
     };
 
-    // try {
-    //   final sucesso = await service.createAnnouncement(body: novoLivro, userId: userId,);
-    //   return sucesso;
-    // } catch (e) {
-    //   return false;
-    // }
-
     try {
       final sucesso = await service.createAnnouncement(body: novoLivro);
       return sucesso;

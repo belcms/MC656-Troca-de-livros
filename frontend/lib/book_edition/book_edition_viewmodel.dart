@@ -89,17 +89,6 @@ class BookEditionViewModel {
     status = (book.status == null || book.status.isEmpty) ? "Disponível" : book.status;
     condition = (book.condition == null || book.condition.isEmpty) ? "Novo" : book.condition;
 
-    // // 👇 MUDANÇA AQUI: Preenchendo a lista de fotos
-    // // Verifique qual é o nome exato do campo que o seu backend retorna para a lista de fotos. 
-    // // Substitua 'photos' pelo nome correto que vem no seu JSON (ex: 'images', 'urls', etc).
-    // if (data['photos'] != null && data['photos'] is List) {
-    //   photoUrls = List<String>.from(data['photos']);
-    // } else if (book.photoUrls != null && book.photoUrls!.isNotEmpty) {
-    //   // Fallback de segurança: se vier só uma coverUrl no modelo antigo, vira uma lista de 1 item
-    //   photoUrls = [book.photoUrls!];
-    // } else {
-    //   photoUrls = []; // Garante que a lista fique vazia se não vier nada
-    // }
     photoUrls = book.photoUrls;
 
     return true;

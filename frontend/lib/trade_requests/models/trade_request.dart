@@ -80,7 +80,7 @@ class TradeUser {
       city: _stringValue(json['city']),
       state: _stringValue(json['state']),
       photoUrl: _nullableString(
-        json['photoUrl'] ?? json['photo_url'] ?? json['photo'],
+        json['cover_photo'] ?? json['photo_url'] ?? json['photo'],
       ),
     );
   }
